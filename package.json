@@ -1,0 +1,8 @@
+{
+	"name": "script-parser-monorepo",
+	"private": true,
+	"scripts": {
+	  "dev:web": "pnpm --filter web dev",
+	  "dev:coprocessor": "pnpm --filter coprocessor dev"
+	}
+}
