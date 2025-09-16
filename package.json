@@ -1,8 +1,17 @@
 {
-	"name": "script-parser-monorepo",
-	"private": true,
-	"scripts": {
-	  "dev:web": "pnpm --filter web dev",
-	  "dev:coprocessor": "pnpm --filter coprocessor dev"
-	}
+  "name": "script-parser",
+  "private": true,
+  "scripts": {
+    "dev:web": "pnpm --filter web dev",
+    "build:web": "pnpm --filter web build",
+    "docker:up": "docker-compose up -d",
+    "docker:down": "docker-compose down",
+    "docker:build": "./scripts/build-push.sh",
+    "prepare": "husky install"
+  },
+  "devDependencies": {
+    "@commitlint/cli": "^18.4.3",
+    "@commitlint/config-conventional": "^18.4.3",
+    "husky": "^8.0.3"
+  }
 }

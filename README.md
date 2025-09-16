@@ -195,6 +195,29 @@ Content-Type: application/json
 - 专注于音频转文本和智能解析功能
 - 支持多种分析类型：摘要、关键词、情感分析等
 
+### 代码规范
+
+项目使用简洁的代码规范配置：
+
+**Web 应用 (Next.js)**
+- ESLint: 基于 Next.js 推荐配置
+- Prettier: 统一代码格式化
+- TypeScript: 严格类型检查
+
+**AI 协处理器 (Python)**
+- Ruff: 现代化的 Python 代码检查和格式化工具
+- 配置文件: `apps/coprocessor/pyproject.toml`
+
+**通用配置**
+- EditorConfig: 统一编辑器设置
+- 格式化脚本: `./scripts/format.sh`
+
+**Commit 规范**
+- 格式: `<type>(<scope>): <subject>`
+- 示例: `feat(api): add user authentication endpoint`
+- 自动检查: Commitlint + Husky Git 钩子
+- 详细规范: 查看 `docs/code-standards.md`
+
 ### 添加新功能
 
 1. **添加新的 API 端点**
