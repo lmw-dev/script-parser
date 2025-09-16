@@ -13,7 +13,7 @@
 1. **简洁优先** - 避免过度复杂的配置
 2. **语言分离** - 每种技术栈使用专门的工具
 3. **就近原则** - 配置文件放在对应的应用目录中
-4. **独立开发友好** - 不强制严格的提交规范
+4. **自动化优先** - 通过工具自动检查，减少人工负担
 
 ## 📁 配置文件分布
 
@@ -147,15 +147,37 @@ line-ending = "lf"
 
 **作用**: Python 代码检查和格式化
 
-### 5. Commit Message 规范 (Conventional Commits)
+### 6. Commitlint 配置 (`commitlint.config.js`)
 
-#### 5.1 格式
+```javascript
+module.exports = {
+  extends: ['@commitlint/config-conventional'],
+  rules: {
+    'type-enum': [2, 'always', [
+      'feat', 'fix', 'docs', 'style', 'refactor', 
+      'perf', 'test', 'chore', 'ci'
+    ]],
+    'scope-enum': [1, 'always', [
+      'web', 'api', 'docker', 'docs', 'config'
+    ]],
+    'subject-max-length': [2, 'always', 50],
+    'subject-case': [2, 'always', 'lower-case'],
+    'subject-full-stop': [2, 'never', '.'],
+  },
+};
+```
+
+**作用**: 自动检查提交信息格式，确保符合 Conventional Commits 标准
+
+### 7. Commit Message 规范 (Conventional Commits)
+
+#### 7.1 格式
 
 ```
 <type>(<scope>): <subject>
 ```
 
-#### 5.2 Type 类型
+#### 7.2 Type 类型
 
 - **feat**: 新功能
 - **fix**: 修复 bug
@@ -167,7 +189,7 @@ line-ending = "lf"
 - **chore**: 构建过程或辅助工具的变动
 - **ci**: CI/CD 相关变更
 
-#### 5.3 Scope 范围（可选）
+#### 7.3 Scope 范围（可选）
 
 - **web**: Web 应用相关
 - **api**: AI 协处理器 API 相关
@@ -175,13 +197,13 @@ line-ending = "lf"
 - **docs**: 文档相关
 - **config**: 配置文件相关
 
-#### 5.4 Subject 主题
+#### 7.4 Subject 主题
 
 - **必须**使用动词原形的小写字母开头
 - **禁止**首字母大写，**禁止**结尾加句号
 - 简洁描述变更内容（≤50 字符）
 
-#### 5.5 示例
+#### 7.5 示例
 
 **正确示例**:
 ```bash
@@ -200,7 +222,7 @@ Fix: routing issue                             # 首字母大写
 add new feature                                # 缺少 type
 ```
 
-#### 5.6 自动检查 (Commitlint)
+#### 7.6 自动检查 (Commitlint)
 
 项目集成了 Commitlint 自动检查提交信息格式：
 
@@ -220,7 +242,7 @@ echo "feat(api): add user authentication" | npx commitlint  # ✅ 通过
 echo "invalid commit message" | npx commitlint             # ❌ 失败
 ```
 
-#### 5.7 Git 提交模板
+#### 7.7 Git 提交模板
 
 项目提供了 `.gitmessage` 模板文件，可以通过以下命令设置：
 
@@ -287,6 +309,35 @@ ruff format .              # 格式化代码
 python -m uvicorn app.main:app --reload --port 8000
 ```
 
+## 🛠️ 实际集成功能
+
+### 已集成的自动化工具
+
+1. **Husky** - Git 钩子管理
+   - 安装位置: `.husky/`
+   - 功能: 在 Git 操作时自动执行检查
+
+2. **Commitlint** - 提交信息检查
+   - 配置文件: `commitlint.config.js`
+   - 功能: 每次提交时自动验证提交信息格式
+   - 钩子: `.husky/commit-msg`
+
+3. **代码格式化工具**
+   - Web: Prettier + ESLint
+   - Python: Ruff
+   - 统一脚本: `./scripts/format.sh`
+
+### 自动化流程
+
+```bash
+# 当你执行 git commit 时，会自动：
+git commit -m "feat(api): add new endpoint"
+# 1. 触发 .husky/commit-msg 钩子
+# 2. 运行 commitlint 检查提交信息格式
+# 3. 格式正确 → 提交成功
+# 4. 格式错误 → 提交被拒绝，显示错误信息
+```
+
 ## ✅ 验证测试
 
 ### 测试结果
@@ -315,6 +366,12 @@ ruff format .              # 格式化成功
 
 # 统一格式化测试
 ./scripts/format.sh        # 全部成功
+
+# Commitlint 测试
+echo "feat(api): add user auth" | npx commitlint     # ✅ 通过
+echo "invalid message" | npx commitlint             # ❌ 失败
+git commit -m "feat: add feature"                   # ✅ 自动检查通过
+git commit -m "Add feature"                         # ❌ 自动检查失败
 ```
 
 ## 🎯 配置特点
@@ -323,9 +380,9 @@ ruff format .              # 格式化成功
 
 1. **简洁实用** - 配置文件少而精
 2. **技术分离** - 不同语言使用专门工具
-3. **开发友好** - 规则宽松，专注核心问题
-4. **维护简单** - 无复杂的 Git 钩子和全局配置
-5. **提交规范** - 统一的 Commit Message 格式
+3. **开发友好** - 规则合理，专注核心问题
+4. **自动化检查** - Git 钩子自动验证提交信息
+5. **提交规范** - 强制统一的 Commit Message 格式
 
 ### 适用场景
 
@@ -352,10 +409,10 @@ ruff format .              # 格式化成功
 
 如果项目规模扩大，可以考虑添加：
 
-- **Husky** - Git 钩子自动化
-- **lint-staged** - 暂存区代码检查
-- **Commitlint** - 提交信息规范
+- **lint-staged** - 暂存区代码检查（提交前自动格式化）
 - **CI/CD 集成** - 自动化检查和部署
+- **更严格的规则** - 根据团队需求调整检查严格程度
+- **自动化测试** - 提交前运行测试套件
 
 ## 🔗 相关文档
 
@@ -363,6 +420,9 @@ ruff format .              # 格式化成功
 - [ESLint 配置文档](https://eslint.org/docs/user-guide/configuring/)
 - [Ruff 配置文档](https://docs.astral.sh/ruff/configuration/)
 - [EditorConfig 文档](https://editorconfig.org/)
+- [Commitlint 文档](https://commitlint.js.org/)
+- [Conventional Commits 规范](https://www.conventionalcommits.org/)
+- [Husky 文档](https://typicode.github.io/husky/)
 
 ---
 
