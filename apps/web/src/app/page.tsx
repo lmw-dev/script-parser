@@ -7,7 +7,7 @@ import { ProcessingSection } from "@/components/sections/ProcessingSection"
 import { ResultSection } from "@/components/sections/ResultSection"
 import { ErrorSection } from "@/components/sections/ErrorSection"
 import { mockParseVideo } from "@/lib/api-client"
-import { extractAndValidateUrl } from "@/lib/validation"
+import { extractAndValidateUrl, validateVideoFile } from "@/lib/validation"
 import type { AppState, AnalysisResult, VideoParseRequest } from "@/types/script-parser.types"
 import { Sparkles, FileText, Zap } from "lucide-react"
 
@@ -52,16 +52,14 @@ export default function ScriptParser() {
     }
   }
 
-  // Handle file selection
+  // Handle file selection - uses the exported logic function
   const handleFileSelect = (file: File | null) => {
-    setSelectedFile(file)
-    
-    if (file) {
-      setState("INPUT_VALID")
-      setError("")
-    } else if (!inputValue.trim()) {
-      setState("IDLE")
-    }
+    handleFileChangeLogic(file, {
+      setAppState: setState,
+      setSelectedFile,
+      setInputValue,
+      setError,
+    })
   }
 
   // Handle form submission
@@ -272,4 +270,40 @@ ${result.analysis.cta}
       </div>
     </div>
   )
+}
+
+// Export the file handling logic function for testing
+export const handleFileChangeLogic = (
+  file: File | null,
+  context: {
+    setAppState: (state: AppState) => void
+    setSelectedFile: (file: File | null) => void
+    setInputValue: (value: string) => void
+    setError: (error: string) => void
+  },
+  validateFn = validateVideoFile
+) => {
+  // Handle null file (user cleared selection)
+  if (!file) {
+    context.setSelectedFile(null)
+    context.setAppState("IDLE")
+    context.setError("")
+    return
+  }
+
+  // Validate the selected file
+  const validationResult = validateFn(file)
+  
+  if (validationResult.isValid) {
+    // File is valid
+    context.setAppState("INPUT_VALID")
+    context.setSelectedFile(file)
+    context.setInputValue("") // Clear URL input when file is selected
+    context.setError("")
+  } else {
+    // File is invalid
+    context.setAppState("ERROR")
+    context.setSelectedFile(null)
+    context.setError(validationResult.error || "文件验证失败")
+  }
 }

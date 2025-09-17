@@ -11,7 +11,7 @@ import { useRef } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { useToast } from "@/hooks/use-toast"
-import { validateVideoFile } from "@/lib/validation"
+// File validation is now handled by the parent component
 import type { InputSectionProps } from "@/types/script-parser.types"
 import { Upload, Link, Sparkles } from "lucide-react"
 
@@ -40,32 +40,24 @@ export function InputSection({
   }
 
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0]
-    if (!file) return
-
-    const validation = validateVideoFile(file)
-    if (!validation.isValid) {
-      toast({
-        title: "文件验证失败",
-        description: validation.error,
-        variant: "destructive",
-        duration: 3000,
-      })
-      return
-    }
-
-    // Clear URL when file is selected
-    if (inputValue) {
-      onInputChange("")
+    const file = event.target.files?.[0] || null
+    
+    // Pass the file to parent component for validation and state management
+    onFileSelect(file)
+    
+    // Reset the input so the same file can be selected again if needed
+    if (event.target) {
+      event.target.value = ''
     }
     
-    onFileSelect(file)
-
-    toast({
-      title: "文件已选择",
-      description: `${file.name} (${(file.size / 1024 / 1024).toFixed(1)}MB)`,
-      duration: 3000,
-    })
+    // Show success toast only for valid files (parent will handle errors)
+    if (file && !error) {
+      toast({
+        title: "文件已选择",
+        description: `${file.name} (${(file.size / 1024 / 1024).toFixed(1)}MB)`,
+        duration: 3000,
+      })
+    }
   }
 
   const isSubmitDisabled = currentState === "IDLE" || currentState === "PROCESSING"
