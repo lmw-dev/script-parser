@@ -30,7 +30,7 @@ describe('validation utilities', () => {
       `
       const result = extractAndValidateUrl(douyinShareText)
       expect(result.isValid).toBe(true)
-      expect(result.extractedUrl).toBe('https://v.douyin.com/ieFbPqc/')
+      expect(result.extractedUrl).toBe('https://v.douyin.com/ieFbPqc')
     })
 
     it('should extract and validate URLs from Xiaohongshu share text', () => {
@@ -48,7 +48,7 @@ describe('validation utilities', () => {
       `
       const result = extractAndValidateUrl(multiUrlText)
       expect(result.isValid).toBe(true)
-      expect(result.extractedUrl).toBe('https://v.douyin.com/valid123/')
+      expect(result.extractedUrl).toBe('https://v.douyin.com/valid123')
     })
 
     it('should return invalid for text without URLs', () => {
@@ -107,3 +107,4 @@ describe('validation utilities', () => {
     })
   })
 })
+

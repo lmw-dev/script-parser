@@ -1,0 +1,47 @@
+---
+description: "A technical design template to guide the AI in creating comprehensive development documents that serve as the foundation for implementation."
+alwaysApply: false
+---
+# Rule: Guide for Writing Development Documents (`Dev` Docs)
+
+When prompted to create a development document (`Dev` doc), your primary action is to **create a new Markdown file**.
+- **File Location**: The new file **must** be saved in the `/docs/development/` directory.
+- **File Naming**: The filename **must** follow the format: `[Task-ID]-dev-[task-title-in-kebab-case].md`.
+- **Example**: `SCR-1-dev-flexible-input-methods.md`
+
+The content of this new file must follow the template structure below.
+
+---
+
+# [Task-ID]:dev:[Task Title]
+
+- **Status**: 🎯 Designing / ✅ Design Complete
+
+---
+
+## 1. 🎯 Design Overview
+- **Objective**: [Clearly describe the core problem this technical design solves.]
+- **Scope**: [Define the boundaries of this implementation.]
+- **Core Decisions**:
+    1. **[Decision 1]**: [Technical choice and rationale.]
+    2. **[Decision 2]**: [Architectural choice and rationale.]
+
+---
+
+## 2. 🏗️ Technical Architecture
+- **Tech Stack**: [List relevant technologies from our official stack.]
+- **Components & Data Flow**: [Use Mermaid diagrams or lists to describe component relationships and data flow.]
+- **API Endpoints (if any)**:
+    - `POST /api/...`: [Endpoint function description.]
+
+---
+
+## 3. 🚀 Implementation Plan
+- **Step 1: [Step Name]** - [Description of the step.]
+- **Step 2: [Step Name]** - [Description of the step.]
+
+---
+
+## 4. ✅ Quality & Testing
+- **Code Quality**: [Specific quality requirements, e.g., must follow SOLID principles.]
+- **Testing Strategy**: [Reference `130-spec-testing-guide.mdc`. Outline key test cases for this feature.]
