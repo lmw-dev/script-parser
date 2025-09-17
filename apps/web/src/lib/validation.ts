@@ -92,14 +92,24 @@ export const extractAndValidateUrl = (text: string): ExtractValidationResult => 
  * Validates video file type and size
  */
 export const validateVideoFile = (file: File): ValidationResult => {
-  const VALID_TYPES = ["video/mp4", "video/mov", "video/avi", "video/mkv", "video/webm"] as const
+  const VALID_TYPES = [
+    "video/mp4", 
+    "video/mov", 
+    "video/quicktime", // MOV files are often reported as video/quicktime
+    "video/avi", 
+    "video/mkv", 
+    "video/webm",
+    "video/x-msvideo" // Alternative AVI MIME type
+  ] as const
 
   const MAX_SIZE = 100 * 1024 * 1024 // 100MB
+
+  // Support common MOV file MIME types (video/mov and video/quicktime)
 
   if (!VALID_TYPES.includes(file.type as (typeof VALID_TYPES)[number])) {
     return {
       isValid: false,
-      error: "Unsupported file type. Please upload MP4, MOV, AVI, MKV or WEBM video files",
+      error: `Unsupported file type: ${file.type}. Please upload MP4, MOV, AVI, MKV or WEBM video files`,
     }
   }
 

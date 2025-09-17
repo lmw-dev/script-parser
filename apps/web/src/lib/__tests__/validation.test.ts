@@ -92,6 +92,18 @@ describe('validation utilities', () => {
       expect(result.isValid).toBe(true)
     })
 
+    it('should validate MOV files with video/quicktime MIME type', () => {
+      const movFile = new File([''], 'test.mov', { type: 'video/quicktime' })
+      const result = validateVideoFile(movFile)
+      expect(result.isValid).toBe(true)
+    })
+
+    it('should validate MOV files with video/mov MIME type', () => {
+      const movFile = new File([''], 'test.mov', { type: 'video/mov' })
+      const result = validateVideoFile(movFile)
+      expect(result.isValid).toBe(true)
+    })
+
     it('should reject unsupported file types', () => {
       const txtFile = new File([''], 'test.txt', { type: 'text/plain' })
       const result = validateVideoFile(txtFile)
