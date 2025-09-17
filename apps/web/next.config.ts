@@ -17,6 +17,20 @@ const nextConfig: NextConfig = {
 
   // 服务器外部包配置
   serverExternalPackages: [],
+
+  // 配置 Server Actions 和 API Routes 的请求体大小限制
+  experimental: {
+    serverActions: {
+      bodySizeLimit: '10mb', // 增加到10MB以支持视频文件上传
+    },
+  },
+
+  // API Routes 配置
+  api: {
+    bodyParser: {
+      sizeLimit: '10mb', // 增加API路由的请求体限制
+    },
+  },
 };
 
 export default nextConfig;
