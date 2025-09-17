@@ -1,6 +1,6 @@
 # TOM-318:task:实现灵活的视频输入功能 (URL与文件上传)
 
-- **Status**: 🎯 Near Complete (仅后端API开发待完成)
+- **Status**: 🎯 Frontend Complete (仅后端API开发待完成)
 
 ---
 
@@ -30,7 +30,7 @@
 - [x] **Frontend Component Development:** 创建InputSection组件，包含URL输入、文件上传和状态管理逻辑
 - [x] **State Management Logic:** 实现输入验证、按钮状态切换和处理状态的UI反馈
 - [x] **Component Architecture Refactor:** 重构InputSection为受控组件，增强URL提取功能 (TOM-323)
-- [ ] **API Client Integration:** 创建前端API客户端，处理与后端的数据交互
+- [x] **API Client Integration:** 创建前端API客户端，处理与后端的数据交互 (TOM-325)
 - [x] **Error Handling Implementation:** 实现前端错误显示和用户反馈机制
 - [x] **Testing Framework Setup:** 配置Jest测试环境，实现验证工具100%覆盖率
 - [x] **Documentation:** 为所有新增代码生成TSDoc和Python docstrings，完善项目README
@@ -78,8 +78,8 @@
 3. ✅ 实现文件上传触发和选择逻辑
 4. ✅ 实现提交按钮状态管理
 
-### Phase 3: Integration & State Management 🚧
-1. ⏳ 创建API客户端处理前后端通信
+### Phase 3: Integration & State Management ✅
+1. ✅ 创建API客户端处理前后端通信 (TOM-325)
 2. ✅ 实现完整的状态流转逻辑
 3. ✅ 集成错误处理和用户反馈
 
@@ -91,17 +91,16 @@
 ### Phase 5: Architecture Enhancement ✅
 1. ✅ 重构InputSection为受控组件 (TOM-323)
 2. ✅ 增强URL提取功能支持分享文本
-3. ✅ 改进验证逻辑和错误处理
 
 ### Phase 6: Quality Assurance ✅
-1. ✅ 搭建Jest测试框架
-2. ✅ 实现验证工具100%测试覆盖率
-3. ✅ 配置测试脚本和覆盖率报告
+1. ✅ 配置Jest测试框架和覆盖率报告
+2. ✅ 实现文件上传逻辑的完整测试覆盖 (TOM-324)
+3. ✅ API Client全面测试，10个测试用例覆盖所有场景
 
 ### Phase 7: Documentation & DevX ✅
-1. ✅ 全面重写项目README文档
-2. ✅ 添加开发指南和架构说明
-3. ✅ 配置VSCode和开发工具
+1. ✅ 全面重写项目README，提升文档质量
+2. ✅ 完善开发指南和架构说明
+3. ✅ 优化开发体验和工具配置
 
 ---
 
@@ -115,6 +114,8 @@
 - [ ] API端点符合RESTful设计规范
 - [x] 错误处理覆盖所有可能的失败场景
 - [x] 用户界面提供清晰的反馈和引导
-- [x] 测试框架完整配置，验证工具100%覆盖率
+- [x] 测试框架完整配置，验证工具100%覆盖率，API Client测试完整
 - [x] 项目文档完善，开发指南详细
 - [x] 开发体验优化，工具配置完整
+- [x] 前端API Client实现完整，支持URL和文件两种请求类型
+- [x] 文件上传逻辑完善，状态管理和验证逻辑完整
