@@ -1,6 +1,6 @@
 # TOM-318:dev:实现灵活的视频输入功能 (URL与文件上传)
 
-- **Status**: 🚧 In Progress
+- **Status**: 🎯 Near Complete (后端API开发待完成)
 
 ---
 
@@ -57,6 +57,9 @@ graph TD
 - **Step 4: API客户端集成** - ⏳ 待开发：创建前端API客户端，实现与后端`/api/parse`端点的数据交互
 - **Step 5: 文件上传功能** - ✅ 已完成：实现文件选择器触发和multipart/form-data上传逻辑
 - **Step 6: 处理状态UI反馈** - ✅ 已完成：实现提交后的"处理中"状态显示和用户反馈
+- **Step 7: 组件架构重构** - ✅ 已完成：重构InputSection为受控组件，增强URL提取功能 (TOM-323)
+- **Step 8: 测试框架搭建** - ✅ 已完成：配置Jest测试环境，实现100%验证工具测试覆盖率
+- **Step 9: 项目文档完善** - ✅ 已完成：全面重写README，添加详细的开发指南和架构说明
 
 ---
 
@@ -67,10 +70,12 @@ graph TD
   - 使用TSDoc为所有导出的组件和函数添加文档注释
   - 遵循项目命名规范：组件文件使用PascalCase，工具函数使用kebab-case
 - **Testing Strategy**: 
-  - 单元测试: 使用Jest测试URL验证逻辑和状态管理函数
-  - 组件测试: 使用React Testing Library测试InputSection组件的用户交互
-  - 集成测试: 测试前端与`/api/parse`端点的完整数据流
-  - E2E测试: 使用Playwright测试完整的用户输入到处理状态的流程
+  - ✅ **单元测试**: 使用Jest + Testing Library测试URL验证逻辑和状态管理函数，已实现100%覆盖率
+  - ✅ **测试框架配置**: 完整的Jest + Next.js + jsdom测试环境，包含Mock配置和覆盖率报告
+  - ✅ **验证工具测试**: 12个测试用例覆盖URL提取、验证、文件验证等所有场景
+  - ⏳ **组件测试**: 使用React Testing Library测试InputSection组件的用户交互 (待开发)
+  - ⏳ **集成测试**: 测试前端与`/api/parse`端点的完整数据流 (待开发)
+  - ⏳ **E2E测试**: 使用Playwright测试完整的用户输入到处理状态的流程 (待开发)
 
 ---
 
@@ -144,3 +149,32 @@ interface ParseVideoResponse {
 - 支持的文件类型: .mp4, .mov, .avi, .mkv
 - 最大文件大小: 100MB（前端预验证）
 - 文件选择器仅显示视频文件类型
+
+---
+
+## 7. 📈 Recent Progress (Latest Updates)
+
+### 7.1 TOM-323: 受控组件重构 ✅ 完成
+- **重构InputSection为受控组件**: 从有状态非受控组件转换为无状态受控组件
+- **增强URL提取功能**: 新增`extractAndValidateUrl`函数，支持从抖音/小红书分享文本中智能提取URL
+- **改进验证逻辑**: 严格的域名验证和错误处理机制
+- **状态管理优化**: 在页面组件中集中管理InputSection状态
+
+### 7.2 测试框架完整搭建 ✅ 完成
+- **Jest配置**: 完整的Jest + Next.js + jsdom测试环境
+- **测试脚本**: `test`, `test:watch`, `test:coverage`三个测试命令
+- **Mock配置**: Next.js路由、媒体查询、观察者API等完整Mock
+- **100%覆盖率**: validation.ts达到100%测试覆盖率
+- **12个测试用例**: 覆盖URL提取、验证、文件验证等所有场景
+
+### 7.3 项目文档全面升级 ✅ 完成
+- **专业化README**: 从基础模板提升到企业级文档标准
+- **技术栈说明**: 详细的Next.js 15、TypeScript 5、Tailwind CSS v4技术栈介绍
+- **开发指南**: 环境要求、安装依赖、开发服务器、构建部署完整流程
+- **项目架构**: 受控组件、状态机模式、设计原则详细说明
+- **贡献指南**: Fork、分支、提交、PR完整开发流程
+
+### 7.4 开发体验优化 ✅ 完成
+- **VSCode配置**: 推荐扩展和调试配置
+- **代码规范**: Conventional Commits、ESLint、Prettier配置
+- **测试覆盖率报告**: 详细的代码覆盖率统计和报告生成
