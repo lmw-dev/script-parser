@@ -3,7 +3,7 @@
  * Based on TOM-323 requirements
  */
 
-import { describe, it, expect } from '@jest/globals'
+// Using Jest globals (available in test environment)
 import { isValidUrl, validateVideoFile, extractAndValidateUrl } from '../validation'
 
 describe('validation utilities', () => {

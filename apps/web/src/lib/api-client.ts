@@ -1,55 +1,79 @@
 /**
  * API client for video parsing service
  * Following TypeScript best practices with strict typing
+ * Implementation for TOM-325 requirements
  */
 
-import type { VideoParseRequest, VideoParseResponse } from "@/types/script-parser.types"
+import type { VideoParseRequest, ApiAnalysisResult, VideoParseResponse } from "@/types/script-parser.types"
 
 /**
  * Submits video for parsing via URL or file upload
+ * Returns the analysis result directly
  */
-export const parseVideo = async (data: VideoParseRequest): Promise<VideoParseResponse> => {
-  if (data.url) {
-    // URL mode - send as JSON
-    const response = await fetch("/api/parse", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({ url: data.url }),
-    })
-
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`)
-    }
-
-    return response.json() as Promise<VideoParseResponse>
+export const parseVideo = async (request: VideoParseRequest): Promise<ApiAnalysisResult> => {
+  // Input validation
+  if (!request.type || (request.type !== 'url' && request.type !== 'file')) {
+    throw new Error(`Invalid request type: ${request.type}`)
   }
 
-  if (data.file) {
-    // File mode - send as multipart/form-data
-    const formData = new FormData()
-    formData.append("file", data.file)
-
-    const response = await fetch("/api/parse", {
-      method: "POST",
-      body: formData,
-    })
-
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`)
+  if (request.type === 'url') {
+    if (!request.url || request.url.trim() === '') {
+      throw new Error('URL is required for URL type requests')
     }
-
-    return response.json() as Promise<VideoParseResponse>
   }
 
-  throw new Error("Either URL or file must be provided")
+  if (request.type === 'file') {
+    if (!request.file) {
+      throw new Error('File is required for file type requests')
+    }
+  }
+
+  try {
+    let response: Response
+
+    if (request.type === 'url') {
+      // URL mode - send as JSON
+      response = await fetch("/api/parse", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          type: "url",
+          url: request.url
+        }),
+      })
+    } else {
+      // File mode - send as multipart/form-data
+      const formData = new FormData()
+      formData.append("file", request.file!)
+      formData.append("type", "file")
+
+      response = await fetch("/api/parse", {
+        method: "POST",
+        body: formData,
+      })
+    }
+
+    if (!response.ok) {
+      // Get error details from response
+      const errorText = await response.text()
+      throw new Error(`API request failed: ${response.status} ${response.statusText} - ${errorText}`)
+    }
+
+    // Parse and return the result
+    const result = await response.json()
+    return result as ApiAnalysisResult
+  } catch (error) {
+    // Re-throw the error to be handled by the caller
+    throw error
+  }
 }
 
 /**
  * Mock implementation for development
  */
-export const mockParseVideo = async (data: VideoParseRequest): Promise<VideoParseResponse> => {
+export const mockParseVideo = async (_data: VideoParseRequest): Promise<VideoParseResponse> => {
   await new Promise((resolve) => setTimeout(resolve, 1000))
 
   const mockResponse: VideoParseResponse = {

@@ -9,7 +9,7 @@ export type AppState = "IDLE" | "INPUT_VALID" | "PROCESSING" | "SUCCESS" | "ERRO
 // Input types for flexible video input
 export type InputType = "url" | "file"
 
-// Analysis result structure
+// Analysis result structure (for display)
 export type AnalysisResult = {
   readonly transcript: string
   readonly analysis: {
@@ -19,10 +19,18 @@ export type AnalysisResult = {
   }
 }
 
+// API result structure (from parseVideo function)
+export type ApiAnalysisResult = {
+  readonly hook: string
+  readonly core: string
+  readonly cta: string
+}
+
 // API request/response types
 export type VideoParseRequest = {
-  url?: string
-  file?: File
+  readonly type: 'url' | 'file'
+  readonly url: string
+  readonly file: File | null
 }
 
 export type VideoParseResponse = {

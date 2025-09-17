@@ -6,9 +6,9 @@ import { InputSection } from "@/components/sections/InputSection"
 import { ProcessingSection } from "@/components/sections/ProcessingSection"
 import { ResultSection } from "@/components/sections/ResultSection"
 import { ErrorSection } from "@/components/sections/ErrorSection"
-import { mockParseVideo } from "@/lib/api-client"
+import { parseVideo } from "@/lib/api-client"
 import { extractAndValidateUrl, validateVideoFile } from "@/lib/validation"
-import type { AppState, AnalysisResult, VideoParseRequest } from "@/types/script-parser.types"
+import type { AppState, AnalysisResult, VideoParseRequest, ApiAnalysisResult } from "@/types/script-parser.types"
 import { Sparkles, FileText, Zap } from "lucide-react"
 
 export default function ScriptParser() {
@@ -66,52 +66,63 @@ export default function ScriptParser() {
   const handleSubmit = async () => {
     setError("")
     
-    // Prepare data for submission
-    let data: VideoParseRequest
-    
-    if (selectedFile) {
-      data = { file: selectedFile }
-    } else if (inputValue.trim()) {
-      const validationResult = extractAndValidateUrl(inputValue)
-      
-      if (validationResult.isValid && validationResult.extractedUrl) {
-        data = { url: validationResult.extractedUrl }
-      } else {
-        setState("ERROR")
-        setError(validationResult.error || "请输入有效的视频链接")
-        return
-      }
-    } else {
-      setState("ERROR")
-      setError("请输入视频链接或选择文件")
-      return
-    }
-
-    // Start processing
+    // Immediately set processing state
     setState("PROCESSING")
     setProcessingStep(1)
-
+    
     try {
-      await new Promise((resolve) => setTimeout(resolve, 1500))
+      // Prepare data for submission
+      let request: VideoParseRequest
+      
+      if (selectedFile) {
+        request = { 
+          type: 'file',
+          url: '',
+          file: selectedFile 
+        }
+      } else if (inputValue.trim()) {
+        const validationResult = extractAndValidateUrl(inputValue)
+        
+        if (validationResult.isValid && validationResult.extractedUrl) {
+          request = { 
+            type: 'url',
+            url: validationResult.extractedUrl,
+            file: null 
+          }
+        } else {
+          throw new Error(validationResult.error || "请输入有效的视频链接")
+        }
+      } else {
+        throw new Error("请输入视频链接或选择文件")
+      }
+
+      // Simulate processing steps for better UX
+      await new Promise((resolve) => setTimeout(resolve, 1000))
       setProcessingStep(2)
 
-      await new Promise((resolve) => setTimeout(resolve, 1500))
+      await new Promise((resolve) => setTimeout(resolve, 1000))
       setProcessingStep(3)
 
-      await new Promise((resolve) => setTimeout(resolve, 1500))
+      // Call the API
+      const result: ApiAnalysisResult = await parseVideo(request)
 
-      const response = await mockParseVideo(data)
-
-      if (response.success && response.result) {
-        setResult(response.result)
-        setState("SUCCESS")
-      } else {
-        throw new Error(response.message || "Analysis failed")
+      // Store result and show success
+      const analysisResult: AnalysisResult = {
+        transcript: "API逐字稿内容将在后端实现后显示",
+        analysis: {
+          hook: result.hook,
+          core: result.core,
+          cta: result.cta
+        }
       }
+      
+      setResult(analysisResult)
+      setState("SUCCESS")
     } catch (err) {
-      console.error("[v0] Analysis error:", err)
+      // Log error for debugging (will be removed in production)
+      console.error("[API] Analysis error:", err)
       setState("ERROR")
-      setError("分析过程中出现错误，请重试")
+      setError(err instanceof Error ? err.message : "分析过程中出现错误，请重试")
     }
   }
 
