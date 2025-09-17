@@ -25,12 +25,7 @@ const nextConfig: NextConfig = {
     },
   },
 
-  // API Routes 配置
-  api: {
-    bodyParser: {
-      sizeLimit: '10mb', // 增加API路由的请求体限制
-    },
-  },
+  // 注意：Next.js 15的API Routes配置已移至route.ts文件中处理
 };
 
 export default nextConfig;
