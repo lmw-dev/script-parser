@@ -1,26 +1,119 @@
-@import 'tailwindcss';
+@import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  /* Linear-inspired color system - HSL format for Tailwind v4 */
+  --background: 0 0% 98%; /* #fafafa */
+  --foreground: 240 10% 11%; /* #1c1c1e */
+  --card: 0 0% 100%; /* #ffffff */
+  --card-foreground: 240 10% 11%; /* #1c1c1e */
+  --popover: 0 0% 100%; /* #ffffff */
+  --popover-foreground: 240 10% 11%; /* #1c1c1e */
+
+  /* Primary: Linear purple */
+  --primary: 235 65% 60%; /* #5e6ad2 */
+  --primary-foreground: 0 0% 100%; /* #ffffff */
+
+  /* Secondary: Neutral grays */
+  --secondary: 240 5% 96%; /* #f4f4f5 */
+  --secondary-foreground: 240 4% 46%; /* #71717a */
+
+  /* Muted: Light grays */
+  --muted: 240 5% 96%; /* #f4f4f5 */
+  --muted-foreground: 240 4% 46%; /* #71717a */
+
+  --accent: 235 65% 60%; /* #5e6ad2 */
+  --accent-foreground: 0 0% 100%; /* #ffffff */
+
+  /* Error: Subtle red */
+  --destructive: 0 84% 60%; /* #ef4444 */
+  --destructive-foreground: 0 0% 100%; /* #ffffff */
+
+  /* Borders: Very subtle */
+  --border: 240 6% 90%; /* #e4e4e7 */
+  --input: 0 0% 100%; /* #ffffff */
+  --ring: 235 65% 60%; /* #5e6ad2 */
+
+  /* Chart colors */
+  --chart-1: 235 65% 60%; /* #5e6ad2 */
+  --chart-2: 271 81% 66%; /* #8b5cf6 */
+  --chart-3: 187 85% 53%; /* #06b6d4 */
+  --chart-4: 142 76% 36%; /* #10b981 */
+  --chart-5: 43 96% 56%; /* #f59e0b */
+
+  --radius: 6px; /* Linear's subtle radius */
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
+.dark {
+  --background: 240 10% 4%; /* #0c0c0d */
+  --foreground: 0 0% 98%; /* #fafafa */
+  --card: 240 10% 10%; /* #1a1a1b */
+  --card-foreground: 0 0% 98%; /* #fafafa */
+  --popover: 240 10% 10%; /* #1a1a1b */
+  --popover-foreground: 0 0% 98%; /* #fafafa */
+  --primary: 239 84% 67%; /* #6366f1 */
+  --primary-foreground: 0 0% 100%; /* #ffffff */
+  --secondary: 240 4% 16%; /* #27272a */
+  --secondary-foreground: 240 5% 65%; /* #a1a1aa */
+  --muted: 240 4% 16%; /* #27272a */
+  --muted-foreground: 240 4% 46%; /* #71717a */
+  --accent: 239 84% 67%; /* #6366f1 */
+  --accent-foreground: 0 0% 100%; /* #ffffff */
+  --destructive: 0 73% 70%; /* #f87171 */
+  --destructive-foreground: 0 0% 100%; /* #ffffff */
+  --border: 240 4% 16%; /* #27272a */
+  --input: 240 10% 10%; /* #1a1a1b */
+  --ring: 239 84% 67%; /* #6366f1 */
+}
+
+@theme {
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
+  --color-background: hsl(var(--background));
+  --color-foreground: hsl(var(--foreground));
+  --color-card: hsl(var(--card));
+  --color-card-foreground: hsl(var(--card-foreground));
+  --color-popover: hsl(var(--popover));
+  --color-popover-foreground: hsl(var(--popover-foreground));
+  --color-primary: hsl(var(--primary));
+  --color-primary-foreground: hsl(var(--primary-foreground));
+  --color-secondary: hsl(var(--secondary));
+  --color-secondary-foreground: hsl(var(--secondary-foreground));
+  --color-muted: hsl(var(--muted));
+  --color-muted-foreground: hsl(var(--muted-foreground));
+  --color-accent: hsl(var(--accent));
+  --color-accent-foreground: hsl(var(--accent-foreground));
+  --color-destructive: hsl(var(--destructive));
+  --color-destructive-foreground: hsl(var(--destructive-foreground));
+  --color-border: hsl(var(--border));
+  --color-input: hsl(var(--input));
+  --color-ring: hsl(var(--ring));
+  --color-chart-1: hsl(var(--chart-1));
+  --color-chart-2: hsl(var(--chart-2));
+  --color-chart-3: hsl(var(--chart-3));
+  --color-chart-4: hsl(var(--chart-4));
+  --color-chart-5: hsl(var(--chart-5));
+  --radius-sm: calc(var(--radius) - 2px);
+  --radius-md: var(--radius);
+  --radius-lg: calc(var(--radius) + 2px);
+  --radius-xl: calc(var(--radius) + 4px);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  body {
+    @apply bg-background text-foreground font-sans antialiased;
+    min-height: 100vh;
   }
 }
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+@layer utilities {
+  /* Linear-style purple gradient for headings */
+  .text-gradient-linear {
+    background: linear-gradient(135deg, hsl(var(--primary)), hsl(var(--chart-2)));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
 }

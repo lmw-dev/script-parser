@@ -1,103 +1,275 @@
-import Image from 'next/image';
+"use client"
 
-export default function Home() {
+import { useState } from "react"
+import { useToast } from "@/hooks/use-toast"
+import { InputSection } from "@/components/sections/InputSection"
+import { ProcessingSection } from "@/components/sections/ProcessingSection"
+import { ResultSection } from "@/components/sections/ResultSection"
+import { ErrorSection } from "@/components/sections/ErrorSection"
+import { mockParseVideo } from "@/lib/api-client"
+import { extractAndValidateUrl } from "@/lib/validation"
+import type { AppState, AnalysisResult, VideoParseRequest } from "@/types/script-parser.types"
+import { Sparkles, FileText, Zap } from "lucide-react"
+
+export default function ScriptParser() {
+  const [state, setState] = useState<AppState>("IDLE")
+  const [processingStep, setProcessingStep] = useState(1)
+  const [result, setResult] = useState<AnalysisResult | null>(null)
+  const [error, setError] = useState("")
+  
+  // InputSection controlled state
+  const [inputValue, setInputValue] = useState("")
+  const [selectedFile, setSelectedFile] = useState<File | null>(null)
+  
+  const { toast } = useToast()
+
+  const processingSteps = [
+    "(1/3) 正在安全上传并解析视频...",
+    "(2/3) 正在调用ASR服务，提取高质量逐字稿...",
+    "(3/3) 正在调用LLM，进行AI结构化分析...",
+  ] as const
+
+  // Handle input change with URL extraction and validation
+  const handleInputChange = (value: string) => {
+    setInputValue(value)
+    
+    // Update state based on input validation
+    if (value.trim() === "") {
+      setState("IDLE")
+      setError("")
+      return
+    }
+
+    // Try to extract and validate URL from the input text
+    const validationResult = extractAndValidateUrl(value)
+    
+    if (validationResult.isValid) {
+      setState("INPUT_VALID")
+      setError("")
+    } else {
+      setState("IDLE")
+      // Don't show error immediately, only when user tries to submit
+    }
+  }
+
+  // Handle file selection
+  const handleFileSelect = (file: File | null) => {
+    setSelectedFile(file)
+    
+    if (file) {
+      setState("INPUT_VALID")
+      setError("")
+    } else if (!inputValue.trim()) {
+      setState("IDLE")
+    }
+  }
+
+  // Handle form submission
+  const handleSubmit = async () => {
+    setError("")
+    
+    // Prepare data for submission
+    let data: VideoParseRequest
+    
+    if (selectedFile) {
+      data = { file: selectedFile }
+    } else if (inputValue.trim()) {
+      const validationResult = extractAndValidateUrl(inputValue)
+      
+      if (validationResult.isValid && validationResult.extractedUrl) {
+        data = { url: validationResult.extractedUrl }
+      } else {
+        setState("ERROR")
+        setError(validationResult.error || "请输入有效的视频链接")
+        return
+      }
+    } else {
+      setState("ERROR")
+      setError("请输入视频链接或选择文件")
+      return
+    }
+
+    // Start processing
+    setState("PROCESSING")
+    setProcessingStep(1)
+
+    try {
+      await new Promise((resolve) => setTimeout(resolve, 1500))
+      setProcessingStep(2)
+
+      await new Promise((resolve) => setTimeout(resolve, 1500))
+      setProcessingStep(3)
+
+      await new Promise((resolve) => setTimeout(resolve, 1500))
+
+      const response = await mockParseVideo(data)
+
+      if (response.success && response.result) {
+        setResult(response.result)
+        setState("SUCCESS")
+      } else {
+        throw new Error(response.message || "Analysis failed")
+      }
+    } catch (err) {
+      console.error("[v0] Analysis error:", err)
+      setState("ERROR")
+      setError("分析过程中出现错误，请重试")
+    }
+  }
+
+  const handleReset = () => {
+    setState("IDLE")
+    setResult(null)
+    setError("")
+    setProcessingStep(1)
+    // Reset InputSection state
+    setInputValue("")
+    setSelectedFile(null)
+  }
+
+  const handleCopy = (text: string) => {
+    navigator.clipboard.writeText(text)
+    toast({
+      title: "已复制到剪贴板",
+      duration: 2000,
+    })
+  }
+
+  const handleDownload = () => {
+    if (!result) return
+
+    const markdown = `# 脚本分析结果
+
+## 完整逐字稿
+${result.transcript}
+
+## AI 结构化分析
+
+### 🚀 钩子 (Hook)
+${result.analysis.hook}
+
+### 💡 核心 (Core)
+${result.analysis.core}
+
+### 🎯 行动号召 (CTA)
+${result.analysis.cta}
+`
+
+    const blob = new Blob([markdown], { type: "text/markdown" })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement("a")
+    a.href = url
+    a.download = "script-analysis.md"
+    a.click()
+    URL.revokeObjectURL(url)
+  }
+
   return (
-    <div className="grid min-h-screen grid-rows-[20px_1fr_20px] items-center justify-items-center gap-16 p-8 pb-20 font-sans sm:p-20">
-      <main className="row-start-2 flex flex-col items-center gap-[32px] sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="list-inside list-decimal text-center font-mono text-sm/6 sm:text-left">
-          <li className="mb-2 tracking-[-.01em]">
-            Get started by editing{' '}
-            <code className="rounded bg-black/[.05] px-1 py-0.5 font-mono font-semibold dark:bg-white/[.06]">
-              src/app/page.tsx
-            </code>
-            .
-          </li>
-          <li className="tracking-[-.01em]">
-            Save and see your changes instantly.
-          </li>
-        </ol>
-
-        <div className="flex flex-col items-center gap-4 sm:flex-row">
-          <a
-            className="bg-foreground text-background flex h-10 items-center justify-center gap-2 rounded-full border border-solid border-transparent px-4 text-sm font-medium transition-colors hover:bg-[#383838] sm:h-12 sm:w-auto sm:px-5 sm:text-base dark:hover:bg-[#ccc]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            className="flex h-10 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-4 text-sm font-medium transition-colors hover:border-transparent hover:bg-[#f2f2f2] sm:h-12 sm:w-auto sm:px-5 sm:text-base md:w-[158px] dark:border-white/[.145] dark:hover:bg-[#1a1a1a]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
+    <div className="min-h-screen bg-background">
+      <div className="h-14 bg-primary border-b border-primary/20 flex items-center justify-between px-6">
+        <div className="flex items-center space-x-3">
+          <div className="flex items-center space-x-2">
+            <div className="w-6 h-6 bg-white/20 rounded flex items-center justify-center">
+              <Sparkles className="w-4 h-4 text-white" />
+            </div>
+            <span className="text-white font-semibold text-sm">AI 脚本快拆</span>
+            <span className="text-white/60 text-xs">by v0</span>
+          </div>
         </div>
-      </main>
-      <footer className="row-start-3 flex flex-wrap items-center justify-center gap-[24px]">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
+        <div className="flex items-center space-x-3">
+          <button className="px-3 py-1.5 bg-black/30 hover:bg-black/40 text-white text-xs font-medium rounded-md transition-colors border border-white/10">
+            开始使用
+          </button>
+          <button className="px-3 py-1.5 bg-white text-primary text-xs font-medium rounded-md hover:bg-white/90 transition-colors">
+            立即体验
+          </button>
+        </div>
+      </div>
+
+      <div className="h-[calc(100vh-3.5rem)] flex">
+        {(state === "IDLE" || state === "INPUT_VALID") && (
+          <>
+            <div className="w-2/5 bg-gradient-to-br from-primary/5 to-primary/10 border-r border-border flex flex-col justify-center px-12">
+              <div className="space-y-8">
+                <div className="space-y-6">
+                  <div className="inline-flex items-center space-x-2 px-3 py-1.5 rounded-full bg-primary/10 border border-primary/20">
+                    <div className="w-1.5 h-1.5 bg-primary rounded-full" />
+                    <span className="text-xs font-medium text-foreground/70 uppercase tracking-wide">AI Analysis</span>
+                  </div>
+                  <h1 className="text-4xl lg:text-5xl font-bold text-gradient-linear tracking-tight leading-tight">
+                    AI 脚本快拆
+                  </h1>
+                  <p className="text-lg text-muted-foreground leading-relaxed">
+                    专业级视频脚本分析工具，一键提取逐字稿并进行AI结构化分析
+                  </p>
+                </div>
+
+                <div className="space-y-6">
+                  <div className="flex items-start space-x-4">
+                    <div className="w-12 h-12 bg-primary/10 rounded-xl flex items-center justify-center flex-shrink-0">
+                      <Sparkles className="w-6 h-6 text-primary" />
+                    </div>
+                    <div>
+                      <h3 className="font-semibold text-foreground mb-1">AI 智能分析</h3>
+                      <p className="text-sm text-muted-foreground">先进的AI算法，精准提取脚本结构</p>
+                    </div>
+                  </div>
+
+                  <div className="flex items-start space-x-4">
+                    <div className="w-12 h-12 bg-primary/10 rounded-xl flex items-center justify-center flex-shrink-0">
+                      <FileText className="w-6 h-6 text-primary" />
+                    </div>
+                    <div>
+                      <h3 className="font-semibold text-foreground mb-1">多格式支持</h3>
+                      <p className="text-sm text-muted-foreground">支持主流视频平台链接和本地文件</p>
+                    </div>
+                  </div>
+
+                  <div className="flex items-start space-x-4">
+                    <div className="w-12 h-12 bg-primary/10 rounded-xl flex items-center justify-center flex-shrink-0">
+                      <Zap className="w-6 h-6 text-primary" />
+                    </div>
+                    <div>
+                      <h3 className="font-semibold text-foreground mb-1">快速处理</h3>
+                      <p className="text-sm text-muted-foreground">秒级响应，高效完成分析任务</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div className="flex-1 flex items-center justify-center px-12">
+              <InputSection 
+                currentState={state}
+                inputValue={inputValue}
+                selectedFile={selectedFile}
+                onInputChange={handleInputChange}
+                onFileSelect={handleFileSelect}
+                onSubmit={handleSubmit}
+                error={error}
+              />
+            </div>
+          </>
+        )}
+
+        {state === "PROCESSING" && (
+          <div className="flex-1 flex items-center justify-center">
+            <ProcessingSection step={processingStep} steps={processingSteps} />
+          </div>
+        )}
+
+        {state === "SUCCESS" && result && (
+          <div className="flex-1 p-8 overflow-auto">
+            <ResultSection result={result} onReset={handleReset} onCopy={handleCopy} onDownload={handleDownload} />
+          </div>
+        )}
+
+        {state === "ERROR" && (
+          <div className="flex-1 flex items-center justify-center">
+            <ErrorSection error={error} onReset={handleReset} />
+          </div>
+        )}
+      </div>
     </div>
-  );
+  )
 }

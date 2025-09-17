@@ -1,34 +1,38 @@
 /**
  * InputSection component - handles URL and file input
- * Based on TOM-318 specification
+ * Based on TOM-318 and TOM-323 specifications
+ * Refactored as a controlled component
  */
 
 "use client"
 
 import type React from "react"
-import { useState, useRef } from "react"
+import { useRef } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { useToast } from "@/hooks/use-toast"
-import { isValidUrl, validateVideoFile } from "@/lib/validation"
-import type { InputSectionProps, VideoParseRequest } from "@/types/script-parser.types"
+import { validateVideoFile } from "@/lib/validation"
+import type { InputSectionProps } from "@/types/script-parser.types"
 import { Upload, Link, Sparkles } from "lucide-react"
 
-export function InputSection({ onSubmit, onStateChange, currentState, error }: InputSectionProps) {
-  const [inputUrl, setInputUrl] = useState("")
-  const [selectedFile, setSelectedFile] = useState<File | null>(null)
+export function InputSection({ 
+  currentState, 
+  inputValue, 
+  selectedFile, 
+  onInputChange, 
+  onFileSelect, 
+  onSubmit, 
+  error 
+}: InputSectionProps) {
   const fileInputRef = useRef<HTMLInputElement>(null)
   const { toast } = useToast()
 
   const handleInputChange = (value: string) => {
-    setInputUrl(value)
-    setSelectedFile(null) // Clear file when URL is entered
-
-    if (value.trim() && isValidUrl(value)) {
-      onStateChange("INPUT_VALID")
-    } else {
-      onStateChange("IDLE")
+    // Clear file when URL is being entered
+    if (selectedFile) {
+      onFileSelect(null)
     }
+    onInputChange(value)
   }
 
   const handleFileUpload = () => {
@@ -41,31 +45,27 @@ export function InputSection({ onSubmit, onStateChange, currentState, error }: I
 
     const validation = validateVideoFile(file)
     if (!validation.isValid) {
-      onStateChange("ERROR")
+      toast({
+        title: "文件验证失败",
+        description: validation.error,
+        variant: "destructive",
+        duration: 3000,
+      })
       return
     }
 
-    setSelectedFile(file)
-    setInputUrl("") // Clear URL when file is selected
-    onStateChange("INPUT_VALID")
+    // Clear URL when file is selected
+    if (inputValue) {
+      onInputChange("")
+    }
+    
+    onFileSelect(file)
 
     toast({
       title: "文件已选择",
       description: `${file.name} (${(file.size / 1024 / 1024).toFixed(1)}MB)`,
       duration: 3000,
     })
-  }
-
-  const handleSubmit = () => {
-    const data: VideoParseRequest = {}
-
-    if (inputUrl) {
-      data.url = inputUrl
-    } else if (selectedFile) {
-      data.file = selectedFile
-    }
-
-    onSubmit(data)
   }
 
   const isSubmitDisabled = currentState === "IDLE" || currentState === "PROCESSING"
@@ -83,7 +83,7 @@ export function InputSection({ onSubmit, onStateChange, currentState, error }: I
             <Link className="absolute left-4 top-1/2 transform -translate-y-1/2 h-5 w-5 text-muted-foreground" />
             <Input
               placeholder="在此处粘贴抖音/小红书分享链接..."
-              value={selectedFile ? `本地文件: ${selectedFile.name}` : inputUrl}
+              value={selectedFile ? `本地文件: ${selectedFile.name}` : inputValue}
               onChange={(e) => handleInputChange(e.target.value)}
               disabled={!!selectedFile || currentState === "PROCESSING"}
               className="bg-input border border-border rounded-xl px-4 py-4 pl-12 h-16 text-center text-lg focus:outline-none focus:ring-2 focus:ring-ring focus:border-primary transition-all duration-200"
@@ -98,7 +98,7 @@ export function InputSection({ onSubmit, onStateChange, currentState, error }: I
         </div>
 
         <Button
-          onClick={handleSubmit}
+          onClick={onSubmit}
           disabled={isSubmitDisabled}
           className="bg-primary text-primary-foreground px-8 py-4 rounded-xl font-semibold w-full h-16 text-lg transition-all duration-200 hover:bg-primary/90 hover:shadow-lg hover:-translate-y-0.5 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 shadow-lg"
           size="lg"
