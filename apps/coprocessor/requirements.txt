@@ -8,6 +8,10 @@ python-dotenv==1.0.1
 # 开发工具
 ruff==0.1.9
 
+# 文件处理
+aiofiles==24.1.0
+Werkzeug==2.3.7
+
 # 测试工具
 pytest==7.4.4
 pytest-asyncio==0.23.2

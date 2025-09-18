@@ -106,16 +106,16 @@ class ShareURLParser:
         try:
             # 提取小红书的 item ID
             item_id = self._extract_xiaohongshu_item_id(url)
-            
+
             # 调用第三方解析服务
             video_data = await self._fetch_xiaohongshu_data(item_id)
-            
+
             # 解析返回的数据
             return self._parse_xiaohongshu_data(video_data, item_id)
-            
+
         except Exception as e:
             raise URLParserError(f"Failed to parse Xiaohongshu video: {str(e)}") from e
-    
+
     def _extract_xiaohongshu_item_id(self, url: str) -> str:
         """从小红书 URL 中提取 item ID"""
         # 从 URL 中提取 item ID: /discovery/item/68c94ab0000000001202ca84
@@ -125,21 +125,21 @@ class ShareURLParser:
         if not match:
             raise URLParserError("无法从小红书 URL 中提取 item ID")
         return match.group(1)
-    
+
     async def _fetch_xiaohongshu_data(self, item_id: str) -> dict:
         """调用第三方解析服务获取小红书视频数据"""
         # 这里需要你提供第三方解析服务的 API 端点
         # 暂时返回模拟数据，你需要替换为实际的 API 调用
-        
+
         # 模拟 API 调用
-        async with httpx.AsyncClient(headers=self.headers) as client:
-            # 这里应该是实际的第三方 API 端点
-            # api_url = f"https://your-api-service.com/parse?url=xiaohongshu&item_id={item_id}"
-            # response = await client.get(api_url)
-            # return response.json()
-            
-            # 暂时返回你提供的示例数据结构
-            return {
+        # async with httpx.AsyncClient(headers=self.headers) as client:
+        #     # 这里应该是实际的第三方 API 端点
+        #     # api_url = f"https://your-api-service.com/parse?url=xiaohongshu&item_id={item_id}"
+        #     # response = await client.get(api_url)
+        #     # return response.json()
+
+        # 暂时返回你提供的示例数据结构
+        return {
                 "code": 200,
                 "message": "操作成功",
                 "data": {
@@ -182,39 +182,39 @@ class ShareURLParser:
                     ]
                 }
             }
-    
+
     def _parse_xiaohongshu_data(self, api_response: dict, item_id: str) -> VideoInfo:
         """解析第三方 API 返回的小红书数据"""
         try:
             if api_response.get("code") != 200:
                 raise URLParserError(f"第三方解析服务返回错误: {api_response.get('message', 'Unknown error')}")
-            
+
             data = api_response["data"]
-            
+
             # 获取视频信息
             video_id = data.get("vid", item_id)
             title = data.get("displayTitle", f"xiaohongshu_{video_id}")
-            
+
             # 查找视频文件
             video_url = None
             for item in data.get("videoItemVoList", []):
                 if item.get("fileType") == "video" and item.get("canDownload"):
                     video_url = item.get("baseUrl")
                     break
-            
+
             if not video_url:
                 raise URLParserError("未找到可下载的视频文件")
-            
+
             # 清理标题中的非法字符
             title = re.sub(r'[\\/:*?"<>|]', '_', title)
-            
+
             return VideoInfo(
                 video_id=video_id,
                 platform="xiaohongshu",
                 title=title,
                 download_url=video_url,
             )
-            
+
         except (KeyError, IndexError, TypeError) as e:
             raise URLParserError(
                 f"Failed to parse Xiaohongshu video data: Missing required fields - {str(e)}"

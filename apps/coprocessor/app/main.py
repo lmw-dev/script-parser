@@ -6,6 +6,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 
+from .services.file_handler import FileHandler, FileHandlerError
 from .services.url_parser import ShareURLParser, URLParserError
 
 # 加载环境变量
@@ -172,13 +173,33 @@ async def parse_video(
     # Handle multipart form data with file upload
     elif "multipart/form-data" in content_type:
         if file:
-            return VideoParseResponse(
-                success=True,
-                data=AnalysisData(
-                    transcript=f"Mock transcript from file: {file.filename}.",
-                    analysis={},
-                ),
-            )
+            file_handler = FileHandler()
+            temp_file_info = None
+            try:
+                # Save uploaded file to temporary storage
+                temp_file_info = await file_handler.save_upload_file(file)
+
+                # TODO: Process file with ASR service
+                # For now, return file information
+                return VideoParseResponse(
+                    success=True,
+                    data=AnalysisData(
+                        transcript=f"Processed file: {temp_file_info.original_filename}",
+                        analysis={
+                            "file_info": {
+                                "file_path": str(temp_file_info.file_path),
+                                "original_filename": temp_file_info.original_filename,
+                                "size": temp_file_info.size
+                            }
+                        },
+                    ),
+                )
+            except FileHandlerError as e:
+                raise HTTPException(status_code=500, detail=str(e)) from e
+            finally:
+                # Always cleanup temporary file
+                if temp_file_info:
+                    await FileHandler.cleanup(temp_file_info.file_path)
         elif url:
             # This handles form data with URL (should return 422 as per test)
             raise HTTPException(status_code=422, detail="URL should be sent as JSON")

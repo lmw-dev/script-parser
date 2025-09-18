@@ -79,19 +79,19 @@ class TestShareURLParser:
         """Test successful Douyin URL parsing with optimized logic"""
         # Mock httpx.AsyncClient
         mock_client = AsyncMock()
-        
+
         # Mock the first request (redirect response)
         mock_redirect_response = AsyncMock()
         mock_redirect_response.url.path = "/share/video/7123456789012345678"
-        
+
         # Mock the second request (HTML content)
         mock_html_response = AsyncMock()
         mock_html_response.text = DOUYIN_HTML_SAMPLE
         mock_html_response.raise_for_status = AsyncMock()
-        
+
         # Set up the mock to return different responses for different calls
         mock_client.get.side_effect = [mock_redirect_response, mock_html_response]
-        
+
         mock_async_client = mocker.patch("httpx.AsyncClient")
         mock_async_client.return_value.__aenter__.return_value = mock_client
 
@@ -114,7 +114,7 @@ class TestShareURLParser:
         """Test successful Xiaohongshu parsing"""
         # Mock httpx.AsyncClient for the third-party API call
         mock_client = AsyncMock()
-        
+
         # Mock API response with the structure you provided
         mock_api_response = AsyncMock()
         mock_api_response.json.return_value = {
@@ -136,15 +136,15 @@ class TestShareURLParser:
                 ]
             }
         }
-        
+
         mock_client.get.return_value = mock_api_response
-        
+
         mock_async_client = mocker.patch("httpx.AsyncClient")
         mock_async_client.return_value.__aenter__.return_value = mock_client
-        
+
         # Test parsing
         result = await parser.parse(XIAOHONGSHU_SHARE_TEXT)
-        
+
         # Assertions
         assert isinstance(result, VideoInfo)
         assert result.platform == "xiaohongshu"
@@ -163,16 +163,16 @@ class TestShareURLParser:
         """Test Douyin parsing failure when HTML structure changes"""
         # Mock httpx.AsyncClient with invalid HTML
         mock_client = AsyncMock()
-        
+
         # Mock the first request (redirect response)
         mock_redirect_response = AsyncMock()
         mock_redirect_response.url.path = "/share/video/7123456789012345678"
-        
+
         # Mock the second request (invalid HTML content)
         mock_html_response = AsyncMock()
         mock_html_response.text = DOUYIN_HTML_INVALID
         mock_html_response.raise_for_status = AsyncMock()
-        
+
         # Set up the mock to return different responses for different calls
         mock_client.get.side_effect = [mock_redirect_response, mock_html_response]
 
