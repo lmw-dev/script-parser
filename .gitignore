@@ -68,3 +68,20 @@ coverage/
 # Temporary folders
 tmp/
 temp/
+
+# Test data files
+*.MOV
+*.mov
+*.mp4
+*.avi
+*.mkv
+*.webm
+*.wav
+*.mp3
+*.m4a
+*.aac
+docs/data/
+test-data/
+test-files/
+*.test.*
+
