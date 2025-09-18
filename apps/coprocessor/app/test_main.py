@@ -7,8 +7,11 @@ client = TestClient(app)
 
 def test_successful_url_request():
     """Test successful JSON request with URL"""
-    response = client.post("/api/parse", json={"url": "http://test.com"})
-    assert response.status_code == 200
+    # Test with xiaohongshu URL - should now work with mock data
+    response = client.post(
+        "/api/parse", json={"url": "https://www.xiaohongshu.com/discovery/item/68c94ab0000000001202ca84"}
+    )
+    assert response.status_code == 200  # Should now succeed
     data = response.json()
     assert data["success"] is True
     assert "data" in data
@@ -38,3 +41,11 @@ def test_content_type_mismatch_url_request():
     """Test URL sent as form data instead of JSON"""
     response = client.post("/api/parse", data={"url": "http://test.com"})
     assert response.status_code == 422
+
+
+def test_unsupported_platform_url_request():
+    """Test unsupported platform URL returns 400"""
+    response = client.post("/api/parse", json={"url": "http://test.com"})
+    assert response.status_code == 400
+    data = response.json()
+    assert "Unsupported platform" in data["detail"]

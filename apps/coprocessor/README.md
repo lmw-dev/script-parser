@@ -8,6 +8,8 @@ AI Coprocessor 是 ScriptParser 系统的核心 AI 服务组件，采用微服�
 
 - **音频转文本 (ASR)**: 集成阿里云通义听悟，支持多种音频格式
 - **视频解析**: 支持 URL 和文件上传两种模式的视频处理
+  - ⭐ **抖音解析**: 完整支持抖音分享链接解析，提取无水印视频
+  - ⭐ **小红书解析**: 完整支持小红书分享链接解析，获取视频资源
 - **智能分析**: 集成 DeepSeek/Kimi LLM，提供文本摘要、关键词提取等功能
 - **高性能 API**: 基于 FastAPI 的异步 API 服务
 
@@ -153,29 +155,74 @@ curl -X POST "http://localhost:8000/api/text/analyze" \
 }
 ```
 
-### 视频解析 (新功能)
+### 视频解析 (新功能) ⭐
 
-#### POST /api/parse - JSON 模式 (URL)
+#### POST /api/parse - 抖音分享链接解析
 ```bash
 curl -X POST "http://localhost:8000/api/parse" \
   -H "Content-Type: application/json" \
   -d '{
-    "url": "https://example.com/video.mp4"
-  }'
+    "url": "6.97 08/27 x@s.re LjP:/ 93阅兵背后的博弈，以及对未来的影响 # 看懂中国 # 93阅兵 # 我们的胜利 # 大国崛起 @Anson安叔（教育号）   https://v.douyin.com/ZbYltR4tOKE/ 复制此链接，打开Dou音搜索，直接观看视频！"
+  }' | jq .
+```
+
+**抖音解析响应:**
+```json
+{
+  "success": true,
+  "data": {
+    "transcript": "Video: 93阅兵背后的博弈，以及对未来的影响 #看懂中国 #93阅兵 #我们的胜利 #大国崛起 @Anson安叔（教育号）",
+    "analysis": {
+      "video_info": {
+        "video_id": "7544048417320799488",
+        "platform": "douyin",
+        "title": "93阅兵背后的博弈，以及对未来的影响 #看懂中国 #93阅兵 #我们的胜利 #大国崛起 @Anson安叔（教育号）",
+        "download_url": "https://aweme.snssdk.com/aweme/v1/play/?line=0&logo_name=aweme_diversion_search&ratio=720p&video_id=..."
+      }
+    }
+  }
+}
+```
+
+#### POST /api/parse - 小红书分享链接解析
+```bash
+curl -X POST "http://localhost:8000/api/parse" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "url": "49 【升级mac os26，变化太大了？ - 玩机国王 | 小红书 - 你的生活兴趣社区】 😆 3s1YuKFs000BYza 😆 https://www.xiaohongshu.com/discovery/item/68c94ab0000000001202ca84?source=webshare&xhsshare=pc_web&xsec_token=AB28Ibm6kG7-vTzwh_PBkMMTDJIS9vmYmKQHp3myYC8rE=&xsec_source=pc_share"
+  }' | jq .
+```
+
+**小红书解析响应:**
+```json
+{
+  "success": true,
+  "data": {
+    "transcript": "Video: 升级mac os26，变化太大了？",
+    "analysis": {
+      "video_info": {
+        "video_id": "68c94ab0000000001202ca84",
+        "platform": "xiaohongshu",
+        "title": "升级mac os26，变化太大了？",
+        "download_url": "https://sns-video-hw.xhscdn.com/stream/79/110/258/01e8c94a61bce4ac4f03700199524c593d_258.mp4"
+      }
+    }
+  }
+}
 ```
 
 #### POST /api/parse - 文件上传模式
 ```bash
 curl -X POST "http://localhost:8000/api/parse" \
-  -F "file=@/Users/liumingwei/01-project/12-liumw/15-script-parser/docs/data/IMG_0029.MOV"
+  -F "file=@/path/to/video.mp4"
 ```
 
-**响应格式:**
+**文件上传响应格式:**
 ```json
 {
   "success": true,
   "data": {
-    "transcript": "视频转录文本",
+    "transcript": "Mock transcript from file: video.mp4.",
     "analysis": {}
   }
 }
@@ -309,6 +356,38 @@ docker-compose up coprocessor
 
 ## 🧪 测试策略
 
+### 重要测试用例 ⭐
+
+#### 抖音分享链接测试
+```bash
+# 测试真实抖音分享链接解析
+curl -X POST "http://localhost:8000/api/parse" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "url": "https://v.douyin.com/ZbYltR4tOKE/"
+  }' | jq .
+```
+
+#### 小红书分享链接测试
+```bash
+# 测试真实小红书分享链接解析
+curl -X POST "http://localhost:8000/api/parse" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "url": "https://www.xiaohongshu.com/discovery/item/68c94ab0000000001202ca84"
+  }' | jq .
+```
+
+#### 不支持平台测试
+```bash
+# 测试不支持的平台 (应返回 400)
+curl -X POST "http://localhost:8000/api/parse" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "url": "https://www.youtube.com/watch?v=dQw4w9WgXcQ"
+  }' | jq .
+```
+
 ### 测试类型
 
 1. **单元测试**: 测试单个函数和类的功能
@@ -321,6 +400,7 @@ docker-compose up coprocessor
 - ✅ 请求验证测试
 - ✅ 错误处理测试
 - ✅ 响应格式测试
+- ✅ 抖音/小红书解析测试
 
 ### 测试数据
 
@@ -376,7 +456,9 @@ git commit -m "test(parse): add integration tests for dual input modes"
 - ✅ 健康检查端点
 - ✅ 音频转文本接口 (模拟)
 - ✅ 文本分析接口 (模拟)
-- ✅ 视频解析端点骨架
+- ✅ 视频解析端点完整实现
+- ⭐ **抖音分享链接解析** (完整实现)
+- ⭐ **小红书分享链接解析** (完整实现)
 
 ### 下一版本 (v1.1.0)
 - [ ] 集成阿里云 ASR API

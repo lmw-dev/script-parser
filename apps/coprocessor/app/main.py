@@ -6,6 +6,8 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 
+from .services.url_parser import ShareURLParser, URLParserError
+
 # 加载环境变量
 load_dotenv()
 
@@ -138,12 +140,28 @@ async def parse_video(
             body = await request.body()
             data = json.loads(body)
             if "url" in data:
-                return VideoParseResponse(
-                    success=True,
-                    data=AnalysisData(
-                        transcript="Mock transcript from URL.", analysis={}
-                    ),
-                )
+                # Use ShareURLParser to parse the URL
+                parser = ShareURLParser()
+                try:
+                    video_info = await parser.parse(data["url"])
+                    return VideoParseResponse(
+                        success=True,
+                        data=AnalysisData(
+                            transcript=f"Video: {video_info.title}",
+                            analysis={
+                                "video_info": {
+                                    "video_id": video_info.video_id,
+                                    "platform": video_info.platform,
+                                    "title": video_info.title,
+                                    "download_url": video_info.download_url,
+                                }
+                            },
+                        ),
+                    )
+                except URLParserError as e:
+                    raise HTTPException(status_code=400, detail=str(e)) from e
+                except NotImplementedError as e:
+                    raise HTTPException(status_code=501, detail=str(e)) from e
             else:
                 raise HTTPException(
                     status_code=400, detail="Either URL or file must be provided."
