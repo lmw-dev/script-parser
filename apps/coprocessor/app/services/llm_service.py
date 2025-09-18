@@ -20,9 +20,8 @@ class LLMService:
         Returns:
             分析结果
         """
-        prompt = self._build_prompt(text, analysis_type)
-
         # TODO: 实现DeepSeek API调用
+        # prompt = self._build_prompt(text, analysis_type)
         # 这里是示例实现
         return f"[LLM示例] {analysis_type}分析: {text[:50]}..."
 
