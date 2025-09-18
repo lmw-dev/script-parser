@@ -80,7 +80,8 @@ temp/
 *.mp3
 *.m4a
 *.aac
-docs/data/
+docs/data/*
+!docs/data/README.md
 test-data/
 test-files/
 *.test.*
