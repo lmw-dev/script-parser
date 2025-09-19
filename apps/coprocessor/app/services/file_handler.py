@@ -92,12 +92,28 @@ class FileHandler:
 
         Note:
             This method handles errors gracefully and does not raise exceptions
-            to ensure cleanup doesn't break the main application flow
+            to ensure cleanup doesn't break the main application flow.
+            实现FileHandler.cleanup的安全调用，处理文件不存在的情况
         """
         try:
+            # 处理文件不存在的情况
             if file_path.exists():
                 file_path.unlink()
+                # In production, you might want to log successful cleanup
+                # logger.debug(f"Successfully cleaned up temporary file: {file_path}")
+            else:
+                # File doesn't exist - this is fine, no action needed
+                # logger.debug(f"Cleanup called for non-existent file: {file_path}")
+                pass
+        except PermissionError:
+            # Handle permission errors gracefully
+            # logger.warning(f"Permission denied when cleaning up file: {file_path}")
+            pass
+        except OSError:
+            # Handle other OS-level errors (disk full, etc.)
+            # logger.warning(f"OS error when cleaning up file: {file_path}")
+            pass
         except Exception:
-            # Log error in production, but don't raise to avoid breaking cleanup
-            # In a production environment, you might want to log this error
+            # Handle any other unexpected errors
+            # logger.error(f"Unexpected error during cleanup of file: {file_path}")
             pass

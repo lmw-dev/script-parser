@@ -16,9 +16,11 @@ def test_successful_url_request():
     )
     assert response.status_code == 200  # Should now succeed
     data = response.json()
+    assert data["code"] == 0
     assert data["success"] is True
     assert "data" in data
     assert "transcript" in data["data"]
+    assert "processing_time" in data
 
 
 def test_successful_file_upload_request():
@@ -28,27 +30,39 @@ def test_successful_file_upload_request():
     )
     assert response.status_code == 200
     data = response.json()
+    assert data["code"] == 0
     assert data["success"] is True
     assert "data" in data
     assert "transcript" in data["data"]
     assert "test.mp4" in data["data"]["transcript"]
+    assert "processing_time" in data
 
 
 def test_missing_inputs_request():
     """Test request with neither URL nor file"""
     response = client.post("/api/parse")
     assert response.status_code == 400
+    data = response.json()["detail"]
+    assert data["code"] == 4002
+    assert data["success"] is False
+    assert "Either URL or file must be provided" in data["message"]
 
 
 def test_content_type_mismatch_url_request():
     """Test URL sent as form data instead of JSON"""
     response = client.post("/api/parse", data={"url": "http://test.com"})
     assert response.status_code == 422
+    data = response.json()["detail"]
+    assert data["code"] == 4002
+    assert data["success"] is False
+    assert "URL should be sent as JSON" in data["message"]
 
 
 def test_unsupported_platform_url_request():
     """Test unsupported platform URL returns 400"""
     response = client.post("/api/parse", json={"url": "http://test.com"})
     assert response.status_code == 400
-    data = response.json()
-    assert "Unsupported platform" in data["detail"]
+    data = response.json()["detail"]
+    assert data["code"] == 4001
+    assert data["success"] is False
+    assert "Failed to parse video URL" in data["message"]

@@ -1,4 +1,5 @@
 import json
+import time
 
 from dotenv import load_dotenv
 from fastapi import FastAPI, File, Form, HTTPException, Request, UploadFile
@@ -6,11 +7,18 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 
+from .error_handling import (
+    ErrorHandler,
+    create_form_url_error,
+    create_json_decode_error,
+    create_missing_input_error,
+    handle_service_exception,
+)
 from .services.asr_service import ASRError, ASRService
-from .services.file_handler import FileHandler, FileHandlerError
+from .services.file_handler import FileHandler, TempFileInfo
 from .services.llm_service import LLMError, create_llm_router_from_env
 from .services.oss_uploader import OSSUploaderError, create_oss_uploader_from_env
-from .services.url_parser import ShareURLParser, URLParserError
+from .services.url_parser import ShareURLParser
 
 # 加载环境变量
 load_dotenv()
@@ -65,9 +73,119 @@ class AnalysisData(BaseModel):
 
 
 class VideoParseResponse(BaseModel):
-    success: bool
-    data: AnalysisData | None = None
-    message: str | None = None
+    code: int                                    # 业务状态码
+    success: bool                               # 操作是否成功
+    data: AnalysisData | None = None           # 成功时的数据
+    message: str | None = None                 # 错误或成功消息
+    processing_time: float | None = None       # 处理时间（秒）
+
+
+class WorkflowOrchestrator:
+    """工作流编排器 - 统一处理URL和文件上传工作流"""
+
+    async def process_url_workflow(self, url: str) -> AnalysisData:
+        """处理URL工作流"""
+        # Use ShareURLParser to parse the URL
+        parser = ShareURLParser()
+        video_info = await parser.parse(url)
+
+        # Try to transcribe video using ASR service
+        transcript_text = f"Video: {video_info.title}"
+        try:
+            asr_service = ASRService()
+            transcript_text = await asr_service.transcribe_from_url(
+                video_info.download_url
+            )
+        except (ASRError, ValueError) as asr_error:
+            # If ASR fails, use fallback transcript with error info
+            transcript_text = (
+                f"Video: {video_info.title} (ASR failed: {str(asr_error)})"
+            )
+
+        # Perform LLM analysis on the transcript
+        llm_analysis = {}
+        try:
+            llm_router = create_llm_router_from_env()
+            analysis_result = await llm_router.analyze(transcript_text)
+            llm_analysis = {
+                "hook": analysis_result.hook,
+                "core": analysis_result.core,
+                "cta": analysis_result.cta
+            }
+        except LLMError as llm_error:
+            llm_analysis = {"error": f"LLM analysis failed: {str(llm_error)}"}
+
+        return AnalysisData(
+            transcript=transcript_text,
+            analysis={
+                "video_info": {
+                    "video_id": video_info.video_id,
+                    "platform": video_info.platform,
+                    "title": video_info.title,
+                    "download_url": video_info.download_url,
+                },
+                "llm_analysis": llm_analysis
+            },
+        )
+
+    async def process_file_workflow(self, file_info: TempFileInfo) -> AnalysisData:
+        """处理文件工作流"""
+        # Process file with ASR service using OSS integration
+        transcript_text = f"Processed file: {file_info.original_filename}"
+        try:
+            # Create OSS uploader and ASR service with OSS integration
+            oss_uploader = create_oss_uploader_from_env()
+            asr_service = ASRService(oss_uploader=oss_uploader)
+            transcript_text = await asr_service.transcribe_from_file(
+                file_info.file_path
+            )
+        except (ASRError, ValueError, OSSUploaderError) as asr_error:
+            # If ASR or OSS fails, use fallback transcript with error info
+            transcript_text = f"File: {file_info.original_filename} (Processing failed: {str(asr_error)})"
+        except Exception as general_error:
+            # Catch any other unexpected errors
+            transcript_text = f"File: {file_info.original_filename} (Processing failed: {str(general_error)})"
+
+        # Perform LLM analysis on the transcript
+        llm_analysis = {}
+        try:
+            llm_router = create_llm_router_from_env()
+            analysis_result = await llm_router.analyze(transcript_text)
+            llm_analysis = {
+                "hook": analysis_result.hook,
+                "core": analysis_result.core,
+                "cta": analysis_result.cta
+            }
+        except LLMError as llm_error:
+            llm_analysis = {"error": f"LLM analysis failed: {str(llm_error)}"}
+
+        return AnalysisData(
+            transcript=transcript_text,
+            analysis={
+                "file_info": {
+                    "file_path": str(file_info.file_path),
+                    "original_filename": file_info.original_filename,
+                    "size": file_info.size,
+                },
+                "llm_analysis": llm_analysis
+            },
+        )
+
+    async def cleanup_resources(self, file_info: TempFileInfo | None):
+        """
+        清理资源 - 确保在所有情况下都能安全执行
+        
+        Args:
+            file_info: 临时文件信息，可能为None
+        """
+        if file_info is not None:
+            try:
+                await FileHandler.cleanup(file_info.file_path)
+            except Exception:
+                # Even if cleanup fails, we don't want to raise an exception
+                # as this could mask the original error that caused the request to fail
+                # In production, this should be logged
+                pass
 
 
 @app.get("/")
@@ -136,152 +254,75 @@ async def parse_video(
     file: UploadFile | None = File(None),
 ):
     """视频解析接口 - 支持URL和文件上传两种模式"""
+    # 添加请求开始时间记录用于计算processing_time
+    start_time = time.time()
     content_type = request.headers.get("content-type", "")
+    temp_file_info: TempFileInfo | None = None
+    orchestrator = WorkflowOrchestrator()
 
-    # Handle JSON request with URL
-    if "application/json" in content_type:
-        try:
-            body = await request.body()
-            data = json.loads(body)
-            if "url" in data:
-                # Use ShareURLParser to parse the URL
-                parser = ShareURLParser()
-                try:
-                    video_info = await parser.parse(data["url"])
-
-                    # Try to transcribe video using ASR service
-                    transcript_text = f"Video: {video_info.title}"
-                    try:
-                        asr_service = ASRService()
-                        transcript_text = await asr_service.transcribe_from_url(
-                            video_info.download_url
-                        )
-                    except (ASRError, ValueError) as asr_error:
-                        # If ASR fails, use fallback transcript with error info
-                        transcript_text = (
-                            f"Video: {video_info.title} (ASR failed: {str(asr_error)})"
-                        )
-
-                    # Perform LLM analysis on the transcript
-                    llm_analysis = {}
-                    try:
-                        llm_router = create_llm_router_from_env()
-                        analysis_result = await llm_router.analyze(transcript_text)
-                        llm_analysis = {
-                            "hook": analysis_result.hook,
-                            "core": analysis_result.core,
-                            "cta": analysis_result.cta
-                        }
-                    except LLMError as llm_error:
-                        llm_analysis = {"error": f"LLM analysis failed: {str(llm_error)}"}
-
-                    return VideoParseResponse(
-                        success=True,
-                        data=AnalysisData(
-                            transcript=transcript_text,
-                            analysis={
-                                "video_info": {
-                                    "video_id": video_info.video_id,
-                                    "platform": video_info.platform,
-                                    "title": video_info.title,
-                                    "download_url": video_info.download_url,
-                                },
-                                "llm_analysis": llm_analysis
-                            },
-                        ),
-                    )
-                except URLParserError as e:
-                    raise HTTPException(status_code=400, detail=str(e)) from e
-                except NotImplementedError as e:
-                    raise HTTPException(status_code=501, detail=str(e)) from e
-            else:
-                raise HTTPException(
-                    status_code=400, detail="Either URL or file must be provided."
-                )
-        except json.JSONDecodeError as e:
-            raise HTTPException(status_code=422, detail="Invalid JSON") from e
-
-    # Handle multipart form data with file upload
-    elif "multipart/form-data" in content_type:
-        if file:
-            file_handler = FileHandler()
-            temp_file_info = None
+    try:
+        # Handle JSON request with URL
+        if "application/json" in content_type:
             try:
+                body = await request.body()
+                data = json.loads(body)
+            except json.JSONDecodeError as e:
+                raise create_json_decode_error(start_time) from e
+
+            if "url" in data:
+                # 重构JSON请求处理逻辑，使用统一的工作流编排
+                result_data = await orchestrator.process_url_workflow(data["url"])
+            else:
+                raise create_missing_input_error(start_time)
+
+        # Handle multipart form data with file upload
+        elif "multipart/form-data" in content_type:
+            if file:
+                file_handler = FileHandler()
                 # Save uploaded file to temporary storage
+                # 确保temp_file_info变量在异常情况下仍能被正确清理
                 temp_file_info = await file_handler.save_upload_file(file)
 
-                # Process file with ASR service using OSS integration
-                transcript_text = f"Processed file: {temp_file_info.original_filename}"
-                try:
-                    # Create OSS uploader and ASR service with OSS integration
-                    oss_uploader = create_oss_uploader_from_env()
-                    asr_service = ASRService(oss_uploader=oss_uploader)
-                    transcript_text = await asr_service.transcribe_from_file(
-                        temp_file_info.file_path
-                    )
-                except (ASRError, ValueError, OSSUploaderError) as asr_error:
-                    # If ASR or OSS fails, use fallback transcript with error info
-                    transcript_text = f"File: {temp_file_info.original_filename} (Processing failed: {str(asr_error)})"
-                except Exception as general_error:
-                    # Catch any other unexpected errors
-                    transcript_text = f"File: {temp_file_info.original_filename} (Processing failed: {str(general_error)})"
+                # 重构multipart请求处理逻辑，使用统一的工作流编排
+                result_data = await orchestrator.process_file_workflow(temp_file_info)
+            elif url:
+                # This handles form data with URL (should return 422 as per test)
+                raise create_form_url_error(start_time)
+            else:
+                raise create_missing_input_error(start_time)
 
-                # Perform LLM analysis on the transcript
-                llm_analysis = {}
-                try:
-                    llm_router = create_llm_router_from_env()
-                    analysis_result = await llm_router.analyze(transcript_text)
-                    llm_analysis = {
-                        "hook": analysis_result.hook,
-                        "core": analysis_result.core,
-                        "cta": analysis_result.cta
-                    }
-                except LLMError as llm_error:
-                    llm_analysis = {"error": f"LLM analysis failed: {str(llm_error)}"}
+        # Handle form-encoded data (application/x-www-form-urlencoded)
+        elif "application/x-www-form-urlencoded" in content_type:
+            if url:
+                # URL sent as form data instead of JSON - this is a validation error
+                raise create_form_url_error(start_time)
+            else:
+                raise create_missing_input_error(start_time)
 
-                return VideoParseResponse(
-                    success=True,
-                    data=AnalysisData(
-                        transcript=transcript_text,
-                        analysis={
-                            "file_info": {
-                                "file_path": str(temp_file_info.file_path),
-                                "original_filename": temp_file_info.original_filename,
-                                "size": temp_file_info.size,
-                            },
-                            "llm_analysis": llm_analysis
-                        },
-                    ),
-                )
-            except FileHandlerError as e:
-                raise HTTPException(status_code=500, detail=str(e)) from e
-            finally:
-                # Always cleanup temporary file
-                if temp_file_info:
-                    await FileHandler.cleanup(temp_file_info.file_path)
-        elif url:
-            # This handles form data with URL (should return 422 as per test)
-            raise HTTPException(status_code=422, detail="URL should be sent as JSON")
+        # Handle empty request or other content types
         else:
-            raise HTTPException(
-                status_code=400, detail="Either URL or file must be provided."
-            )
+            raise create_missing_input_error(start_time)
 
-    # Handle form-encoded data (application/x-www-form-urlencoded)
-    elif "application/x-www-form-urlencoded" in content_type:
-        if url:
-            # URL sent as form data instead of JSON - this is a validation error
-            raise HTTPException(status_code=422, detail="URL should be sent as JSON")
-        else:
-            raise HTTPException(
-                status_code=400, detail="Either URL or file must be provided."
-            )
-
-    # Handle empty request or other content types
-    else:
-        raise HTTPException(
-            status_code=400, detail="Either URL or file must be provided."
+        # 确保所有成功响应返回HTTP 200状态码和业务码0
+        success_response = ErrorHandler.create_success_response(
+            data=result_data,
+            message="Processing completed successfully",
+            start_time=start_time
         )
+
+        return VideoParseResponse(**success_response)
+
+    except HTTPException:
+        # Re-raise HTTP exceptions (these are already properly formatted)
+        raise
+    except Exception as e:
+        # 移除重复的错误处理代码，使用统一的异常处理机制
+        raise handle_service_exception(e, start_time) from e
+
+    finally:
+        # 在文件处理流程中使用try-finally块确保资源清理
+        # 验证finally块在所有异常情况下都能执行
+        await orchestrator.cleanup_resources(temp_file_info)
 
 
 if __name__ == "__main__":

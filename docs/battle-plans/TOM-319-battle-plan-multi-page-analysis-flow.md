@@ -9,9 +9,9 @@
 - **所属项目 (Project)**: `[Q4/KR2] "Script Parse"MVP构建`
 - **核心价值 (Core Value)**: 将单页应用重构为多页面流程，优化用户体验，为长耗时API请求提供清晰的视觉反馈和流畅的页面导航。
 - **关键决策 (Core Decisions)**:
-    1. **[架构模式]**: 采用 Next.js App Router 进行页面路由管理，实现首页 → 处理页 → 结果页的流程。
-    2. **[状态管理]**: 基于现有架构，使用 React Context + useReducer 进行页面间状态管理，保持与现有代码风格一致。
-    3. **[用户体验]**: 实现即时页面跳转，将API调用延迟到处理页面，提供清晰的等待反馈。
+    1. **[架构模式]**: 保持现有单页应用架构，通过条件渲染和状态机实现多页面体验，避免破坏现有组件设计。
+    2. **[状态管理]**: 扩展现有的 `useState` 状态机模式，添加页面状态管理，保持与现有架构一致。
+    3. **[用户体验]**: 通过状态机控制页面切换，实现类似多页面的用户体验，但保持单页应用的架构优势。
 - **预估时间 (Time Estimate)**: ~2-3 developer-days
 
 ---
@@ -22,135 +22,152 @@
 
     ```mermaid
     graph TD
-        A[首页 /] --> B{用户提交}
+        A[IDLE状态 - 显示InputSection] --> B{用户提交}
         B --> C[保存输入到状态]
-        C --> D[立即跳转到 /processing]
-        D --> E[从状态获取输入]
+        C --> D[状态切换到PROCESSING]
+        D --> E[显示ProcessingSection]
         E --> F[调用 /api/parse API]
         F --> G{API响应}
         G -->|成功| H[保存结果到状态]
-        G -->|失败| I[显示错误页面]
-        H --> J[自动跳转到 /result]
-        J --> K[从状态获取结果]
-        K --> L[展示 ResultSection]
-        I --> M[显示 ErrorSection]
+        G -->|失败| I[状态切换到ERROR]
+        H --> J[状态切换到SUCCESS]
+        J --> K[显示ResultSection]
+        I --> L[显示ErrorSection]
+        K --> M[用户重置]
+        L --> M
+        M --> A
     ```
 
-- **页面路由结构 (Page Routes)**:
+- **状态机结构 (State Machine)**:
 
     ```typescript
-    // 页面路由定义
-    /                    // 首页 - 输入页面
-    /processing          // 处理页 - 等待和API调用
-    /result             // 结果页 - 展示分析结果
+    // 扩展现有的状态机
+    type AppState = "IDLE" | "INPUT_VALID" | "PROCESSING" | "SUCCESS" | "ERROR"
+    
+    // 页面状态映射
+    const pageMapping = {
+      IDLE: "InputSection",           // 输入页面
+      INPUT_VALID: "InputSection",    // 输入页面（有效状态）
+      PROCESSING: "ProcessingSection", // 处理页面
+      SUCCESS: "ResultSection",       // 结果页面
+      ERROR: "ErrorSection"           // 错误页面
+    }
     ```
 
 - **状态管理 (State Management)**:
 
     ```typescript
-    // 基于现有架构的状态结构
-    interface AppContextState {
-      // 页面状态
-      currentPage: 'home' | 'processing' | 'result';
-      // 输入数据
-      inputData: {
-        type: 'url' | 'file';
-        url?: string;
-        file?: File;
-      } | null;
-      // 分析结果
-      analysisResult: AnalysisResult | null;
-      // 错误状态
-      error: string | null;
-      // 处理步骤
-      processingStep: number;
+    // 扩展现有的状态结构
+    const [state, setState] = useState<AppState>("IDLE")
+    const [processingStep, setProcessingStep] = useState(1)
+    const [result, setResult] = useState<AnalysisResult | null>(null)
+    const [error, setError] = useState("")
+    
+    // 输入数据状态（保持现有结构）
+    const [inputValue, setInputValue] = useState("")
+    const [selectedFile, setSelectedFile] = useState<File | null>(null)
+    
+    // 状态转换函数
+    const handleStateTransition = (newState: AppState) => {
+      setState(newState)
+      // 根据状态执行相应逻辑
+      if (newState === "PROCESSING") {
+        // 开始处理流程
+        processAnalysis()
+      }
     }
-
-    // Context Actions
-    type AppContextAction = 
-      | { type: 'SET_INPUT_DATA'; payload: InputData }
-      | { type: 'SET_ANALYSIS_RESULT'; payload: AnalysisResult }
-      | { type: 'SET_ERROR'; payload: string }
-      | { type: 'SET_PROCESSING_STEP'; payload: number }
-      | { type: 'NAVIGATE_TO_PROCESSING' }
-      | { type: 'NAVIGATE_TO_RESULT' }
-      | { type: 'RESET' };
     ```
 
 ### 2.1 关键技术方案 (Key Technical Solutions)
 
-> #### **页面路由管理 (`Next.js App Router`)**
->
+> #### **状态机页面切换 (`State-Based Page Switching`)**
 > ```typescript
-> // 使用 Next.js 13+ App Router
-> app/
->   ├── page.tsx              // 首页 (/)
->   ├── processing/
->   │   └── page.tsx          // 处理页 (/processing)
->   └── result/
->       └── page.tsx          // 结果页 (/result)
+> // 基于现有架构的条件渲染
+> return (
+>   <div className="min-h-screen bg-background">
+>     {(state === "IDLE" || state === "INPUT_VALID") && (
+>       <InputSection 
+>         currentState={state}
+>         inputValue={inputValue}
+>         selectedFile={selectedFile}
+>         onInputChange={handleInputChange}
+>         onFileSelect={handleFileSelect}
+>         onSubmit={handleSubmit}
+>         error={error}
+>       />
+>     )}
+>     {state === "PROCESSING" && (
+>       <ProcessingSection step={processingStep} steps={processingSteps} />
+>     )}
+>     {state === "SUCCESS" && result && (
+>       <ResultSection result={result} onReset={handleReset} />
+>     )}
+>     {state === "ERROR" && (
+>       <ErrorSection error={error} onReset={handleReset} />
+>     )}
+>   </div>
+> )
 > ```
 
-> #### **状态管理 (`React Context + useReducer`)**
+> #### **状态转换逻辑 (`State Transition Logic`)**
 > ```typescript
-> // 基于现有架构的 Context 实现
-> const AppContext = createContext<{
->   state: AppContextState;
->   dispatch: Dispatch<AppContextAction>;
-> } | null>(null);
-> 
-> // Context Provider 组件
-> export function AppProvider({ children }: { children: React.ReactNode }) {
->   const [state, dispatch] = useReducer(appReducer, initialState);
->   return (
->     <AppContext.Provider value={{ state, dispatch }}>
->       {children}
->     </AppContext.Provider>
->   );
-> }
-> 
-> // 自定义 Hook
-> export function useAppContext() {
->   const context = useContext(AppContext);
->   if (!context) {
->     throw new Error('useAppContext must be used within AppProvider');
->   }
->   return context;
-> }
-> ```
-
-> #### **页面跳转逻辑 (`Navigation Flow`)**
-> ```typescript
-> // 首页提交处理
-> const handleSubmit = (inputData: InputData) => {
->   dispatch({ type: 'SET_INPUT_DATA', payload: inputData });
->   dispatch({ type: 'NAVIGATE_TO_PROCESSING' });
->   router.push('/processing');
-> };
-> 
-> // 处理页API调用
-> const processAnalysis = async () => {
+> // 扩展现有的状态转换
+> const handleSubmit = async () => {
+>   setError("")
+>   setState("PROCESSING")
+>   setProcessingStep(1)
+>   
 >   try {
->     const result = await apiClient.parseVideo(state.inputData);
->     dispatch({ type: 'SET_ANALYSIS_RESULT', payload: result });
->     dispatch({ type: 'NAVIGATE_TO_RESULT' });
->     router.push('/result');
->   } catch (error) {
->     dispatch({ type: 'SET_ERROR', payload: error.message });
+>     // 模拟处理步骤
+>     await new Promise(resolve => setTimeout(resolve, 1000))
+>     setProcessingStep(2)
+>     
+>     await new Promise(resolve => setTimeout(resolve, 1000))
+>     setProcessingStep(3)
+>     
+>     // API调用
+>     const result = await parseVideo(request)
+>     setResult(result)
+>     setState("SUCCESS")
+>   } catch (err) {
+>     setState("ERROR")
+>     setError(err.message)
 >   }
-> };
+> }
+> ```
+
+> #### **用户体验优化 (`UX Enhancement`)**
+> ```typescript
+> // 添加页面切换动画
+> const pageVariants = {
+>   initial: { opacity: 0, x: 20 },
+>   in: { opacity: 1, x: 0 },
+>   out: { opacity: 0, x: -20 }
+> }
+> 
+> // 使用 Framer Motion 或 CSS 过渡
+> <motion.div
+>   key={state}
+>   initial="initial"
+>   animate="in"
+>   exit="out"
+>   variants={pageVariants}
+>   transition={{ duration: 0.3 }}
+> >
+>   {/* 当前页面内容 */}
+> </motion.div>
 > ```
 
 ---
 
 ## 3. 🚀 作战序列 (Implementation Sequence)
 
-- [ ] **1. `[Web] 创建 React Context 状态管理`**: 基于现有架构，实现 AppContext 和 useReducer 进行页面间状态管理。
-- [ ] **2. `[Web] 设置 Next.js App Router 页面结构`**: 创建 /processing 和 /result 页面路由，保持与现有代码风格一致。
-- [ ] **3. `[Web] 重构首页输入逻辑`**: 修改现有 InputSection 组件，集成 Context 状态管理和页面跳转。
-- [ ] **4. `[Web] 创建处理页面`**: 实现 /processing 页面，包含 API 调用和状态管理逻辑。
-- [ ] **5. `[Web] 创建结果页面`**: 实现 /result 页面，展示分析结果。
-- [ ] **6. `[Web] 优化用户体验和页面过渡`**: 添加加载状态、页面过渡动画和用户反馈。
+- [ ] **1. `[Web] 优化现有状态机逻辑`**: 扩展现有的状态转换逻辑，优化 PROCESSING 状态的处理流程。
+- [ ] **2. `[Web] 增强 ProcessingSection 组件`**: 改进处理页面的视觉反馈，添加更清晰的进度指示和状态描述。
+- [ ] **3. `[Web] 优化 ResultSection 组件`**: 改进结果页面的展示效果，添加页面切换动画。
+- [ ] **4. `[Web] 添加页面切换动画`**: 使用 CSS 过渡或 Framer Motion 实现平滑的页面切换效果。
+- [ ] **5. `[Web] 优化用户体验细节`**: 添加加载状态、错误提示和用户反馈的细节优化。
+- [ ] **6. `[Web] 性能优化和测试`**: 确保状态切换的性能，添加相应的测试用例。
 
 ---
 
@@ -168,11 +185,11 @@
 
 ## 5. ✅ 验收标准 (Acceptance Criteria)
 
-- [ ] **页面导航功能**: 在首页提交有效视频源后，浏览器地址栏变为 `/processing`
-- [ ] **API调用验证**: 在 `/processing` 页面，网络面板中可以看到对 `/api/parse` 的 POST 请求
-- [ ] **成功流程**: 使用 Mock API，请求成功后浏览器地址栏自动变为 `/result`
-- [ ] **结果展示**: `/result` 页面成功渲染 `ResultSection` 并展示正确的模拟分析数据
-- [ ] **错误处理**: 使用 Mock API，请求失败后 `/processing` 页面显示 `ErrorSection`
-- [ ] **状态管理**: 页面间数据传递正确，无数据丢失或状态混乱
-- [ ] **用户体验**: 页面跳转流畅，加载状态清晰，错误提示友好
-- [ ] **代码质量**: 通过所有代码质量检查，测试覆盖率达到要求
+- [ ] **状态切换功能**: 在首页提交有效视频源后，应用状态从 `INPUT_VALID` 切换到 `PROCESSING`
+- [ ] **API调用验证**: 在 `PROCESSING` 状态时，网络面板中可以看到对 `/api/parse` 的 POST 请求
+- [ ] **成功流程**: 使用 Mock API，请求成功后应用状态自动切换到 `SUCCESS`
+- [ ] **结果展示**: `SUCCESS` 状态时成功渲染 `ResultSection` 并展示正确的模拟分析数据
+- [ ] **错误处理**: 使用 Mock API，请求失败后应用状态切换到 `ERROR` 并显示 `ErrorSection`
+- [ ] **状态管理**: 状态转换正确，数据在状态间传递无丢失或混乱
+- [ ] **用户体验**: 状态切换流畅，加载状态清晰，错误提示友好，页面切换动画自然
+- [ ] **代码质量**: 通过所有代码质量检查，测试覆盖率达到要求，保持与现有架构一致
