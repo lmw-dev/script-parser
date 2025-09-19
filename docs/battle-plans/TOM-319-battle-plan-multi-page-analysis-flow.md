@@ -10,7 +10,7 @@
 - **核心价值 (Core Value)**: 将单页应用重构为多页面流程，优化用户体验，为长耗时API请求提供清晰的视觉反馈和流畅的页面导航。
 - **关键决策 (Core Decisions)**:
     1. **[架构模式]**: 采用 Next.js App Router 进行页面路由管理，实现首页 → 处理页 → 结果页的流程。
-    2. **[状态管理]**: 引入轻量级客户端状态管理库（Zustand/Jotai）进行页面间数据传递，避免复杂的URL参数。
+    2. **[状态管理]**: 基于现有架构，使用 React Context + useReducer 进行页面间状态管理，保持与现有代码风格一致。
     3. **[用户体验]**: 实现即时页面跳转，将API调用延迟到处理页面，提供清晰的等待反馈。
 - **预估时间 (Time Estimate)**: ~2-3 developer-days
 
@@ -48,23 +48,33 @@
 - **状态管理 (State Management)**:
 
     ```typescript
-    // 客户端状态结构
-    interface AppState {
+    // 基于现有架构的状态结构
+    interface AppContextState {
+      // 页面状态
+      currentPage: 'home' | 'processing' | 'result';
+      // 输入数据
       inputData: {
         type: 'url' | 'file';
         url?: string;
         file?: File;
       } | null;
-      analysisResult: {
-        transcript: string;
-        analysis: {
-          hook: string;
-          core: string;
-          cta: string;
-        };
-      } | null;
+      // 分析结果
+      analysisResult: AnalysisResult | null;
+      // 错误状态
       error: string | null;
+      // 处理步骤
+      processingStep: number;
     }
+
+    // Context Actions
+    type AppContextAction = 
+      | { type: 'SET_INPUT_DATA'; payload: InputData }
+      | { type: 'SET_ANALYSIS_RESULT'; payload: AnalysisResult }
+      | { type: 'SET_ERROR'; payload: string }
+      | { type: 'SET_PROCESSING_STEP'; payload: number }
+      | { type: 'NAVIGATE_TO_PROCESSING' }
+      | { type: 'NAVIGATE_TO_RESULT' }
+      | { type: 'RESET' };
     ```
 
 ### 2.1 关键技术方案 (Key Technical Solutions)
@@ -81,38 +91,52 @@
 >       └── page.tsx          // 结果页 (/result)
 > ```
 
-> #### **状态管理 (`Zustand Store`)**
->
+> #### **状态管理 (`React Context + useReducer`)**
 > ```typescript
-> // 使用 Zustand 进行轻量级状态管理
-> interface AppStore {
->   inputData: InputData | null;
->   analysisResult: AnalysisResult | null;
->   error: string | null;
->   setInputData: (data: InputData) => void;
->   setAnalysisResult: (result: AnalysisResult) => void;
->   setError: (error: string) => void;
->   clearState: () => void;
+> // 基于现有架构的 Context 实现
+> const AppContext = createContext<{
+>   state: AppContextState;
+>   dispatch: Dispatch<AppContextAction>;
+> } | null>(null);
+> 
+> // Context Provider 组件
+> export function AppProvider({ children }: { children: React.ReactNode }) {
+>   const [state, dispatch] = useReducer(appReducer, initialState);
+>   return (
+>     <AppContext.Provider value={{ state, dispatch }}>
+>       {children}
+>     </AppContext.Provider>
+>   );
+> }
+> 
+> // 自定义 Hook
+> export function useAppContext() {
+>   const context = useContext(AppContext);
+>   if (!context) {
+>     throw new Error('useAppContext must be used within AppProvider');
+>   }
+>   return context;
 > }
 > ```
 
 > #### **页面跳转逻辑 (`Navigation Flow`)**
->
 > ```typescript
 > // 首页提交处理
 > const handleSubmit = (inputData: InputData) => {
->   setInputData(inputData);
+>   dispatch({ type: 'SET_INPUT_DATA', payload: inputData });
+>   dispatch({ type: 'NAVIGATE_TO_PROCESSING' });
 >   router.push('/processing');
 > };
 > 
 > // 处理页API调用
 > const processAnalysis = async () => {
 >   try {
->     const result = await apiClient.parseVideo(inputData);
->     setAnalysisResult(result);
+>     const result = await apiClient.parseVideo(state.inputData);
+>     dispatch({ type: 'SET_ANALYSIS_RESULT', payload: result });
+>     dispatch({ type: 'NAVIGATE_TO_RESULT' });
 >     router.push('/result');
 >   } catch (error) {
->     setError(error.message);
+>     dispatch({ type: 'SET_ERROR', payload: error.message });
 >   }
 > };
 > ```
@@ -121,11 +145,11 @@
 
 ## 3. 🚀 作战序列 (Implementation Sequence)
 
-- [ ] **1. `[Web] 设置状态管理和基础路由结构`**: 引入 Zustand 状态管理，创建基础页面路由结构。
-- [ ] **2. `[Web] 重构首页输入逻辑`**: 修改 InputSection 组件，实现状态保存和页面跳转。
-- [ ] **3. `[Web] 创建处理页面`**: 实现 /processing 页面，包含 API 调用和状态管理逻辑。
-- [ ] **4. `[Web] 创建结果页面`**: 实现 /result 页面，展示分析结果。
-- [ ] **5. `[Web] 实现错误处理页面`**: 在 /processing 页面添加错误状态展示。
+- [ ] **1. `[Web] 创建 React Context 状态管理`**: 基于现有架构，实现 AppContext 和 useReducer 进行页面间状态管理。
+- [ ] **2. `[Web] 设置 Next.js App Router 页面结构`**: 创建 /processing 和 /result 页面路由，保持与现有代码风格一致。
+- [ ] **3. `[Web] 重构首页输入逻辑`**: 修改现有 InputSection 组件，集成 Context 状态管理和页面跳转。
+- [ ] **4. `[Web] 创建处理页面`**: 实现 /processing 页面，包含 API 调用和状态管理逻辑。
+- [ ] **5. `[Web] 创建结果页面`**: 实现 /result 页面，展示分析结果。
 - [ ] **6. `[Web] 优化用户体验和页面过渡`**: 添加加载状态、页面过渡动画和用户反馈。
 
 ---
