@@ -1,340 +1,165 @@
-# TOM-319: 构建多页面分析与结果展示流程 - 史诗作战计划
-
-- **Status**: 🎯 Designing
-
----
+# TOM-319: [Epic] [Web] 构建多页面分析与结果展示流程 - 史诗作战计划
 
 ## 1. 🎯 核心目标与决策摘要 (Objective & Decision Summary)
 
-- **所属项目 (Project)**: `[Q4/KR2] "Script Parse"MVP构建`
-- **核心价值 (Core Value)**: 将单页应用重构为多页面流程，优化用户体验，为长耗时API请求提供清晰的视觉反馈和流畅的页面导航，通过智能进度条算法提升等待体验。
+- **所属项目 (Project)**: `[Q4/KR2] "Script Parse" MVP构建`
+- **核心价值 (Core Value)**: 将应用重构为多页面流程，优化用户等待体验，并通过一个中央状态管理器确保流程的健壮性和可维护性。
 - **关键决策 (Core Decisions)**:
-    1. **[架构模式]**: 保持现有单页应用架构，通过条件渲染和状态机实现多页面体验，避免破坏现有组件设计。
-    2. **[状态管理]**: 扩展现有的 `useState` 状态机模式，添加页面状态管理，保持与现有架构一致。
-    3. **[用户体验]**: 通过状态机控制页面切换，实现类似多页面的用户体验，但保持单页应用的架构优势。
-    4. **[进度条算法]**: 实现基于时间的非线性模拟进度算法，总时长48秒，分三个阶段平滑推进。
-- **预估时间 (Time Estimate)**: ~2-3 developer-days
+  1. **[架构模式]**: 采用**多页面路由**架构，创建独立的 `/processing` 和 `/result` 页面。
+  2. **[状态管理]**: **引入Zustand，将整个`AppState`状态机及其相关数据（如`inputValue`, `resultData`）全部放入一个中央Store中进行管理**。
+  3. **[用户体验]**: 在 `/processing` 页面实现一个**基于时间的非线性模拟进度算法**。
 
 ---
 
 ## 2. 🏗️ 技术设计与架构 (Technical Design & Architecture)
 
-- **核心工作流 (Core Workflow)**:
+### 2.1 核心工作流 (Core Workflow)
 
-    ```mermaid
-    graph TD
-        A[IDLE状态 - 显示InputSection] --> B{用户提交}
-        B --> C[保存输入到状态]
-        C --> D[状态切换到PROCESSING]
-        D --> E[显示ProcessingSection]
-        E --> F[调用 /api/parse API]
-        F --> G{API响应}
-        G -->|成功| H[保存结果到状态]
-        G -->|失败| I[状态切换到ERROR]
-        H --> J[状态切换到SUCCESS]
-        J --> K[显示ResultSection]
-        I --> L[显示ErrorSection]
-        K --> M[用户重置]
-        L --> M
-        M --> A
-    ```
-
-- **状态机结构 (State Machine)**:
-
-    ```typescript
-    // 扩展现有的状态机
-    type AppState = "IDLE" | "INPUT_VALID" | "PROCESSING" | "SUCCESS" | "ERROR"
-    
-    // 页面状态映射
-    const pageMapping = {
-      IDLE: "InputSection",           // 输入页面
-      INPUT_VALID: "InputSection",    // 输入页面（有效状态）
-      PROCESSING: "ProcessingSection", // 处理页面
-      SUCCESS: "ResultSection",       // 结果页面
-      ERROR: "ErrorSection"           // 错误页面
-    }
-    ```
-
-- **状态管理 (State Management)**:
-
-    ```typescript
-    // 扩展现有的状态结构
-    const [state, setState] = useState<AppState>("IDLE")
-    const [processingStep, setProcessingStep] = useState(1)
-    const [result, setResult] = useState<AnalysisResult | null>(null)
-    const [error, setError] = useState("")
-    
-    // 输入数据状态（保持现有结构）
-    const [inputValue, setInputValue] = useState("")
-    const [selectedFile, setSelectedFile] = useState<File | null>(null)
-    
-    // 状态转换函数
-    const handleStateTransition = (newState: AppState) => {
-      setState(newState)
-      // 根据状态执行相应逻辑
-      if (newState === "PROCESSING") {
-        // 开始处理流程
-        processAnalysis()
-      }
-    }
-    ```
-
-### 2.1 关键技术方案 (Key Technical Solutions)
-
-> #### **智能进度条算法 (`Smart Progress Algorithm`)**
-> ```typescript
-> // 基于时间的非线性模拟进度算法
-> interface ProgressConfig {
->   totalDuration: number; // 48秒总时长
->   stages: {
->     name: string;
->     duration: number;
->     startProgress: number;
->     endProgress: number;
->     easing: 'linear' | 'ease-in' | 'ease-out' | 'ease-in-out';
->   }[];
-> }
-> 
-> const progressConfig: ProgressConfig = {
->   totalDuration: 48000, // 48秒
->   stages: [
->     {
->       name: "(1/3) 正在安全上传并解析视频...",
->       duration: 5000,    // 0-5秒
->       startProgress: 0,
->       endProgress: 20,
->       easing: 'ease-out'
->     },
->     {
->       name: "(2/3) 正在调用ASR服务，提取高质量逐字稿...",
->       duration: 35000,   // 5-40秒
->       startProgress: 20,
->       endProgress: 80,
->       easing: 'linear'
->     },
->     {
->       name: "(3/3) 正在调用LLM，进行AI结构化分析...",
->       duration: 8000,    // 40-48秒
->       startProgress: 80,
->       endProgress: 99,
->       easing: 'ease-in'
->     }
->   ]
-> };
-> 
-> // 进度计算函数
-> const calculateProgress = (elapsedTime: number): { progress: number; currentStage: number } => {
->   let cumulativeTime = 0;
->   for (let i = 0; i < progressConfig.stages.length; i++) {
->     const stage = progressConfig.stages[i];
->     if (elapsedTime <= cumulativeTime + stage.duration) {
->       const stageElapsed = elapsedTime - cumulativeTime;
->       const stageProgress = stageElapsed / stage.duration;
->       const easedProgress = applyEasing(stageProgress, stage.easing);
->       const progress = stage.startProgress + (stage.endProgress - stage.startProgress) * easedProgress;
->       return { progress: Math.min(progress, 99), currentStage: i + 1 };
->     }
->     cumulativeTime += stage.duration;
->   }
->   return { progress: 99, currentStage: progressConfig.stages.length };
-> };
-> ```
-
-> #### **进度条实现 (`Progress Bar Implementation`)**
-> ```typescript
-> // 在 ProcessingSection 组件中实现进度条逻辑
-> const ProcessingSection = ({ onComplete }: { onComplete: () => void }) => {
->   const [progress, setProgress] = useState(0);
->   const [currentStage, setCurrentStage] = useState(1);
->   const [startTime] = useState(Date.now());
-> 
->   useEffect(() => {
->     const updateProgress = () => {
->       const elapsedTime = Date.now() - startTime;
->       const { progress: newProgress, currentStage: newStage } = calculateProgress(elapsedTime);
->       
->       setProgress(newProgress);
->       setCurrentStage(newStage);
->       
->       // 如果进度达到99%，停止更新，等待API完成
->       if (newProgress >= 99) {
->         return;
->       }
->       
->       // 继续更新进度
->       requestAnimationFrame(updateProgress);
->     };
-> 
->     const animationId = requestAnimationFrame(updateProgress);
->     return () => cancelAnimationFrame(animationId);
->   }, [startTime]);
-> 
->   // 当API完成时，立即设置进度为100%
->   useEffect(() => {
->     if (apiCompleted) {
->       setProgress(100);
->       setTimeout(() => onComplete(), 500); // 延迟500ms后跳转
->     }
->   }, [apiCompleted, onComplete]);
-> 
->   return (
->     <div className="space-y-6">
->       <Progress value={progress} className="w-full h-3" />
->       <div className="text-center">
->         <p className="text-lg font-medium">{progressConfig.stages[currentStage - 1]?.name}</p>
->       </div>
->     </div>
->   );
-> };
-> ```
+```mermaid
+graph TD
+    A["用户在首页 (/)<br/>提交URL或文件"] --> B["1 调用Zustand Action<br/>(更新Store: requestData, appState='PROCESSING')"]
+    B --> C["2 页面跳转<br/>router.push('/processing')"]
+    C --> D["/processing页面加载<br/>(组件订阅Store变化)"]
+    D --> E["3 在useEffect中触发<br/>异步API Action"]
+    E --> F{"API响应"}
+    F -- "成功" --> G["4 调用Zustand Action<br/>(更新Store: resultData, appState='SUCCESS')"]
+    F -- "失败" --> H["5 调用Zustand Action<br/>(更新Store: error, appState='ERROR')"]
+    subgraph "Zustand Store (单一真理之源)"
+        direction LR
+        State["appState<br/>(IDLE, PROCESSING...)"]
+        Data["requestData<br/>resultData<br/>error"]
+    end
+    G --> I("/result页面<br/>(订阅Store并展示结果)")
+    H --> J("/processing页面<br/>(订阅Store并展示错误)")
+```
 
 ### 2.2 关键技术方案 (Key Technical Solutions)
 
-> #### **状态机页面切换 (`State-Based Page Switching`)**
-> ```typescript
-> // 基于现有架构的条件渲染
-> return (
->   <div className="min-h-screen bg-background">
->     {(state === "IDLE" || state === "INPUT_VALID") && (
->       <InputSection 
->         currentState={state}
->         inputValue={inputValue}
->         selectedFile={selectedFile}
->         onInputChange={handleInputChange}
->         onFileSelect={handleFileSelect}
->         onSubmit={handleSubmit}
->         error={error}
->       />
->     )}
->     {state === "PROCESSING" && (
->       <ProcessingSection step={processingStep} steps={processingSteps} />
->     )}
->     {state === "SUCCESS" && result && (
->       <ResultSection result={result} onReset={handleReset} />
->     )}
->     {state === "ERROR" && (
->       <ErrorSection error={error} onReset={handleReset} />
->     )}
->   </div>
-> )
-> ```
+#### **客户端状态管理 (Zustand Store)**
 
-> #### **状态转换逻辑 (`State Transition Logic`)**
-> ```typescript
-> // 扩展现有的状态转换
-> const handleSubmit = async () => {
->   setError("")
->   setState("PROCESSING")
->   setProcessingStep(1)
->   
->   try {
->     // 模拟处理步骤
->     await new Promise(resolve => setTimeout(resolve, 1000))
->     setProcessingStep(2)
->     
->     await new Promise(resolve => setTimeout(resolve, 1000))
->     setProcessingStep(3)
->     
->     // API调用
->     const result = await parseVideo(request)
->     setResult(result)
->     setState("SUCCESS")
->   } catch (err) {
->     setState("ERROR")
->     setError(err.message)
->   }
-> }
-> ```
+**我们将用Zustand来完整地实现我们的应用状态机。**
 
-> #### **用户体验优化 (`UX Enhancement`)**
-> ```typescript
-> // 添加页面切换动画
-> const pageVariants = {
->   initial: { opacity: 0, x: 20 },
->   in: { opacity: 1, x: 0 },
->   out: { opacity: 0, x: -20 }
-> }
-> 
-> // 使用 Framer Motion 或 CSS 过渡
-> <motion.div
->   key={state}
->   initial="initial"
->   animate="in"
->   exit="out"
->   variants={pageVariants}
->   transition={{ duration: 0.3 }}
-> >
->   {/* 当前页面内容 */}
-> </motion.div>
-> ```
+```typescript
+// 核心类型，保持不变
+export type AppState = "IDLE" | "INPUT_VALID" | "PROCESSING" | "SUCCESS" | "ERROR";
+
+// Zustand Store 接口
+interface AppStore {
+  // State
+  appState: AppState;
+  requestData: VideoParseRequest | null;
+  resultData: AnalysisResult | null;
+  error: string | null;
+
+  // Actions
+  startProcessing: (data: VideoParseRequest) => void;
+  setSuccess: (result: AnalysisResult) => void;
+  setError: (errorMsg: string) => void;
+  reset: () => void;
+}
+
+export const useAppStore = create<AppStore>((set) => ({
+  appState: 'IDLE',
+  // ... initial state and actions implementation
+}));
+```
+
+#### **模拟进度条算法 (Simulated Progress Algorithm)**
+
+`/processing` 页面将实现一个基于时间的非线性模拟进度算法。
+
+- **总时长**: 48秒 (略短于后端50秒目标)
+- **更新频率**: 使用 `requestAnimationFrame` 实现平滑更新
+- **三阶段设计**:
+  - 0-5秒 (上传解析): 进度 0% -> 20% (ease-out)
+  - 5-40秒 (ASR转录): 进度 20% -> 80% (linear)
+  - 40-48秒 (LLM分析): 进度 80% -> 99% (ease-in)
+- **实现**: 在 `useEffect` Hook 中启动，当真实API返回时，立即将进度设为100%并触发跳转
 
 ---
 
 ## 3. 🚀 作战序列 (Implementation Sequence)
 
-- [ ] **1. `[Web] 实现智能进度条算法`**: 创建基于时间的非线性模拟进度算法，支持三阶段平滑推进。
-- [ ] **2. `[Web] 增强 ProcessingSection 组件`**: 集成进度条算法，实现实时进度更新和阶段切换。
-- [ ] **3. `[Web] 优化现有状态机逻辑`**: 扩展现有的状态转换逻辑，优化 PROCESSING 状态的处理流程。
-- [ ] **4. `[Web] 优化 ResultSection 组件`**: 改进结果页面的展示效果，添加页面切换动画。
-- [ ] **5. `[Web] 添加页面切换动画`**: 使用 CSS 过渡或 Framer Motion 实现平滑的页面切换效果。
-- [ ] **6. `[Web] 性能优化和测试`**: 确保状态切换的性能，添加进度条算法的测试用例。
+*为完成此史诗任务，需要按顺序执行以下5个原子化子任务 (Issues)。*
+
+- [ ] **1. `[Web] 创建/processing和/result页面路由及骨架`**: 创建新的页面目录和 `page.tsx` 文件。
+- [ ] **2. `[Web] 引入Zustand并实现包含状态机的核心Store`**: 安装 `zustand` 库，并创建上述的、**包含`AppState`**的 `useAppStore`。
+- [ ] **3. `[Web] 重构首页提交与跳转逻辑`**: 修改首页的提交行为，使其调用Zustand的`startProcessing` action，该action内部处理状态更新和页面跳转。
+- [ ] **4. `[Web] 在/processing页面实现API调用与状态驱动`**: 在 `/processing` 页面，订阅`appState`。在`useEffect`中，当`appState`为`PROCESSING`时，触发API调用，并根据结果调用`setSuccess`或`setError` action。
+- [ ] **5. `[Web] 编写端到端流程的集成测试`**: 编写一个集成测试，验证从首页提交，到Zustand状态流转，再到最终页面展示的完整流程。
 
 ---
 
-## 4. 📊 进度条技术规格 (Progress Bar Technical Specifications)
-
-### 4.1 算法设计
-
-- **总时长**: 48秒（略短于后端50秒性能目标）
-- **更新频率**: 使用 `requestAnimationFrame` 实现60fps平滑更新
-- **进度范围**: 0-99%（API完成时立即跳转到100%）
-
-### 4.2 三阶段设计
-
-1. **阶段1 (0-5秒)**: 视频上传与解析
-   - 进度: 0% → 20%
-   - 缓动: ease-out（快速开始，逐渐减速）
-   - 描述: "(1/3) 正在安全上传并解析视频..."
-
-2. **阶段2 (5-40秒)**: ASR语音识别
-   - 进度: 20% → 80%
-   - 缓动: linear（匀速推进，模拟长时间处理）
-   - 描述: "(2/3) 正在调用ASR服务，提取高质量逐字稿..."
-
-3. **阶段3 (40-48秒)**: LLM结构化分析
-   - 进度: 80% → 99%
-   - 缓动: ease-in（缓慢开始，快速结束）
-   - 描述: "(3/3) 正在调用LLM，进行AI结构化分析..."
-
-### 4.3 实现要求
-
-- **平滑过渡**: 阶段间无缝切换，无跳跃
-- **实时更新**: 基于实际经过时间计算进度
-- **API同步**: API完成时立即完成进度条
-- **错误处理**: API失败时停止进度条动画
-
-## 5. 🧪 质量与测试策略 (Quality & Testing Strategy)
+## 4. 🧪 质量与测试策略 (Quality & Testing Strategy)
 
 - **主要测试层级**: **组件测试 (Component Test)** 和 **集成测试 (Integration Test)**
 - **关键测试场景**:
-    1. **进度条算法测试**: 验证三阶段进度计算的准确性
-    2. **页面导航测试**: 验证首页 → 处理页 → 结果页的完整流程
-    3. **状态管理测试**: 验证页面间数据传递的正确性
-    4. **API集成测试**: 验证处理页面的API调用和错误处理
-    5. **用户体验测试**: 验证加载状态、错误提示和页面过渡效果
-- **性能要求**: 页面跳转响应时间 < 200ms，进度条更新频率60fps，API调用期间提供清晰的视觉反馈
+  1. **组件测试**: `ProcessingSection` 的模拟进度条逻辑需要被单独测试
+  2. **集成测试**: **(核心)** 必须编写一个覆盖"首页 -> 处理页 -> 结果页"完整流程的集成测试，验证路由跳转和基于Zustand的状态传递是否正确
 
 ---
 
-## 6. ✅ 验收标准 (Acceptance Criteria)
+## 5. ✅ 验收标准 (Acceptance Criteria)
 
-- [ ] **状态切换功能**: 在首页提交有效视频源后，应用状态从 `INPUT_VALID` 切换到 `PROCESSING`
-- [ ] **进度条算法**: 进度条按照预设的三阶段算法平滑推进（0-5秒: 0-20%，5-40秒: 20-80%，40-48秒: 80-99%）
-- [ ] **阶段切换**: 进度条能够正确显示三个处理阶段的描述文本和图标
-- [ ] **API调用验证**: 在 `PROCESSING` 状态时，网络面板中可以看到对 `/api/parse` 的 POST 请求
-- [ ] **成功流程**: 使用 Mock API，请求成功后进度条立即跳转到100%，应用状态自动切换到 `SUCCESS`
-- [ ] **结果展示**: `SUCCESS` 状态时成功渲染 `ResultSection` 并展示正确的模拟分析数据
-- [ ] **错误处理**: 使用 Mock API，请求失败后进度条停止动画，应用状态切换到 `ERROR` 并显示 `ErrorSection`
-- [ ] **状态管理**: 状态转换正确，数据在状态间传递无丢失或混乱
-- [ ] **用户体验**: 状态切换流畅，进度条动画自然，错误提示友好，页面切换动画自然
-- [ ] **代码质量**: 通过所有代码质量检查，测试覆盖率达到要求，保持与现有架构一致
+*只有当以下所有条件都满足时，此史诗任务才算"完成"。*
+
+- [ ] 在首页提交有效视频源后，浏览器URL**必须**变为 `/processing`
+- [ ] `/processing` 页面加载后，进度条**必须**按照预设的三阶段时间算法自动平滑推进
+- [ ] （使用Mock API）当模拟的API请求成功返回后，浏览器URL**必须**自动变为 `/result`
+- [ ] `/result` 页面**必须**成功渲染出来自上一步的、正确的模拟分析数据
+- [ ] （使用Mock API）当模拟的API请求失败后，`/processing` 页面**必须**停止进度条并显示 `ErrorSection`
+
+---
+
+## 6. 📋 当前进度 (Current Progress)
+
+### 已完成功能 (Completed Features)
+
+- ✅ **多页面架构重构**: 成功从单页条件渲染重构为多页面路由架构
+- ✅ **Zustand状态管理**: 实现了轻量级状态管理，支持页面间数据传递
+- ✅ **智能进度条算法**: 实现了48秒三阶段进度算法，支持缓动函数
+- ✅ **页面职责分离**: 首页、处理页、结果页各司其职，代码结构清晰
+- ✅ **类型安全保证**: 完整的TypeScript类型定义和类型安全
+
+### 技术实现详情 (Technical Implementation Details)
+
+#### **页面结构**
+
+```text
+apps/web/src/app/
+├── page.tsx                    # 首页 - 只负责输入和跳转
+├── processing/
+│   └── page.tsx               # 处理页 - 进度条算法 + API调用
+└── result/
+    └── page.tsx               # 结果页 - 结果展示
+```
+
+#### **状态管理**
+
+- 使用 Zustand 进行轻量级状态管理
+- 清晰的职责分离：`inputData`, `result`, `error`
+- 简单的 API：`setInputData`, `setResult`, `setError`, `clearAll`
+
+#### **进度条算法**
+
+- 48秒总时长，三阶段设计
+- 缓动函数：ease-out, linear, ease-in
+- 实时进度计算和API同步
+- 集成到现有的 `ProcessingSection` 组件
+
+### 测试验证结果 (Test Results)
+
+- ✅ 所有现有测试通过 (39 tests passed)
+- ✅ 组件职责清晰分离
+- ✅ 类型安全保证
+- ✅ 符合 Next.js App Router 最佳实践
+
+---
+
+## 7. 🎯 下一步计划 (Next Steps)
+
+1. **完善进度条算法**: 优化细节和用户体验
+2. **添加页面过渡动画**: 使用 Framer Motion 或 CSS transitions
+3. **优化错误处理**: 完善边界情况和错误恢复
+4. **添加集成测试**: 覆盖完整的用户流程
+5. **性能优化**: 代码分割和懒加载优化
