@@ -8,7 +8,7 @@
 
 ### 1. InputSection 组件
 
-**文件路径**: `components/sections/input-section.tsx`
+**文件路径**: `components/sections/InputSection.tsx`
 
 **组件职责**:
 - 处理用户视频输入（URL 或文件上传）
@@ -49,7 +49,7 @@ const maxFileSize = 100 * 1024 * 1024 // 100MB
 
 ### 2. ProcessingSection 组件
 
-**文件路径**: `components/sections/processing-section.tsx`
+**文件路径**: `components/sections/ProcessingSection.tsx`
 
 **组件职责**:
 - 展示三阶段处理进度
@@ -76,7 +76,7 @@ interface ProcessingSectionProps {
 
 ### 3. ResultSection 组件
 
-**文件路径**: `components/sections/result-section.tsx`
+**文件路径**: `components/sections/ResultSection.tsx`
 
 **组件职责**:
 - 展示分析结果
@@ -111,7 +111,7 @@ interface ResultSectionProps {
 
 ### 4. ErrorSection 组件
 
-**文件路径**: `components/sections/error-section.tsx`
+**文件路径**: `components/sections/ErrorSection.tsx`
 
 **组件职责**:
 - 错误状态展示

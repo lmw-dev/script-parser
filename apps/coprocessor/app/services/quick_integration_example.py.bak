@@ -7,16 +7,15 @@ import asyncio
 import sys
 from pathlib import Path
 
+from dotenv import load_dotenv
+from services.asr_service import ASRService
+from services.oss_uploader import create_oss_uploader_from_env
+
 # 添加项目根目录到Python路径
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
 # 加载环境变量
-from dotenv import load_dotenv
-
 load_dotenv()
-
-from services.asr_service import ASRService
-from services.oss_uploader import create_oss_uploader_from_env
 
 
 async def quick_test():
@@ -25,7 +24,9 @@ async def quick_test():
     print("=" * 50)
 
     # 使用较小的测试文件
-    test_file = Path("/Users/liumingwei/01-project/12-liumw/15-script-parser/docs/data/IMG_0036.MOV")
+    test_file = Path(
+        "/Users/liumingwei/01-project/12-liumw/15-script-parser/docs/data/IMG_0036.MOV"
+    )
 
     if not test_file.exists():
         print(f"❌ 测试文件不存在: {test_file}")

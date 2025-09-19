@@ -8,8 +8,10 @@ import os
 from pathlib import Path
 from typing import Protocol
 
-import httpx
 from pydantic import BaseModel
+
+from ..config import TimeoutConfig
+from ..http_client import get_http_client
 
 # Prompt文件路径
 PROMPT_FILE_PATH = (
@@ -76,43 +78,41 @@ class DeepSeekAdapter:
             LLMError: 当分析失败时
         """
         try:
-            async with httpx.AsyncClient() as client:
-                response = await client.post(
-                    f"{self.base_url}/v1/chat/completions",
-                    headers={
-                        "Authorization": f"Bearer {self.api_key}",
-                        "Content-Type": "application/json",
-                    },
-                    json={
-                        "model": "deepseek-chat",
-                        "messages": [
-                            {"role": "system", "content": self.system_prompt},
-                            {"role": "user", "content": text},
-                        ],
-                        "temperature": 0.7,
-                        "max_tokens": 1000,
-                    },
-                    timeout=30.0,
+            client = await get_http_client()
+            response = await client.post(
+                f"{self.base_url}/v1/chat/completions",
+                headers={
+                    "Authorization": f"Bearer {self.api_key}",
+                    "Content-Type": "application/json",
+                },
+                json={
+                    "model": "deepseek-chat",
+                    "messages": [
+                        {"role": "system", "content": self.system_prompt},
+                        {"role": "user", "content": text},
+                    ],
+                    "temperature": 0.7,
+                    "max_tokens": 1000,
+                },
+                timeout=TimeoutConfig.LLM_TIMEOUT,
+            )
+
+            response.raise_for_status()
+            result = response.json()
+
+            # 提取响应内容
+            content = result["choices"][0]["message"]["content"]
+
+            # 解析JSON响应
+            try:
+                analysis_data = json.loads(content)
+                return AnalysisResult(
+                    hook=analysis_data["hook"],
+                    core=analysis_data["core"],
+                    cta=analysis_data["cta"],
                 )
-
-                response.raise_for_status()
-                result = response.json()
-
-                # 提取响应内容
-                content = result["choices"][0]["message"]["content"]
-
-                # 解析JSON响应
-                try:
-                    analysis_data = json.loads(content)
-                    return AnalysisResult(
-                        hook=analysis_data["hook"],
-                        core=analysis_data["core"],
-                        cta=analysis_data["cta"],
-                    )
-                except (json.JSONDecodeError, KeyError) as e:
-                    raise LLMError(
-                        f"Failed to parse DeepSeek response: {str(e)}"
-                    ) from e
+            except (json.JSONDecodeError, KeyError) as e:
+                raise LLMError(f"Failed to parse DeepSeek response: {str(e)}") from e
 
         except Exception as e:
             if isinstance(e, LLMError):
@@ -157,41 +157,41 @@ class KimiAdapter:
             LLMError: 当分析失败时
         """
         try:
-            async with httpx.AsyncClient() as client:
-                response = await client.post(
-                    f"{self.base_url}/v1/chat/completions",
-                    headers={
-                        "Authorization": f"Bearer {self.api_key}",
-                        "Content-Type": "application/json",
-                    },
-                    json={
-                        "model": "moonshot-v1-8k",
-                        "messages": [
-                            {"role": "system", "content": self.system_prompt},
-                            {"role": "user", "content": text},
-                        ],
-                        "temperature": 0.7,
-                        "max_tokens": 1000,
-                    },
-                    timeout=30.0,
+            client = await get_http_client()
+            response = await client.post(
+                f"{self.base_url}/v1/chat/completions",
+                headers={
+                    "Authorization": f"Bearer {self.api_key}",
+                    "Content-Type": "application/json",
+                },
+                json={
+                    "model": "moonshot-v1-8k",
+                    "messages": [
+                        {"role": "system", "content": self.system_prompt},
+                        {"role": "user", "content": text},
+                    ],
+                    "temperature": 0.7,
+                    "max_tokens": 1000,
+                },
+                timeout=TimeoutConfig.LLM_TIMEOUT,
+            )
+
+            response.raise_for_status()
+            result = response.json()
+
+            # 提取响应内容
+            content = result["choices"][0]["message"]["content"]
+
+            # 解析JSON响应
+            try:
+                analysis_data = json.loads(content)
+                return AnalysisResult(
+                    hook=analysis_data["hook"],
+                    core=analysis_data["core"],
+                    cta=analysis_data["cta"],
                 )
-
-                response.raise_for_status()
-                result = response.json()
-
-                # 提取响应内容
-                content = result["choices"][0]["message"]["content"]
-
-                # 解析JSON响应
-                try:
-                    analysis_data = json.loads(content)
-                    return AnalysisResult(
-                        hook=analysis_data["hook"],
-                        core=analysis_data["core"],
-                        cta=analysis_data["cta"],
-                    )
-                except (json.JSONDecodeError, KeyError) as e:
-                    raise LLMError(f"Failed to parse Kimi response: {str(e)}") from e
+            except (json.JSONDecodeError, KeyError) as e:
+                raise LLMError(f"Failed to parse Kimi response: {str(e)}") from e
 
         except Exception as e:
             if isinstance(e, LLMError):

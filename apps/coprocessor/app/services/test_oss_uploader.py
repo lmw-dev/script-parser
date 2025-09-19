@@ -77,7 +77,8 @@ class TestOSSUploader:
         # 验证调用
         mock_auth.assert_called_once_with("test-key-id", "test-key-secret")
         mock_bucket_class.assert_called_once_with(
-            mock_auth_instance, "https://oss-cn-beijing.aliyuncs.com", "test-bucket"
+            mock_auth_instance, "https://oss-cn-beijing.aliyuncs.com", "test-bucket",
+            connect_timeout=5.0
         )
         mock_bucket.put_object_from_file.assert_called_once_with(
             "audio/1234567890_test_audio.wav",

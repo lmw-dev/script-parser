@@ -8,20 +8,20 @@ import os
 import sys
 from pathlib import Path
 
+from dotenv import load_dotenv
+from services.asr_service import ASRError, ASRService
+from services.oss_uploader import OSSUploaderError, create_oss_uploader_from_env
+
 # 添加项目根目录到Python路径
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
 # 加载环境变量
-from dotenv import load_dotenv
-
 load_dotenv()
-
-from services.asr_service import ASRError, ASRService
-from services.oss_uploader import OSSUploaderError, create_oss_uploader_from_env
 
 
 class IntegrationTestError(Exception):
     """集成测试异常"""
+
     pass
 
 
@@ -46,7 +46,7 @@ async def test_video_transcription_via_oss(video_file_path: Path) -> dict:
         "transcription_success": False,
         "transcript": None,
         "error": None,
-        "steps_completed": []
+        "steps_completed": [],
     }
 
     try:
@@ -66,7 +66,7 @@ async def test_video_transcription_via_oss(video_file_path: Path) -> dict:
             oss_uploader = create_oss_uploader_from_env()
             test_result["steps_completed"].append("oss_uploader_created")
         except Exception as e:
-            raise IntegrationTestError(f"创建OSS上传器失败: {str(e)}")
+            raise IntegrationTestError(f"创建OSS上传器失败: {str(e)}") from e
 
         # 2. 确保bucket存在
         print("🪣 检查并确保bucket存在...")
@@ -74,7 +74,7 @@ async def test_video_transcription_via_oss(video_file_path: Path) -> dict:
             oss_uploader.ensure_bucket_exists()
             test_result["steps_completed"].append("bucket_ensured")
         except OSSUploaderError as e:
-            raise IntegrationTestError(f"Bucket操作失败: {str(e)}")
+            raise IntegrationTestError(f"Bucket操作失败: {str(e)}") from e
 
         # 3. 上传文件到OSS
         print("⬆️  上传文件到OSS...")
@@ -85,7 +85,7 @@ async def test_video_transcription_via_oss(video_file_path: Path) -> dict:
             test_result["steps_completed"].append("file_uploaded")
             print(f"✅ 文件已上传到OSS: {upload_result.file_url}")
         except OSSUploaderError as e:
-            raise IntegrationTestError(f"文件上传失败: {str(e)}")
+            raise IntegrationTestError(f"文件上传失败: {str(e)}") from e
 
         # 4. 创建ASR服务
         print("🎤 创建ASR服务...")
@@ -93,7 +93,7 @@ async def test_video_transcription_via_oss(video_file_path: Path) -> dict:
             asr_service = ASRService()
             test_result["steps_completed"].append("asr_service_created")
         except Exception as e:
-            raise IntegrationTestError(f"创建ASR服务失败: {str(e)}")
+            raise IntegrationTestError(f"创建ASR服务失败: {str(e)}") from e
 
         # 5. 使用OSS URL进行转录
         print("🔄 开始ASR转录...")
@@ -102,7 +102,11 @@ async def test_video_transcription_via_oss(video_file_path: Path) -> dict:
             test_result["transcription_success"] = True
             test_result["transcript"] = transcript
             test_result["steps_completed"].append("transcription_completed")
-            print(f"✅ 转录完成: {transcript[:100]}..." if len(transcript) > 100 else f"✅ 转录完成: {transcript}")
+            print(
+                f"✅ 转录完成: {transcript[:100]}..."
+                if len(transcript) > 100
+                else f"✅ 转录完成: {transcript}"
+            )
         except ASRError as e:
             # ASR错误不算致命错误，记录但继续
             test_result["error"] = f"ASR转录失败: {str(e)}"
@@ -134,7 +138,9 @@ async def run_integration_tests():
 
     # 再次检查路径
     if not data_dir.exists():
-        data_dir = Path("/Users/liumingwei/01-project/12-liumw/15-script-parser/docs/data")
+        data_dir = Path(
+            "/Users/liumingwei/01-project/12-liumw/15-script-parser/docs/data"
+        )
 
     if not data_dir.exists():
         print(f"❌ 测试数据目录不存在: {data_dir}")
@@ -142,7 +148,7 @@ async def run_integration_tests():
         return
 
     # 查找视频文件
-    video_extensions = ['.mov', '.mp4', '.avi', '.mkv', '.MOV', '.MP4']
+    video_extensions = [".mov", ".mp4", ".avi", ".mkv", ".MOV", ".MP4"]
     video_files = []
 
     for ext in video_extensions:
@@ -180,7 +186,9 @@ async def run_integration_tests():
     print("=" * 60)
 
     successful_uploads = sum(1 for r in test_results if r["upload_success"])
-    successful_transcriptions = sum(1 for r in test_results if r["transcription_success"])
+    successful_transcriptions = sum(
+        1 for r in test_results if r["transcription_success"]
+    )
 
     print(f"📁 测试文件数量: {len(test_results)}")
     print(f"⬆️  成功上传: {successful_uploads}/{len(test_results)}")
@@ -191,31 +199,41 @@ async def run_integration_tests():
         print(f"\n📋 测试 {i}: {Path(result['file_path']).name}")
         print(f"   文件大小: {result['file_size_mb']} MB")
         print(f"   上传状态: {'✅ 成功' if result['upload_success'] else '❌ 失败'}")
-        if result['upload_url']:
+        if result["upload_url"]:
             print(f"   OSS URL: {result['upload_url']}")
-        print(f"   转录状态: {'✅ 成功' if result['transcription_success'] else '❌ 失败'}")
-        if result['transcript']:
-            preview = result['transcript'][:80] + "..." if len(result['transcript']) > 80 else result['transcript']
+        print(
+            f"   转录状态: {'✅ 成功' if result['transcription_success'] else '❌ 失败'}"
+        )
+        if result["transcript"]:
+            preview = (
+                result["transcript"][:80] + "..."
+                if len(result["transcript"]) > 80
+                else result["transcript"]
+            )
             print(f"   转录预览: {preview}")
-        if result['error']:
+        if result["error"]:
             print(f"   错误信息: {result['error']}")
         print(f"   完成步骤: {', '.join(result['steps_completed'])}")
 
     # 环境检查
     print("\n🔧 环境配置检查:")
     env_vars = [
-        'ALIBABA_CLOUD_ACCESS_KEY_ID',
-        'ALIBABA_CLOUD_ACCESS_KEY_SECRET',
-        'DASHSCOPE_API_KEY',
-        'OSS_ENDPOINT',
-        'OSS_BUCKET_NAME'
+        "ALIBABA_CLOUD_ACCESS_KEY_ID",
+        "ALIBABA_CLOUD_ACCESS_KEY_SECRET",
+        "DASHSCOPE_API_KEY",
+        "OSS_ENDPOINT",
+        "OSS_BUCKET_NAME",
     ]
 
     for var in env_vars:
         value = os.getenv(var)
         if value:
             # 只显示前4位和后4位，中间用*代替
-            masked_value = value[:4] + '*' * (len(value) - 8) + value[-4:] if len(value) > 8 else '*' * len(value)
+            masked_value = (
+                value[:4] + "*" * (len(value) - 8) + value[-4:]
+                if len(value) > 8
+                else "*" * len(value)
+            )
             print(f"   {var}: {masked_value}")
         else:
             print(f"   {var}: ❌ 未设置")

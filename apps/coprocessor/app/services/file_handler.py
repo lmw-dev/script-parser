@@ -6,6 +6,8 @@ from fastapi import UploadFile
 from pydantic import BaseModel
 from werkzeug.utils import secure_filename
 
+from ..config import PerformanceConfig
+
 # Default temporary directory
 TEMP_DIR = Path("/tmp/scriptparser")
 
@@ -42,7 +44,7 @@ class FileHandler:
 
     async def save_upload_file(self, file: UploadFile) -> TempFileInfo:
         """
-        Save uploaded file to temporary storage with security measures
+        Save uploaded file to temporary storage with security measures and memory optimization
 
         Args:
             file: FastAPI UploadFile object
@@ -65,21 +67,46 @@ class FileHandler:
             # Create full file path
             file_path = self.temp_dir / unique_filename
 
-            # Read file content
-            content = await file.read()
-
-            # Write file asynchronously
+            # Use streaming to optimize memory usage for large files
+            total_size = 0
             async with aiofiles.open(file_path, "wb") as f:
-                await f.write(content)
+                if PerformanceConfig.ENABLE_STREAMING_UPLOAD:
+                    # Stream file in chunks to reduce memory usage
+                    while chunk := await file.read(PerformanceConfig.CHUNK_SIZE):
+                        await f.write(chunk)
+                        total_size += len(chunk)
 
-            # Get file size from saved file
-            file_size = file_path.stat().st_size
+                        # Check file size limit
+                        if total_size > PerformanceConfig.MAX_FILE_SIZE:
+                            # Clean up partial file
+                            file_path.unlink(missing_ok=True)
+                            raise FileHandlerError(
+                                f"File size exceeds maximum limit of {PerformanceConfig.MAX_FILE_SIZE} bytes"
+                            )
+                else:
+                    # Traditional approach - read all content at once
+                    content = await file.read()
+                    total_size = len(content)
+
+                    # Check file size limit
+                    if total_size > PerformanceConfig.MAX_FILE_SIZE:
+                        raise FileHandlerError(
+                            f"File size exceeds maximum limit of {PerformanceConfig.MAX_FILE_SIZE} bytes"
+                        )
+
+                    await f.write(content)
 
             return TempFileInfo(
-                file_path=file_path, original_filename=safe_filename, size=file_size
+                file_path=file_path, original_filename=safe_filename, size=total_size
             )
 
         except Exception as e:
+            # Ensure cleanup on error
+            if "file_path" in locals():
+                try:
+                    file_path.unlink(missing_ok=True)
+                except OSError:
+                    pass
             raise FileHandlerError(f"Failed to save uploaded file: {str(e)}") from e
 
     @staticmethod

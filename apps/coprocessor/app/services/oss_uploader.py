@@ -10,6 +10,8 @@ from pathlib import Path
 import oss2
 from pydantic import BaseModel
 
+from ..config import TimeoutConfig
+
 
 class OSSUploaderError(Exception):
     """Custom exception for OSS Uploader errors."""
@@ -48,9 +50,14 @@ class OSSUploader:
         self.endpoint = endpoint
         self.bucket_name = bucket_name
 
-        # 初始化OSS认证和存储桶
+        # 初始化OSS认证和存储桶，配置超时设置
         self.auth = oss2.Auth(access_key_id, access_key_secret)
-        self.bucket = oss2.Bucket(self.auth, endpoint, bucket_name)
+        self.bucket = oss2.Bucket(
+            self.auth,
+            endpoint,
+            bucket_name,
+            connect_timeout=TimeoutConfig.HTTP_CONNECT_TIMEOUT,
+        )
 
     def upload_file(self, local_file_path: Path) -> OSSUploadResult:
         """

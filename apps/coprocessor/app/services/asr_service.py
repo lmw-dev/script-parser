@@ -3,6 +3,7 @@
 基于 dashscope 库实现
 """
 
+import asyncio
 import json
 import os
 from http import HTTPStatus
@@ -11,6 +12,7 @@ from urllib import request
 
 import dashscope
 
+from ..config import TimeoutConfig
 from .oss_uploader import OSSUploader, OSSUploaderError
 
 
@@ -68,9 +70,15 @@ class ASRService:
             ASRError: 当转录失败时
         """
         try:
-            # 发起异步转录任务
-            task_response = dashscope.audio.asr.Transcription.async_call(
-                model=self.model, file_urls=[video_url], language_hints=["zh", "en"]
+            # 使用asyncio.wait_for添加超时控制
+            task_response = await asyncio.wait_for(
+                asyncio.to_thread(
+                    dashscope.audio.asr.Transcription.async_call,
+                    model=self.model,
+                    file_urls=[video_url],
+                    language_hints=["zh", "en"],
+                ),
+                timeout=TimeoutConfig.ASR_TIMEOUT,
             )
 
             # 检查响应是否有效
@@ -90,14 +98,22 @@ class ASRService:
                     f"DashScope API error (status: {status_code}): {error_msg}"
                 )
 
-            # 等待转录完成
-            transcription_response = dashscope.audio.asr.Transcription.wait(
-                task=task_response.output.task_id
+            # 等待转录完成，添加超时控制
+            transcription_response = await asyncio.wait_for(
+                asyncio.to_thread(
+                    dashscope.audio.asr.Transcription.wait,
+                    task=task_response.output.task_id,
+                ),
+                timeout=TimeoutConfig.ASR_TIMEOUT,
             )
 
             # 处理转录结果
             return self._process_transcription_response(transcription_response)
 
+        except asyncio.TimeoutError:
+            raise ASRError(
+                f"ASR transcription timed out after {TimeoutConfig.ASR_TIMEOUT} seconds"
+            ) from None
         except Exception as e:
             if isinstance(e, ASRError):
                 raise
@@ -137,11 +153,15 @@ class ASRService:
             # 传统模式：使用绝对路径尝试转录
             abs_path = str(file_path.resolve())
 
-            # 发起异步转录任务
-            task_response = dashscope.audio.asr.Transcription.async_call(
-                model=self.model,
-                file_urls=[abs_path],
-                language_hints=["zh", "en"],
+            # 发起异步转录任务，添加超时控制
+            task_response = await asyncio.wait_for(
+                asyncio.to_thread(
+                    dashscope.audio.asr.Transcription.async_call,
+                    model=self.model,
+                    file_urls=[abs_path],
+                    language_hints=["zh", "en"],
+                ),
+                timeout=TimeoutConfig.ASR_TIMEOUT,
             )
 
             # 检查响应是否有效
@@ -161,14 +181,22 @@ class ASRService:
                     f"DashScope API error (status: {status_code}): {error_msg}"
                 )
 
-            # 等待转录完成
-            transcription_response = dashscope.audio.asr.Transcription.wait(
-                task=task_response.output.task_id
+            # 等待转录完成，添加超时控制
+            transcription_response = await asyncio.wait_for(
+                asyncio.to_thread(
+                    dashscope.audio.asr.Transcription.wait,
+                    task=task_response.output.task_id,
+                ),
+                timeout=TimeoutConfig.ASR_TIMEOUT,
             )
 
             # 处理转录结果
             return self._process_transcription_response(transcription_response)
 
+        except asyncio.TimeoutError:
+            raise ASRError(
+                f"ASR transcription timed out after {TimeoutConfig.ASR_TIMEOUT} seconds"
+            ) from None
         except Exception as e:
             if isinstance(e, ASRError):
                 raise

@@ -9,8 +9,20 @@ import { Progress } from "@/components/ui/progress"
 import { Brain, FileText, Sparkles } from "lucide-react"
 import type { ProcessingSectionProps } from "@/types/script-parser.types"
 
-export function ProcessingSection({ step, steps }: ProcessingSectionProps) {
-  const progress = (step / steps.length) * 100
+interface EnhancedProcessingSectionProps extends ProcessingSectionProps {
+  progress?: number
+  stageName?: string
+}
+
+export function ProcessingSection({ 
+  step, 
+  steps, 
+  progress: customProgress, 
+  stageName 
+}: EnhancedProcessingSectionProps) {
+  // Use custom progress if provided, otherwise calculate from step
+  const progress = customProgress !== undefined ? customProgress : (step / steps.length) * 100
+  const displayStageName = stageName || steps[step - 1]
 
   const stepIcons = [
     <FileText key="1" className="h-5 w-5" />,
@@ -64,7 +76,7 @@ export function ProcessingSection({ step, steps }: ProcessingSectionProps) {
           <Progress value={progress} className="w-full h-3 bg-slate-200" />
           <div className="flex items-center justify-center space-x-3 text-primary">
             {stepIcons[step - 1]}
-            <p className="text-base font-medium">{steps[step - 1]}</p>
+            <p className="text-base font-medium">{displayStageName}</p>
           </div>
         </div>
 

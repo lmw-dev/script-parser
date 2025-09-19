@@ -54,6 +54,8 @@ export type InputSectionProps = {
 export type ProcessingSectionProps = {
   readonly step: number
   readonly steps: ReadonlyArray<string>
+  readonly progress?: number
+  readonly stageName?: string
 }
 
 export type ResultSectionProps = {

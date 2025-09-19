@@ -186,7 +186,7 @@ interface ApiResponse<T> {
 ## 开发规范
 
 ### 1. 文件命名
-- 组件文件: kebab-case (如 `input-section.tsx`)
+- 组件文件: PascalCase (如 `InputSection.tsx`)
 - 类型文件: camelCase (如 `index.ts`)
 - 工具文件: kebab-case (如 `api-client.ts`)
 
