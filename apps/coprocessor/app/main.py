@@ -6,7 +6,10 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 
+from .services.asr_service import ASRError, ASRService
 from .services.file_handler import FileHandler, FileHandlerError
+from .services.llm_service import LLMError, create_llm_router_from_env
+from .services.oss_uploader import OSSUploaderError, create_oss_uploader_from_env
 from .services.url_parser import ShareURLParser, URLParserError
 
 # 加载环境变量
@@ -145,17 +148,45 @@ async def parse_video(
                 parser = ShareURLParser()
                 try:
                     video_info = await parser.parse(data["url"])
+
+                    # Try to transcribe video using ASR service
+                    transcript_text = f"Video: {video_info.title}"
+                    try:
+                        asr_service = ASRService()
+                        transcript_text = await asr_service.transcribe_from_url(
+                            video_info.download_url
+                        )
+                    except (ASRError, ValueError) as asr_error:
+                        # If ASR fails, use fallback transcript with error info
+                        transcript_text = (
+                            f"Video: {video_info.title} (ASR failed: {str(asr_error)})"
+                        )
+
+                    # Perform LLM analysis on the transcript
+                    llm_analysis = {}
+                    try:
+                        llm_router = create_llm_router_from_env()
+                        analysis_result = await llm_router.analyze(transcript_text)
+                        llm_analysis = {
+                            "hook": analysis_result.hook,
+                            "core": analysis_result.core,
+                            "cta": analysis_result.cta
+                        }
+                    except LLMError as llm_error:
+                        llm_analysis = {"error": f"LLM analysis failed: {str(llm_error)}"}
+
                     return VideoParseResponse(
                         success=True,
                         data=AnalysisData(
-                            transcript=f"Video: {video_info.title}",
+                            transcript=transcript_text,
                             analysis={
                                 "video_info": {
                                     "video_id": video_info.video_id,
                                     "platform": video_info.platform,
                                     "title": video_info.title,
                                     "download_url": video_info.download_url,
-                                }
+                                },
+                                "llm_analysis": llm_analysis
                             },
                         ),
                     )
@@ -179,18 +210,46 @@ async def parse_video(
                 # Save uploaded file to temporary storage
                 temp_file_info = await file_handler.save_upload_file(file)
 
-                # TODO: Process file with ASR service
-                # For now, return file information
+                # Process file with ASR service using OSS integration
+                transcript_text = f"Processed file: {temp_file_info.original_filename}"
+                try:
+                    # Create OSS uploader and ASR service with OSS integration
+                    oss_uploader = create_oss_uploader_from_env()
+                    asr_service = ASRService(oss_uploader=oss_uploader)
+                    transcript_text = await asr_service.transcribe_from_file(
+                        temp_file_info.file_path
+                    )
+                except (ASRError, ValueError, OSSUploaderError) as asr_error:
+                    # If ASR or OSS fails, use fallback transcript with error info
+                    transcript_text = f"File: {temp_file_info.original_filename} (Processing failed: {str(asr_error)})"
+                except Exception as general_error:
+                    # Catch any other unexpected errors
+                    transcript_text = f"File: {temp_file_info.original_filename} (Processing failed: {str(general_error)})"
+
+                # Perform LLM analysis on the transcript
+                llm_analysis = {}
+                try:
+                    llm_router = create_llm_router_from_env()
+                    analysis_result = await llm_router.analyze(transcript_text)
+                    llm_analysis = {
+                        "hook": analysis_result.hook,
+                        "core": analysis_result.core,
+                        "cta": analysis_result.cta
+                    }
+                except LLMError as llm_error:
+                    llm_analysis = {"error": f"LLM analysis failed: {str(llm_error)}"}
+
                 return VideoParseResponse(
                     success=True,
                     data=AnalysisData(
-                        transcript=f"Processed file: {temp_file_info.original_filename}",
+                        transcript=transcript_text,
                         analysis={
                             "file_info": {
                                 "file_path": str(temp_file_info.file_path),
                                 "original_filename": temp_file_info.original_filename,
-                                "size": temp_file_info.size
-                            }
+                                "size": temp_file_info.size,
+                            },
+                            "llm_analysis": llm_analysis
                         },
                     ),
                 )

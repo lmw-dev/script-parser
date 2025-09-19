@@ -8,7 +8,6 @@ from .file_handler import FileHandler, FileHandlerError, TempFileInfo
 
 
 class TestFileHandler:
-
     @pytest.fixture
     def temp_dir(self, tmp_path):
         """Create a temporary directory for testing"""
@@ -41,22 +40,24 @@ class TestFileHandler:
     def mock_aiofiles_open(self, mocker):
         """Mock aiofiles.open for testing"""
         mock_file = AsyncMock()
-        mock_open = mocker.patch('aiofiles.open')
+        mock_open = mocker.patch("aiofiles.open")
         mock_open.return_value.__aenter__.return_value = mock_file
         return mock_open, mock_file
 
     @pytest.mark.asyncio
-    async def test_save_upload_file_success(self, file_handler, mock_upload_file, mock_aiofiles_open, mocker):
+    async def test_save_upload_file_success(
+        self, file_handler, mock_upload_file, mock_aiofiles_open, mocker
+    ):
         """Test successful file saving"""
         mock_open, mock_file = mock_aiofiles_open
 
         # Mock Path.stat() for file size
-        mock_stat = mocker.patch('pathlib.Path.stat')
+        mock_stat = mocker.patch("pathlib.Path.stat")
         mock_stat.return_value.st_size = 1024
 
         # Mock uuid generation for predictable testing
         test_uuid = "12345678-1234-5678-9012-123456789abc"
-        mocker.patch('uuid.uuid4', return_value=Mock(__str__=lambda x: test_uuid))
+        mocker.patch("uuid.uuid4", return_value=Mock(__str__=lambda x: test_uuid))
 
         # Test file saving
         result = await file_handler.save_upload_file(mock_upload_file)
@@ -73,17 +74,19 @@ class TestFileHandler:
         mock_file.write.assert_called_once_with(b"mock_video_content")
 
     @pytest.mark.asyncio
-    async def test_save_upload_file_unsafe_filename(self, file_handler, mock_unsafe_upload_file, mock_aiofiles_open, mocker):
+    async def test_save_upload_file_unsafe_filename(
+        self, file_handler, mock_unsafe_upload_file, mock_aiofiles_open, mocker
+    ):
         """Test filename sanitization for unsafe filenames"""
         mock_open, mock_file = mock_aiofiles_open
 
         # Mock Path.stat() for file size
-        mock_stat = mocker.patch('pathlib.Path.stat')
+        mock_stat = mocker.patch("pathlib.Path.stat")
         mock_stat.return_value.st_size = 512
 
         # Mock uuid generation
         test_uuid = "87654321-4321-8765-2109-876543210fed"
-        mocker.patch('uuid.uuid4', return_value=Mock(__str__=lambda x: test_uuid))
+        mocker.patch("uuid.uuid4", return_value=Mock(__str__=lambda x: test_uuid))
 
         # Test file saving with unsafe filename
         result = await file_handler.save_upload_file(mock_unsafe_upload_file)
@@ -142,10 +145,12 @@ class TestFileHandler:
         mock_path.unlink.assert_called_once()
 
     @pytest.mark.asyncio
-    async def test_save_upload_file_io_error(self, file_handler, mock_upload_file, mocker):
+    async def test_save_upload_file_io_error(
+        self, file_handler, mock_upload_file, mocker
+    ):
         """Test file saving with I/O error"""
         # Mock aiofiles.open to raise IOError
-        mock_open = mocker.patch('aiofiles.open')
+        mock_open = mocker.patch("aiofiles.open")
         mock_open.side_effect = OSError("Disk full")
 
         # Test file saving - should raise FileHandlerError
@@ -153,10 +158,12 @@ class TestFileHandler:
             await file_handler.save_upload_file(mock_upload_file)
 
     @pytest.mark.asyncio
-    async def test_save_upload_file_permission_error(self, file_handler, mock_upload_file, mocker):
+    async def test_save_upload_file_permission_error(
+        self, file_handler, mock_upload_file, mocker
+    ):
         """Test file saving with permission error"""
         # Mock aiofiles.open to raise PermissionError
-        mock_open = mocker.patch('aiofiles.open')
+        mock_open = mocker.patch("aiofiles.open")
         mock_open.side_effect = PermissionError("Permission denied")
 
         # Test file saving - should raise FileHandlerError
@@ -164,7 +171,9 @@ class TestFileHandler:
             await file_handler.save_upload_file(mock_upload_file)
 
     @pytest.mark.asyncio
-    async def test_save_upload_file_no_filename(self, file_handler, mock_aiofiles_open, mocker):
+    async def test_save_upload_file_no_filename(
+        self, file_handler, mock_aiofiles_open, mocker
+    ):
         """Test file saving when upload file has no filename"""
         mock_open, mock_file = mock_aiofiles_open
 
@@ -175,12 +184,12 @@ class TestFileHandler:
         mock_file_no_name.read = AsyncMock(return_value=b"content")
 
         # Mock Path.stat() for file size
-        mock_stat = mocker.patch('pathlib.Path.stat')
+        mock_stat = mocker.patch("pathlib.Path.stat")
         mock_stat.return_value.st_size = 256
 
         # Mock uuid generation
         test_uuid = "11111111-2222-3333-4444-555555555555"
-        mocker.patch('uuid.uuid4', return_value=Mock(__str__=lambda x: test_uuid))
+        mocker.patch("uuid.uuid4", return_value=Mock(__str__=lambda x: test_uuid))
 
         # Test file saving
         result = await file_handler.save_upload_file(mock_file_no_name)
@@ -207,9 +216,7 @@ class TestFileHandler:
         file_path = Path("/tmp/test/file.mp4")
 
         temp_file_info = TempFileInfo(
-            file_path=file_path,
-            original_filename="video.mp4",
-            size=2048
+            file_path=file_path, original_filename="video.mp4", size=2048
         )
 
         assert temp_file_info.file_path == file_path

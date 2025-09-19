@@ -1,0 +1,236 @@
+"""
+OSS Uploader 与 ASR Service 集成测试
+使用 docs/data 目录下的真实视频文件进行端到端测试
+"""
+
+import asyncio
+import os
+import sys
+from pathlib import Path
+
+# 添加项目根目录到Python路径
+sys.path.insert(0, str(Path(__file__).parent.parent))
+
+# 加载环境变量
+from dotenv import load_dotenv
+
+load_dotenv()
+
+from services.asr_service import ASRError, ASRService
+from services.oss_uploader import OSSUploaderError, create_oss_uploader_from_env
+
+
+class IntegrationTestError(Exception):
+    """集成测试异常"""
+    pass
+
+
+async def test_video_transcription_via_oss(video_file_path: Path) -> dict:
+    """
+    测试视频文件通过OSS上传后进行ASR转录的完整流程
+
+    Args:
+        video_file_path: 视频文件路径
+
+    Returns:
+        包含测试结果的字典
+
+    Raises:
+        IntegrationTestError: 当测试失败时
+    """
+    test_result = {
+        "file_path": str(video_file_path),
+        "file_size_mb": 0,
+        "upload_success": False,
+        "upload_url": None,
+        "transcription_success": False,
+        "transcript": None,
+        "error": None,
+        "steps_completed": []
+    }
+
+    try:
+        # 检查文件是否存在
+        if not video_file_path.exists():
+            raise IntegrationTestError(f"测试文件不存在: {video_file_path}")
+
+        # 获取文件大小
+        file_size = video_file_path.stat().st_size
+        test_result["file_size_mb"] = round(file_size / (1024 * 1024), 2)
+        print(f"📁 测试文件: {video_file_path.name} ({test_result['file_size_mb']} MB)")
+        test_result["steps_completed"].append("file_check")
+
+        # 1. 创建OSS上传器
+        print("🔧 创建OSS上传器...")
+        try:
+            oss_uploader = create_oss_uploader_from_env()
+            test_result["steps_completed"].append("oss_uploader_created")
+        except Exception as e:
+            raise IntegrationTestError(f"创建OSS上传器失败: {str(e)}")
+
+        # 2. 确保bucket存在
+        print("🪣 检查并确保bucket存在...")
+        try:
+            oss_uploader.ensure_bucket_exists()
+            test_result["steps_completed"].append("bucket_ensured")
+        except OSSUploaderError as e:
+            raise IntegrationTestError(f"Bucket操作失败: {str(e)}")
+
+        # 3. 上传文件到OSS
+        print("⬆️  上传文件到OSS...")
+        try:
+            upload_result = oss_uploader.upload_file(video_file_path)
+            test_result["upload_success"] = True
+            test_result["upload_url"] = upload_result.file_url
+            test_result["steps_completed"].append("file_uploaded")
+            print(f"✅ 文件已上传到OSS: {upload_result.file_url}")
+        except OSSUploaderError as e:
+            raise IntegrationTestError(f"文件上传失败: {str(e)}")
+
+        # 4. 创建ASR服务
+        print("🎤 创建ASR服务...")
+        try:
+            asr_service = ASRService()
+            test_result["steps_completed"].append("asr_service_created")
+        except Exception as e:
+            raise IntegrationTestError(f"创建ASR服务失败: {str(e)}")
+
+        # 5. 使用OSS URL进行转录
+        print("🔄 开始ASR转录...")
+        try:
+            transcript = await asr_service.transcribe_from_url(upload_result.file_url)
+            test_result["transcription_success"] = True
+            test_result["transcript"] = transcript
+            test_result["steps_completed"].append("transcription_completed")
+            print(f"✅ 转录完成: {transcript[:100]}..." if len(transcript) > 100 else f"✅ 转录完成: {transcript}")
+        except ASRError as e:
+            # ASR错误不算致命错误，记录但继续
+            test_result["error"] = f"ASR转录失败: {str(e)}"
+            print(f"⚠️  ASR转录失败: {str(e)}")
+
+        return test_result
+
+    except IntegrationTestError as e:
+        test_result["error"] = str(e)
+        print(f"❌ 集成测试失败: {str(e)}")
+        return test_result
+    except Exception as e:
+        test_result["error"] = f"未预期的错误: {str(e)}"
+        print(f"💥 未预期的错误: {str(e)}")
+        return test_result
+
+
+async def run_integration_tests():
+    """运行集成测试"""
+    print("🚀 开始OSS上传器与ASR服务集成测试")
+    print("=" * 60)
+
+    # 测试数据目录
+    data_dir = Path("../../docs/data")
+
+    # 如果从coprocessor目录运行，调整路径
+    if not data_dir.exists():
+        data_dir = Path("../../../docs/data")
+
+    # 再次检查路径
+    if not data_dir.exists():
+        data_dir = Path("/Users/liumingwei/01-project/12-liumw/15-script-parser/docs/data")
+
+    if not data_dir.exists():
+        print(f"❌ 测试数据目录不存在: {data_dir}")
+        print("请确保 docs/data 目录存在并包含测试视频文件")
+        return
+
+    # 查找视频文件
+    video_extensions = ['.mov', '.mp4', '.avi', '.mkv', '.MOV', '.MP4']
+    video_files = []
+
+    for ext in video_extensions:
+        video_files.extend(data_dir.glob(f"*{ext}"))
+
+    if not video_files:
+        print(f"❌ 在 {data_dir} 目录下未找到视频文件")
+        print(f"支持的格式: {', '.join(video_extensions)}")
+        return
+
+    print(f"📂 找到 {len(video_files)} 个视频文件:")
+    for video_file in video_files:
+        file_size = video_file.stat().st_size / (1024 * 1024)
+        print(f"  - {video_file.name} ({file_size:.1f} MB)")
+
+    # 测试结果
+    test_results = []
+
+    # 对每个视频文件进行测试
+    for i, video_file in enumerate(video_files, 1):
+        print(f"\n🎬 测试 {i}/{len(video_files)}: {video_file.name}")
+        print("-" * 40)
+
+        result = await test_video_transcription_via_oss(video_file)
+        test_results.append(result)
+
+        # 简短休息，避免API限制
+        if i < len(video_files):
+            print("⏳ 等待 3 秒...")
+            await asyncio.sleep(3)
+
+    # 输出测试总结
+    print("\n" + "=" * 60)
+    print("📊 集成测试总结")
+    print("=" * 60)
+
+    successful_uploads = sum(1 for r in test_results if r["upload_success"])
+    successful_transcriptions = sum(1 for r in test_results if r["transcription_success"])
+
+    print(f"📁 测试文件数量: {len(test_results)}")
+    print(f"⬆️  成功上传: {successful_uploads}/{len(test_results)}")
+    print(f"🎤 成功转录: {successful_transcriptions}/{len(test_results)}")
+
+    # 详细结果
+    for i, result in enumerate(test_results, 1):
+        print(f"\n📋 测试 {i}: {Path(result['file_path']).name}")
+        print(f"   文件大小: {result['file_size_mb']} MB")
+        print(f"   上传状态: {'✅ 成功' if result['upload_success'] else '❌ 失败'}")
+        if result['upload_url']:
+            print(f"   OSS URL: {result['upload_url']}")
+        print(f"   转录状态: {'✅ 成功' if result['transcription_success'] else '❌ 失败'}")
+        if result['transcript']:
+            preview = result['transcript'][:80] + "..." if len(result['transcript']) > 80 else result['transcript']
+            print(f"   转录预览: {preview}")
+        if result['error']:
+            print(f"   错误信息: {result['error']}")
+        print(f"   完成步骤: {', '.join(result['steps_completed'])}")
+
+    # 环境检查
+    print("\n🔧 环境配置检查:")
+    env_vars = [
+        'ALIBABA_CLOUD_ACCESS_KEY_ID',
+        'ALIBABA_CLOUD_ACCESS_KEY_SECRET',
+        'DASHSCOPE_API_KEY',
+        'OSS_ENDPOINT',
+        'OSS_BUCKET_NAME'
+    ]
+
+    for var in env_vars:
+        value = os.getenv(var)
+        if value:
+            # 只显示前4位和后4位，中间用*代替
+            masked_value = value[:4] + '*' * (len(value) - 8) + value[-4:] if len(value) > 8 else '*' * len(value)
+            print(f"   {var}: {masked_value}")
+        else:
+            print(f"   {var}: ❌ 未设置")
+
+
+def main():
+    """主函数"""
+    try:
+        asyncio.run(run_integration_tests())
+    except KeyboardInterrupt:
+        print("\n⏹️  测试被用户中断")
+    except Exception as e:
+        print(f"\n💥 测试运行失败: {str(e)}")
+        sys.exit(1)
+
+
+if __name__ == "__main__":
+    main()

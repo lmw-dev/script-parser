@@ -9,7 +9,10 @@ def test_successful_url_request():
     """Test successful JSON request with URL"""
     # Test with xiaohongshu URL - should now work with mock data
     response = client.post(
-        "/api/parse", json={"url": "https://www.xiaohongshu.com/discovery/item/68c94ab0000000001202ca84"}
+        "/api/parse",
+        json={
+            "url": "https://www.xiaohongshu.com/discovery/item/68c94ab0000000001202ca84"
+        },
     )
     assert response.status_code == 200  # Should now succeed
     data = response.json()

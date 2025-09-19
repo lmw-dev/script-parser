@@ -12,6 +12,7 @@ TEMP_DIR = Path("/tmp/scriptparser")
 
 class TempFileInfo(BaseModel):
     """Information about a temporarily saved file"""
+
     file_path: Path
     original_filename: str
     size: int
@@ -68,16 +69,14 @@ class FileHandler:
             content = await file.read()
 
             # Write file asynchronously
-            async with aiofiles.open(file_path, 'wb') as f:
+            async with aiofiles.open(file_path, "wb") as f:
                 await f.write(content)
 
             # Get file size from saved file
             file_size = file_path.stat().st_size
 
             return TempFileInfo(
-                file_path=file_path,
-                original_filename=safe_filename,
-                size=file_size
+                file_path=file_path, original_filename=safe_filename, size=file_size
             )
 
         except Exception as e:

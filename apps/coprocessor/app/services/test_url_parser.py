@@ -7,9 +7,7 @@ from .url_parser import ShareURLParser, URLParserError, VideoInfo
 
 # Test data
 DOUYIN_SHARE_TEXT = "看看这个视频 https://v.douyin.com/ieFKhre/ 复制此链接，打开Dou音搜索，直接观看视频！"
-XIAOHONGSHU_SHARE_TEXT = (
-    "49 【升级mac os26，变化太大了？ - 玩机国王 | 小红书 - 你的生活兴趣社区】 😆 3s1YuKFs000BYza 😆 https://www.xiaohongshu.com/discovery/item/68c94ab0000000001202ca84?source=webshare&xhsshare=pc_web&xsec_token=AB28Ibm6kG7-vTzwh_PBkMMTDJIS9vmYmKQHp3myYC8rE=&xsec_source=pc_share"
-)
+XIAOHONGSHU_SHARE_TEXT = "49 【升级mac os26，变化太大了？ - 玩机国王 | 小红书 - 你的生活兴趣社区】 😆 3s1YuKFs000BYza 😆 https://www.xiaohongshu.com/discovery/item/68c94ab0000000001202ca84?source=webshare&xhsshare=pc_web&xsec_token=AB28Ibm6kG7-vTzwh_PBkMMTDJIS9vmYmKQHp3myYC8rE=&xsec_source=pc_share"
 NO_URL_TEXT = "这是一段没有链接的文本"
 
 DOUYIN_HTML_SAMPLE = """
@@ -131,10 +129,10 @@ class TestShareURLParser:
                         "baseUrl": "https://sns-video-hw.xhscdn.com/stream/test-video.mp4",
                         "quality": "未知",
                         "fileType": "video",
-                        "canDownload": True
+                        "canDownload": True,
                     }
-                ]
-            }
+                ],
+            },
         }
 
         mock_client.get.return_value = mock_api_response

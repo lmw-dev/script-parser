@@ -120,7 +120,8 @@ class ShareURLParser:
         """从小红书 URL 中提取 item ID"""
         # 从 URL 中提取 item ID: /discovery/item/68c94ab0000000001202ca84
         import re
-        pattern = r'/item/([a-f0-9]+)'
+
+        pattern = r"/item/([a-f0-9]+)"
         match = re.search(pattern, url)
         if not match:
             raise URLParserError("无法从小红书 URL 中提取 item ID")
@@ -140,54 +141,56 @@ class ShareURLParser:
 
         # 暂时返回你提供的示例数据结构
         return {
-                "code": 200,
-                "message": "操作成功",
-                "data": {
-                    "vid": item_id,
-                    "host": "xiaohongshu",
-                    "hostAlias": "小红书",
-                    "displayTitle": "升级mac os26，变化太大了？",
-                    "status": "finish",
-                    "videoItemVoList": [
-                        {
-                            "baseUrl": "https://sns-video-hw.xhscdn.com/stream/79/110/258/01e8c94a61bce4ac4f03700199524c593d_258.mp4",
-                            "quality": "未知",
-                            "qualityAlias": "未知清晰度",
-                            "fileType": "video",
-                            "size": 0,
-                            "mustUseDownloader": False,
-                            "hlsType": False,
-                            "dashType": False,
-                            "live": False,
-                            "canDownload": True,
-                            "canDirectPlay": True,
-                            "canDirectDownload": False,
-                            "onlyForVip": False
-                        },
-                        {
-                            "baseUrl": "https://sns-webpic.xhscdn.com/1040g00831mg8iahp4u004a031hprq9f1r7a89j8?imageView2/2/w/0/format/jpg",
-                            "quality": "封面",
-                            "qualityAlias": "图片(封面)",
-                            "fileType": "image",
-                            "size": 0,
-                            "mustUseDownloader": False,
-                            "hlsType": False,
-                            "dashType": False,
-                            "live": False,
-                            "canDownload": True,
-                            "canDirectPlay": True,
-                            "canDirectDownload": False,
-                            "onlyForVip": False
-                        }
-                    ]
-                }
-            }
+            "code": 200,
+            "message": "操作成功",
+            "data": {
+                "vid": item_id,
+                "host": "xiaohongshu",
+                "hostAlias": "小红书",
+                "displayTitle": "升级mac os26，变化太大了？",
+                "status": "finish",
+                "videoItemVoList": [
+                    {
+                        "baseUrl": "https://sns-video-hw.xhscdn.com/stream/79/110/258/01e8c94a61bce4ac4f03700199524c593d_258.mp4",
+                        "quality": "未知",
+                        "qualityAlias": "未知清晰度",
+                        "fileType": "video",
+                        "size": 0,
+                        "mustUseDownloader": False,
+                        "hlsType": False,
+                        "dashType": False,
+                        "live": False,
+                        "canDownload": True,
+                        "canDirectPlay": True,
+                        "canDirectDownload": False,
+                        "onlyForVip": False,
+                    },
+                    {
+                        "baseUrl": "https://sns-webpic.xhscdn.com/1040g00831mg8iahp4u004a031hprq9f1r7a89j8?imageView2/2/w/0/format/jpg",
+                        "quality": "封面",
+                        "qualityAlias": "图片(封面)",
+                        "fileType": "image",
+                        "size": 0,
+                        "mustUseDownloader": False,
+                        "hlsType": False,
+                        "dashType": False,
+                        "live": False,
+                        "canDownload": True,
+                        "canDirectPlay": True,
+                        "canDirectDownload": False,
+                        "onlyForVip": False,
+                    },
+                ],
+            },
+        }
 
     def _parse_xiaohongshu_data(self, api_response: dict, item_id: str) -> VideoInfo:
         """解析第三方 API 返回的小红书数据"""
         try:
             if api_response.get("code") != 200:
-                raise URLParserError(f"第三方解析服务返回错误: {api_response.get('message', 'Unknown error')}")
+                raise URLParserError(
+                    f"第三方解析服务返回错误: {api_response.get('message', 'Unknown error')}"
+                )
 
             data = api_response["data"]
 
@@ -206,7 +209,7 @@ class ShareURLParser:
                 raise URLParserError("未找到可下载的视频文件")
 
             # 清理标题中的非法字符
-            title = re.sub(r'[\\/:*?"<>|]', '_', title)
+            title = re.sub(r'[\\/:*?"<>|]', "_", title)
 
             return VideoInfo(
                 video_id=video_id,
