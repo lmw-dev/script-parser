@@ -5,14 +5,14 @@ import { useRouter } from "next/navigation"
 import { useToast } from "@/hooks/use-toast"
 import { InputSection } from "@/components/sections/InputSection"
 import { extractAndValidateUrl, validateVideoFile } from "@/lib/validation"
-import { useAnalysisStore } from "@/stores/analysis-store"
+import { useAppStore } from "@/stores/app-store"
 import type { VideoParseRequest } from "@/types/script-parser.types"
 import { Sparkles, FileText, Zap } from "lucide-react"
 
 export default function HomePage() {
   const router = useRouter()
   const { toast } = useToast()
-  const { setInputData } = useAnalysisStore()
+  const { startProcessing } = useAppStore()
   
   // Local state for input validation only
   const [inputValue, setInputValue] = useState("")
@@ -109,7 +109,7 @@ export default function HomePage() {
     }
 
     // Store data in Zustand store and navigate
-    setInputData(request)
+    startProcessing(request)
     router.push('/processing')
   }
 
