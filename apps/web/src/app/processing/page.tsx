@@ -19,7 +19,7 @@ export default function ProcessingPage() {
     if (finalState.appState === 'SUCCESS') {
       router.push('/result')
     } else if (finalState.appState === 'ERROR') {
-      router.push('/error')
+      router.push('/result')
     }
   }
 

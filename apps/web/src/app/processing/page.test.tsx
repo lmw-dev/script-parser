@@ -126,7 +126,7 @@ describe('ProcessingPage Integration', () => {
 
       await waitFor(() => {
         expect(mockPush).toHaveBeenCalledTimes(1);
-        expect(mockPush).toHaveBeenCalledWith('/error');
+        expect(mockPush).toHaveBeenCalledWith('/result');
         expect(mockReplace).not.toHaveBeenCalled();
       });
     });
