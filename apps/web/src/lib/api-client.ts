@@ -11,6 +11,8 @@ import type { VideoParseRequest, ApiAnalysisResult, VideoParseResponse } from "@
  * Returns the analysis result directly
  */
 export const parseVideo = async (request: VideoParseRequest): Promise<ApiAnalysisResult> => {
+  const apiUrl = `${process.env.NEXT_PUBLIC_API_URL}/api/parse`;
+
   // Input validation
   if (!request.type || (request.type !== 'url' && request.type !== 'file')) {
     throw new Error(`Invalid request type: ${request.type}`)
@@ -33,13 +35,12 @@ export const parseVideo = async (request: VideoParseRequest): Promise<ApiAnalysi
 
     if (request.type === 'url') {
       // URL mode - send as JSON
-      response = await fetch("/api/parse", {
+      response = await fetch(apiUrl, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          type: "url",
           url: request.url
         }),
       })
@@ -47,9 +48,8 @@ export const parseVideo = async (request: VideoParseRequest): Promise<ApiAnalysi
       // File mode - send as multipart/form-data
       const formData = new FormData()
       formData.append("file", request.file!)
-      formData.append("type", "file")
 
-      response = await fetch("/api/parse", {
+      response = await fetch(apiUrl, {
         method: "POST",
         body: formData,
       })
@@ -61,9 +61,15 @@ export const parseVideo = async (request: VideoParseRequest): Promise<ApiAnalysi
       throw new Error(`API request failed: ${response.status} ${response.statusText} - ${errorText}`)
     }
 
-    // Parse and return the result
-    const result = await response.json()
-    return result as ApiAnalysisResult
+    // Parse and return the result, handling the new data structure
+    const responseData: VideoParseResponse = await response.json()
+    if (responseData.success && responseData.data) {
+        // The real API nests the analysis in a few layers
+        return responseData.data.analysis.llm_analysis;
+    } else {
+        throw new Error(responseData.message || 'API returned a non-successful status.');
+    }
+
   } catch (error) {
     // Re-throw the error to be handled by the caller
     throw error
