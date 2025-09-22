@@ -64,9 +64,15 @@ export const parseVideo = async (request: VideoParseRequest): Promise<AnalysisRe
     // Parse and transform the result to match frontend data structure
     const responseData: VideoParseResponse = await response.json()
     if (responseData.success && responseData.data) {
+        const llmAnalysis = responseData.data.analysis?.llm_analysis;
+
+        if (!llmAnalysis) {
+            throw new Error('LLM analysis data is missing in the API response.');
+        }
+
         const frontendResult: AnalysisResult = {
             transcript: responseData.data.transcript,
-            analysis: responseData.data.analysis.llm_analysis,
+            analysis: llmAnalysis,
         };
         return frontendResult;
     } else {

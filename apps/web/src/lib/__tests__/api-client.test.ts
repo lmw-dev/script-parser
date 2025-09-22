@@ -122,6 +122,27 @@ describe('api-client', () => {
   
           await expect(parseVideo(request)).rejects.toThrow('API request failed: 400 Bad Request - Invalid request format');
         });
+
+        it('should throw error if llm_analysis data is missing', async () => {
+            const mockBackendData = {
+                transcript: 'This is the transcript.',
+                analysis: {},
+            } as unknown as BackendData; // Type cast to simulate missing llm_analysis
+            const mockApiResponse: VideoParseResponse = {
+                success: true,
+                code: 0,
+                data: mockBackendData,
+            };
+            mockFetch.mockResolvedValue({ ok: true, json: jest.fn().mockResolvedValue(mockApiResponse) });
+    
+            const request: VideoParseRequest = {
+                type: 'url',
+                url: 'https://www.douyin.com/video/123456789',
+                file: null,
+            };
+    
+            await expect(parseVideo(request)).rejects.toThrow('LLM analysis data is missing in the API response.');
+        });
       });
   });
 });
