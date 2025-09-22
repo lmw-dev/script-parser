@@ -84,5 +84,4 @@ docs/data/*
 !docs/data/README.md
 test-data/
 test-files/
-*.test.*
 
