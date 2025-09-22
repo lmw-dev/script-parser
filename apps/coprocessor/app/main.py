@@ -263,24 +263,24 @@ class WorkflowOrchestrator:
                     transcript_text = await asr_service.transcribe_from_file(
                         file_info.file_path
                     )
-                            except (ASRError, ValueError, OSSUploaderError) as asr_error:
-                                self.perf_logger.log_error(
-                                    "File ASR transcription failed",
-                                    asr_error,
-                                    filename=file_info.original_filename,
-                                )
-                                # Re-raise the error to stop the workflow and return a proper error response
-                                raise asr_error            except Exception as general_error:
+                # Record ASR completion checkpoint only on success
+                self.time_monitor.checkpoint("asr_complete")
+            except (ASRError, ValueError, OSSUploaderError) as asr_error:
+                self.perf_logger.log_error(
+                    "File ASR transcription failed",
+                    asr_error,
+                    filename=file_info.original_filename,
+                )
+                # Re-raise the error to stop the workflow and return a proper error response
+                raise asr_error
+            except Exception as general_error:
                 self.perf_logger.log_error(
                     "File processing failed with unexpected error",
                     general_error,
                     filename=file_info.original_filename,
                 )
-                # Catch any other unexpected errors
-                transcript_text = f"File: {file_info.original_filename} (Processing failed: {str(general_error)})"
-            else:
-                # Record ASR completion checkpoint only on success
-                self.time_monitor.checkpoint("asr_complete")
+                # Re-raise to ensure a 500 error is returned
+                raise general_error
 
         # Perform LLM analysis on the transcript
         llm_analysis = {}
