@@ -263,15 +263,14 @@ class WorkflowOrchestrator:
                     transcript_text = await asr_service.transcribe_from_file(
                         file_info.file_path
                     )
-            except (ASRError, ValueError, OSSUploaderError) as asr_error:
-                self.perf_logger.log_error(
-                    "File ASR transcription failed",
-                    asr_error,
-                    filename=file_info.original_filename,
-                )
-                # If ASR or OSS fails, use fallback transcript with error info
-                transcript_text = f"File: {file_info.original_filename} (Processing failed: {str(asr_error)})"
-            except Exception as general_error:
+                            except (ASRError, ValueError, OSSUploaderError) as asr_error:
+                                self.perf_logger.log_error(
+                                    "File ASR transcription failed",
+                                    asr_error,
+                                    filename=file_info.original_filename,
+                                )
+                                # Re-raise the error to stop the workflow and return a proper error response
+                                raise asr_error            except Exception as general_error:
                 self.perf_logger.log_error(
                     "File processing failed with unexpected error",
                     general_error,
