@@ -1,0 +1,53 @@
+---
+inclusion: manual
+---
+# Rule: Guide for Writing Task Documents (`Task` Docs)
+
+When prompted to create a task document (`Task` doc), your primary action is to **create a new Markdown file**.
+- **File Location**: The new file **must** be saved in the `/docs/tasks/` directory.
+- **File Naming**: The filename **must** follow the format: `[Task-ID]-task-[task-title-in-kebab-case].md`.
+- **Example**: `SCR-1-task-flexible-input-methods.md`
+
+The content of this new file must follow the template structure below.
+
+---
+
+# [Task-ID]:task:[Task Title]
+
+- **Status**: 🔄 Preparing / ⚡ In Progress / ✅ Done
+
+---
+
+## 1. 🎯 Quick Decision Summary
+- **Priority**: 🔴 High / 🟡 Medium / 🟢 Low
+- **Core Value**: [A single sentence describing the core value of this task.]
+- **Time Estimate**: [e.g., ~4 hours]
+
+---
+
+## 2. 🔑 Human-AI Division of Labor
+
+### 👨‍💼 Human Tasks (You)
+*Work requiring human thought and decision-making.*
+- [ ] **Write Test Cases:** Create the initial (failing) unit tests in `tests/`.
+- [ ] **Enhance Prompt:** Add `@` references for the new test and implementation files to the `Prompt` doc.
+- [ ] **Final Review & Merge:** Perform the self-review using the PR template and merge the code.
+
+### 🤖 AI Tasks (AI)
+*Automated execution work delegated to the AI.*
+- **Code Implementation:** Write the application code to make all tests pass.
+- **Documentation:** Generate all necessary TSDoc/Docstrings for new code.
+
+---
+
+## 3. 📦 AI Instruction Package
+*This package is the final command for the AI after human prep is complete.*
+
+- **🎯 Core Objective**:
+  `Write the code in [implementation file] to make all tests in [test file] pass.`
+- **🗂️ Context References**:
+  `@/path/to/implementation/file.ts`
+  `@/path/to/test/file.test.ts`
+  `@.cursor/rules/relevant-rule.mdc`
+- **✅ Acceptance Criteria**:
+  `All tests in [test file] must pass 100%.`

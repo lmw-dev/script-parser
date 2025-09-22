@@ -1,0 +1,71 @@
+---
+inclusion: manual
+---
+# Rule: Guide for Writing Epic Battle Plan Documents (v2.1)
+
+When prompted to create a plan for a new Epic, your primary action is to **create a new Markdown file**.
+- **File Location**: The new file **must** be saved in the `/docs/battle-plans/` directory.
+- **File Naming**: The filename **must** follow the format: `[Epic-ID]-battle-plan-[epic-title-in-kebab-case].md`.
+- **Example**: `TOM-326-battle-plan-implement-api-parse-endpoint.md`
+
+The content of this new file must follow the template structure below.
+---
+
+# [Epic-ID]: [Epic Title] - 史诗作战计划
+
+- **Status**: 🎯 Designing / ✅ Plan Approved
+
+---
+
+## 1. 🎯 核心目标与决策摘要 (Objective & Decision Summary)
+- **所属项目 (Project)**: [Link to the parent Project in Linear]
+- **核心价值 (Core Value)**: [A single sentence describing the user value and business objective.]
+- **关键决策 (Core Decisions)**:
+    1. **[技术选型]**: [e.g., Adopting a synchronous API model for the MVP.]
+    2. **[架构模式]**: [e.g., Implementing the LLM service using an Adapter Pattern.]
+- **预估时间 (Time Estimate)**: [e.g., ~3 developer-days]
+
+---
+
+## 2. 🏗️ 技术设计与架构 (Technical Design & Architecture)
+- **核心工作流 (Core Workflow)**: [Use a Mermaid diagram to visualize the end-to-end data flow and component interaction.]
+- **API 契约 (API Contract)**: [Define the API endpoints, request/response schemas using code blocks.]
+- **数据模型 (Data Models)**: [Define the core data structures and types.]
+
+### 2.1 关键技术方案 (Key Technical Solutions)
+*[在此处详细描述核心算法、关键函数的伪代码或具体的实现思路。这部分内容是AI执行具体子任务时的重要参考。]*
+**示例:**
+> #### **抖音URL解析器 (`DouyinParser`)**
+> ```python
+> class DouyinParser:
+>     def parse_share_url(self, share_text: str) -> VideoInfo:
+>         # 1. Regex to find URL in text
+>         # 2. Follow redirects to get video_id
+>         # 3. Scrape page HTML for window._ROUTER_DATA
+>         # 4. Parse JSON and extract no-watermark URL
+>         # ...
+> ```
+
+---
+
+## 3. 🚀 作战序列 (Implementation Sequence)
+*This section lists the atomic, ordered sub-tasks (Issues) required to complete the Epic.*
+
+- [ ] **1. [子任务标题]**: [一句话描述此子任务的目标]
+- [ ] **2. [子任务标题]**: [一句话描述此子任务的目标]
+- [ ] **3. [子任务标题]**: [一句话描述此子任务的目标]
+
+---
+
+## 4. 🧪 质量与测试策略 (Quality & Testing Strategy)
+- **主要测试层级**: [明确本次Epic开发将重点覆盖的测试类型: Unit, Component, Integration]
+- **关键测试场景**: [列出必须覆盖的、最重要的几个端到端测试场景]
+- **性能要求 (If any)**: [e.g., The p99 latency for the `/api/parse` endpoint must be under 50 seconds for a 1-minute video.]
+
+---
+
+## 5. ✅ 验收标准 (Acceptance Criteria)
+*A checklist of conditions that must be met for the entire Epic to be considered "Done".*
+- [ ] [端到端功能验收标准 1]
+- [ ] [性能验收标准 2]
+- [ ] [错误处理验收标准 3]

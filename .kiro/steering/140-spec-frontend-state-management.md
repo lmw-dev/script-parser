@@ -1,0 +1,17 @@
+---
+inclusion: fileMatch
+fileMatchPattern: ['**/*.ts', '**/*.tsx']
+---
+# Rule: Frontend State Management Specification (v1.0)
+
+## 1. Core Principles
+- **Local State First:** Always prefer local component state (`useState`, `useReducer`) for state that is not shared or is only passed down one or two levels.
+- **Composition over Context:** Before lifting state up to a shared context, always consider if better component composition can solve the prop-drilling issue.
+
+## 2. Usage of React Context
+- **Strict Use Case:** Use `React.Context` **only** for state that is truly global and needs to be accessed by many components at different levels of the tree.
+  - **Good Examples:** User authentication status, theme (light/dark mode), internationalization (i18n) settings.
+- **Anti-Pattern:** Strictly forbid using Context as a general-purpose state management "bucket" for non-global or loosely related state.
+
+## 3. Future Scaling
+- If the application grows to a point where Context becomes unwieldy, we will evaluate dedicated state management libraries (e.g., Zustand, Jotai). This decision must be made as a formal architectural change, not on a whim.

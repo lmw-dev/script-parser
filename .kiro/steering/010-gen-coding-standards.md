@@ -1,0 +1,34 @@
+---
+inclusion: fileMatch
+fileMatchPattern: ['**/*.ts', '**/*.tsx', '**/*.py']
+---
+
+# Rule: General Coding Standards and Best Practices (v2.1)
+
+## 1. Readability First
+- **Clarity over cleverness.** Write code that is simple, explicit, and easy for a human to understand in 6 months.
+- **Use descriptive, unambiguous names for variables, functions, and classes.** Avoid cryptic abbreviations. (For specific casing and file naming rules, refer to `011-gen-naming-conventions.mdc`.)
+  - **Good:** `calculateTotalPrice`, `isUserAuthenticated`
+  - **Bad:** `calc`, `auth`
+- **Keep functions and methods short and focused.** They should do one thing and do it well (Single Responsibility Principle).
+
+## 2. Don't Repeat Yourself (DRY)
+- If you find yourself writing the same block of code in multiple places, refactor it into a reusable function or component.
+- Use constants for "magic numbers" or strings that appear more than once.
+  - **Good:** `const MAX_LOGIN_ATTEMPTS = 5;`
+  - **Bad:** `if (attempts > 5)`
+
+## 3. Commenting Philosophy
+- **Comment the "why," not the "what."** The code itself should explain *what* it is doing. Comments should explain *why* a particular approach was taken, especially if the logic is complex or non-obvious.
+- Use comments to explain business logic, trade-offs, or future work (`// TODO:`).
+- Keep comments up-to-date with the code.
+
+## 4. Error Handling
+- Do not ignore errors silently.
+- Provide clear, informative error messages that can help with debugging.
+- Use `try...catch` blocks for operations that can fail (e.g., API calls, file I/O).
+
+## 5. Immutability
+- Prefer immutable data structures where possible. Do not modify objects or arrays passed as arguments to a function; return a new modified copy instead.
+
+---

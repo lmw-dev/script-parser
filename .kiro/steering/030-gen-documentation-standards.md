@@ -1,0 +1,56 @@
+---
+inclusion: fileMatch
+fileMatchPattern: ['**/*.ts', '**/*.tsx', '**/*.py']
+---
+# Rule: Documentation & Docstring Standards (v1.0)
+
+## 1. Core Principle
+- All non-trivial, exported/public functions, classes, and types **must** be documented. The documentation should live with the code.
+
+## 2. TypeScript / TSDoc
+- **Requirement:** All exported `type` aliases, `interface` definitions, functions, and React components **must** have TSDoc comments.
+- **Format:** Use standard TSDoc tags (`@param`, `@returns`, `@description`).
+- **Example:**
+  ```typescript
+  /**
+   * Calculates the total price including tax.
+   * @param price - The base price of the item.
+   * @param taxRate - The tax rate (e.g., 0.05 for 5%).
+   * @returns The total price.
+   */
+  export const calculateTotalPrice = (price: number, taxRate: number): number => {
+    return price * (1 + taxRate);
+  };
+```
+```
+
+## 3. Python / Docstrings
+
+- **Requirement:** All public modules, functions, classes, and methods **must** have docstrings.
+    
+- **Format:** Follow the Google Python Style Guide format for docstrings.
+    
+- **Example:**
+    
+    Python
+    
+    ```
+    class UserManager:
+        """Manages user-related operations in the system.
+    
+        Attributes:
+            db_session: The database session object.
+        """
+    
+        def get_user_profile(self, user_id: int) -> dict | None:
+            """Fetches a user profile from the database.
+    
+            Args:
+                user_id: The ID of the user to fetch.
+    
+            Returns:
+                A dictionary containing the user profile, or None if not found.
+            """
+            # ... implementation ...
+    ```
+    

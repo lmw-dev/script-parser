@@ -1,0 +1,39 @@
+---
+inclusion: fileMatch
+fileMatchPattern: ['**/*.py']
+---
+# Rule: Python Best Practices
+
+## 1. Adhere to PEP 8
+- **Indentation**: Use 4 spaces per indentation level.
+- **Line Length**: Maximum line length is 88 characters, enforced by Ruff.
+- **Imports**: Imports should be grouped in the following order: standard library, third-party libraries, local application. Ruff will automatically handle this.
+
+## 2. Embrace Modern Type Hinting
+- All function signatures (arguments and return values) **must** have type hints.
+- Use modern types from the `typing` module (e.g., `list`, `dict` instead of `List`, `Dict` for Python 3.9+).
+- **Example**:
+    ```python
+    # GOOD
+    def get_user(user_id: int) -> dict | None:
+        # ...
+
+    # BAD
+    def get_user(user_id):
+        # ...
+    ```
+
+## 3. Use f-strings for String Formatting
+- For all string formatting, f-strings are the preferred method due to their readability and performance.
+  - **Good**: `message = f"Hello, {user_name}!"`
+  - **Bad**: `message = "Hello, %s!" % user_name` or `message = "Hello, {}!".format(user_name)`
+
+## 4. Exception Handling
+- Be specific in `except` blocks. Never use a bare `except:`.
+  - **Good**: `except FileNotFoundError as e:`
+  - **Bad**: `except:`
+- Log errors with context instead of just printing them.
+
+## 5. Dependency Management
+- All project dependencies **must** be explicitly listed in a `requirements.txt` file.
+- Always work within an activated virtual environment (`venv`) to isolate project dependencies.
