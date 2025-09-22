@@ -603,6 +603,9 @@ async def parse_video(
                 start_time=start_time,
             )
 
+            # Add detailed logging for the exact response data
+            perf_logger.logger.info(f"[DEBUG] Full success response being sent: {success_response}")
+
             # Add performance summary to logs
             perf_summary = orchestrator.time_monitor.get_performance_summary()
             perf_logger.logger.info(
