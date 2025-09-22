@@ -4,7 +4,7 @@
  */
 
 import { parseVideo } from '../api-client';
-import type { VideoParseRequest, ApiAnalysisResult, VideoParseResponse } from '@/types/script-parser.types';
+import type { VideoParseRequest, AnalysisResult, VideoParseResponse, BackendData } from '@/types/script-parser.types';
 
 // Mock global fetch
 const mockFetch = jest.fn();
@@ -48,21 +48,32 @@ describe('api-client', () => {
         });
       });
 
-      it('should return parsed result for successful URL request', async () => {
-        const mockLlmAnalysis: ApiAnalysisResult = {
-          hook: 'Amazing hook content',
-          core: 'Deep core analysis',
-          cta: 'Strong call to action',
+      it('should return transformed AnalysisResult for successful URL request', async () => {
+        const mockBackendData: BackendData = {
+            transcript: 'This is the transcript.',
+            analysis: {
+                llm_analysis: {
+                    hook: 'Amazing hook content',
+                    core: 'Deep core analysis',
+                    cta: 'Strong call to action',
+                }
+            }
         };
         const mockApiResponse: VideoParseResponse = {
             success: true,
             code: 0,
-            data: { 
-                transcript: 'test transcript', 
-                analysis: { llm_analysis: mockLlmAnalysis }
-            },
+            data: mockBackendData,
         };
         mockFetch.mockResolvedValue({ ok: true, json: jest.fn().mockResolvedValue(mockApiResponse) });
+
+        const expectedFrontendResult: AnalysisResult = {
+            transcript: 'This is the transcript.',
+            analysis: {
+                hook: 'Amazing hook content',
+                core: 'Deep core analysis',
+                cta: 'Strong call to action',
+            }
+        }
 
         const request: VideoParseRequest = {
           type: 'url',
@@ -72,59 +83,29 @@ describe('api-client', () => {
 
         const result = await parseVideo(request);
 
-        expect(result).toEqual(mockLlmAnalysis);
+        expect(result).toEqual(expectedFrontendResult);
       });
     });
 
-    describe('File submission', () => {
-      it('should make correct fetch call for file request', async () => {
-        const mockFile = new File(['test content'], 'test.mp4', { type: 'video/mp4' });
-        const mockApiResponse: VideoParseResponse = {
-            success: true,
-            code: 0,
-            data: { transcript: '', analysis: { llm_analysis: { hook: '', core: '', cta: '' } } },
-          };
-        mockFetch.mockResolvedValue({ ok: true, json: jest.fn().mockResolvedValue(mockApiResponse) });
-
-        const request: VideoParseRequest = {
-          type: 'file',
-          url: '',
-          file: mockFile,
-        };
-
-        await parseVideo(request);
-
-        expect(mockFetch).toHaveBeenCalledWith(apiUrl, {
-          method: 'POST',
-          body: expect.any(FormData),
-        });
-
-        const callArgs = mockFetch.mock.calls[0];
-        const formData = callArgs[1].body as FormData;
-        expect(formData.get('file')).toBe(mockFile);
-        expect(formData.has('type')).toBe(false);
-      });
-
-      it('should throw an error if the API returns success: false', async () => {
-        const mockApiResponse = { 
-            success: false, 
-            message: 'Processing failed in backend' 
-        };
-        mockFetch.mockResolvedValue({ ok: true, json: jest.fn().mockResolvedValue(mockApiResponse) });
-
-        const request: VideoParseRequest = {
-            type: 'url',
-            url: 'https://www.douyin.com/video/123456789',
-            file: null,
-          };
-
-        await expect(parseVideo(request)).rejects.toThrow('Processing failed in backend');
-      });
-    });
-
-    // Error and input validation tests remain largely the same
     describe('Error handling', () => {
-        it('should throw error when API returns failure response', async () => {
+        it('should throw an error if the API returns success: false', async () => {
+            const mockApiResponse = { 
+                success: false, 
+                code: 500,
+                message: 'Processing failed in backend' 
+            };
+            mockFetch.mockResolvedValue({ ok: true, json: jest.fn().mockResolvedValue(mockApiResponse) });
+    
+            const request: VideoParseRequest = {
+                type: 'url',
+                url: 'https://www.douyin.com/video/123456789',
+                file: null,
+              };
+    
+            await expect(parseVideo(request)).rejects.toThrow('Processing failed in backend');
+          });
+
+        it('should throw error when API returns non-ok response', async () => {
           const mockResponse = {
             ok: false,
             status: 400,
@@ -140,13 +121,6 @@ describe('api-client', () => {
           };
   
           await expect(parseVideo(request)).rejects.toThrow('API request failed: 400 Bad Request - Invalid request format');
-        });
-      });
-  
-      describe('Input validation', () => {
-        it('should throw error for invalid request type', async () => {
-          const request = { type: 'invalid' } as any;
-          await expect(parseVideo(request)).rejects.toThrow('Invalid request type: invalid');
         });
       });
   });

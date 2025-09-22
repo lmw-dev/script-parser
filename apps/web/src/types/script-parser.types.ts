@@ -9,7 +9,7 @@ export type AppState = "IDLE" | "INPUT_VALID" | "PROCESSING" | "SUCCESS" | "ERRO
 // Input types for flexible video input
 export type InputType = "url" | "file"
 
-// Analysis result structure (for display)
+// This is the final, clean data structure used by the frontend components.
 export type AnalysisResult = {
   readonly transcript: string
   readonly analysis: {
@@ -19,12 +19,23 @@ export type AnalysisResult = {
   }
 }
 
-// API result structure (from parseVideo function)
+// This represents the nested `llm_analysis` object from the backend.
 export type ApiAnalysisResult = {
   readonly hook: string
   readonly core: string
   readonly cta: string
 }
+
+// This represents the structure of the `data` object in the backend response.
+export type BackendData = {
+  readonly transcript: string;
+  readonly analysis: {
+    readonly llm_analysis: ApiAnalysisResult;
+    // other potential fields from the backend
+    readonly video_info?: any;
+    readonly file_info?: any;
+  };
+};
 
 // API request/response types
 export type VideoParseRequest = {
@@ -33,21 +44,22 @@ export type VideoParseRequest = {
   readonly file: File | null
 }
 
+// This now accurately reflects the JSON response from the Python backend.
 export type VideoParseResponse = {
   readonly success: boolean
-  readonly message: string
-  readonly task_id: string
-  readonly result?: AnalysisResult
+  readonly code: number
+  readonly message?: string
+  readonly data?: BackendData
 }
 
 // Component props interfaces
 export type InputSectionProps = {
   readonly currentState: AppState
-  readonly inputValue: string // Controlled by parent component
-  readonly selectedFile: File | null // Controlled by parent component
-  readonly onInputChange: (value: string) => void // Controlled by parent component
-  readonly onFileSelect: (file: File | null) => void // Controlled by parent component
-  readonly onSubmit: () => void // Simplified - no data parameter
+  readonly inputValue: string
+  readonly selectedFile: File | null
+  readonly onInputChange: (value: string) => void
+  readonly onFileSelect: (file: File | null) => void
+  readonly onSubmit: () => void
   readonly error?: string
 }
 

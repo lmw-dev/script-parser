@@ -10,7 +10,7 @@ import type { VideoParseRequest, ApiAnalysisResult, VideoParseResponse } from "@
  * Submits video for parsing via URL or file upload
  * Returns the analysis result directly
  */
-export const parseVideo = async (request: VideoParseRequest): Promise<ApiAnalysisResult> => {
+export const parseVideo = async (request: VideoParseRequest): Promise<AnalysisResult> => {
   const apiUrl = `${process.env.NEXT_PUBLIC_API_URL}/api/parse`;
 
   // Input validation
@@ -61,11 +61,14 @@ export const parseVideo = async (request: VideoParseRequest): Promise<ApiAnalysi
       throw new Error(`API request failed: ${response.status} ${response.statusText} - ${errorText}`)
     }
 
-    // Parse and return the result, handling the new data structure
+    // Parse and transform the result to match frontend data structure
     const responseData: VideoParseResponse = await response.json()
     if (responseData.success && responseData.data) {
-        // The real API nests the analysis in a few layers
-        return responseData.data.analysis.llm_analysis;
+        const frontendResult: AnalysisResult = {
+            transcript: responseData.data.transcript,
+            analysis: responseData.data.analysis.llm_analysis,
+        };
+        return frontendResult;
     } else {
         throw new Error(responseData.message || 'API returned a non-successful status.');
     }
