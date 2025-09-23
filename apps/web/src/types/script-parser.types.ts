@@ -73,7 +73,6 @@ export type ProcessingSectionProps = {
 export type ResultSectionProps = {
   readonly result: AnalysisResult
   readonly onReset: () => void
-  readonly onCopy: (text: string) => void
   readonly onDownload: () => void
 }
 

@@ -44,6 +44,7 @@
     "@vercel/analytics": "^1.5.0",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
+    "copy-to-clipboard": "^3.3.3",
     "geist": "^1.5.1",
     "lucide-react": "^0.544.0",
     "next": "15.5.3",

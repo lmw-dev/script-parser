@@ -24,13 +24,6 @@ export default function ResultPage() {
     router.push("/")
   }
 
-  const handleCopy = (text: string) => {
-    navigator.clipboard.writeText(text)
-    toast({
-      title: "已复制到剪贴板",
-      duration: 2000,
-    })
-  }
 
   const handleDownload = () => {
     if (!resultData) return
@@ -86,7 +79,6 @@ ${resultData.analysis.cta}
         <ResultSection
           result={resultData}
           onReset={handleReset}
-          onCopy={handleCopy}
           onDownload={handleDownload}
         />
       </main>

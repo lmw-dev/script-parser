@@ -1,6 +1,6 @@
 /**
  * ResultSection component - displays analysis results
- * Based on TOM-318 specification
+ * Based on TOM-318 and TOM-346 specifications
  */
 
 "use client"
@@ -8,9 +8,42 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Copy, Download, RefreshCw, CheckCircle, FileText, Target, Zap } from "lucide-react"
-import type { ResultSectionProps } from "@/types/script-parser.types"
+import { useToast } from "@/hooks/use-toast"
+import { copyToClipboard } from "@/lib/utils"
+import type { AnalysisResult } from "@/types/script-parser.types"
 
-export function ResultSection({ result, onReset, onCopy, onDownload }: ResultSectionProps) {
+// Update props to remove onCopy as it's now handled internally
+export type ResultSectionProps = {
+  readonly result: AnalysisResult
+  readonly onReset: () => void
+  readonly onDownload: () => void
+}
+
+export function ResultSection({ result, onReset, onDownload }: ResultSectionProps) {
+  const { toast } = useToast()
+
+  const handleCopy = (textToCopy: string, type: string) => {
+    try {
+      const success = copyToClipboard(textToCopy)
+      if (success) {
+        toast({
+          title: "复制成功！",
+          description: `${type} 已复制到您的剪贴板。`,
+        })
+      } else {
+        // This case might not be easily reachable if copy-to-clipboard is robust
+        // but it is good practice to handle it.
+        throw new Error("copyToClipboard returned false")
+      }
+    } catch (error) {
+      toast({
+        title: "复制失败",
+        description: "无法访问剪贴板，请检查浏览器权限。",
+        variant: "destructive",
+      })
+    }
+  }
+
   return (
     <div className="space-y-8">
       <div className="text-center space-y-6">
@@ -42,7 +75,7 @@ export function ResultSection({ result, onReset, onCopy, onDownload }: ResultSec
               <Button
                 variant="outline"
                 size="sm"
-                onClick={() => onCopy(result.transcript)}
+                onClick={() => handleCopy(result.transcript, "完整逐字稿")}
                 className="border-primary/20 bg-transparent hover:bg-primary/10"
               >
                 <Copy className="h-4 w-4" />
@@ -67,7 +100,7 @@ export function ResultSection({ result, onReset, onCopy, onDownload }: ResultSec
                 <Button
                   variant="outline"
                   size="sm"
-                  onClick={() => onCopy(result.analysis.hook)}
+                  onClick={() => handleCopy(result.analysis.hook, "钩子")}
                   className="border-primary/20 bg-transparent hover:bg-primary/10"
                 >
                   <Copy className="h-4 w-4" />
@@ -91,7 +124,7 @@ export function ResultSection({ result, onReset, onCopy, onDownload }: ResultSec
                 <Button
                   variant="outline"
                   size="sm"
-                  onClick={() => onCopy(result.analysis.core)}
+                  onClick={() => handleCopy(result.analysis.core, "核心")}
                   className="border-primary/20 bg-transparent hover:bg-primary/10"
                 >
                   <Copy className="h-4 w-4" />
@@ -113,7 +146,7 @@ export function ResultSection({ result, onReset, onCopy, onDownload }: ResultSec
                 <Button
                   variant="outline"
                   size="sm"
-                  onClick={() => onCopy(result.analysis.cta)}
+                  onClick={() => handleCopy(result.analysis.cta, "行动号召")}
                   className="border-primary/20 bg-transparent hover:bg-primary/10"
                 >
                   <Copy className="h-4 w-4" />
