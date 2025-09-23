@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useEffect, useState, useRef } from "react"
 import { useRouter } from "next/navigation"
 import { useAppStore } from "@/stores/app-store"
 import { parseVideo } from "@/lib/api-client"
@@ -13,6 +13,7 @@ export default function ProcessingPage() {
   const setSuccess = useAppStore((state) => state.setSuccess)
   const setError = useAppStore((state) => state.setError)
   const [apiCompleted, setApiCompleted] = useState(false)
+  const requestSent = useRef(false)
 
   const handleCompletion = () => {
     const finalState = useAppStore.getState()
@@ -34,6 +35,12 @@ export default function ProcessingPage() {
         router.replace("/")
         return
       }
+
+      // Prevent double execution in Strict Mode
+      if (requestSent.current) {
+        return
+      }
+      requestSent.current = true
 
       try {
         const result = await parseVideo(requestData)
