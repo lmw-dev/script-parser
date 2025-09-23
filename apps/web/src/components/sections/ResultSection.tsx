@@ -1,6 +1,6 @@
 /**
  * ResultSection component - displays analysis results
- * Based on TOM-318 and TOM-346 specifications
+ * Based on TOM-318, TOM-346 and TOM-347 specifications
  */
 
 "use client"
@@ -9,17 +9,16 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Copy, Download, RefreshCw, CheckCircle, FileText, Target, Zap } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
-import { copyToClipboard } from "@/lib/utils"
+import { copyToClipboard, downloadAsMarkdown } from "@/lib/utils"
 import type { AnalysisResult } from "@/types/script-parser.types"
 
-// Update props to remove onCopy as it's now handled internally
+// Update props to remove onCopy and onDownload as they are now handled internally
 export type ResultSectionProps = {
   readonly result: AnalysisResult
   readonly onReset: () => void
-  readonly onDownload: () => void
 }
 
-export function ResultSection({ result, onReset, onDownload }: ResultSectionProps) {
+export function ResultSection({ result, onReset }: ResultSectionProps) {
   const { toast } = useToast()
 
   const handleCopy = (textToCopy: string, type: string) => {
@@ -31,14 +30,29 @@ export function ResultSection({ result, onReset, onDownload }: ResultSectionProp
           description: `${type} 已复制到您的剪贴板。`,
         })
       } else {
-        // This case might not be easily reachable if copy-to-clipboard is robust
-        // but it is good practice to handle it.
         throw new Error("copyToClipboard returned false")
       }
     } catch (error) {
       toast({
         title: "复制失败",
         description: "无法访问剪贴板，请检查浏览器权限。",
+        variant: "destructive",
+      })
+    }
+  }
+
+  const handleDownload = () => {
+    try {
+      downloadAsMarkdown(result)
+      toast({
+        title: "结果已开始下载",
+        description: "文件将保存为 script-analysis.md",
+        duration: 3000,
+      })
+    } catch (error) {
+      toast({
+        title: "下载失败",
+        description: "无法生成下载文件，请稍后重试。",
         variant: "destructive",
       })
     }
@@ -162,7 +176,7 @@ export function ResultSection({ result, onReset, onDownload }: ResultSectionProp
 
       <div className="flex justify-center space-x-4">
         <Button
-          onClick={onDownload}
+          onClick={handleDownload}
           variant="outline"
           className="border-primary/20 bg-transparent hover:bg-primary/10 px-6 py-3"
         >

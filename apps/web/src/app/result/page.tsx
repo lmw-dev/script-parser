@@ -3,13 +3,11 @@
 import { useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { useAppStore } from "@/stores/app-store"
-import { useToast } from "@/hooks/use-toast"
 import { ResultSection } from "@/components/sections/ResultSection"
 import { ErrorSection } from "@/components/sections/ErrorSection"
 
 export default function ResultPage() {
   const router = useRouter()
-  const { toast } = useToast()
   const { resultData, error, appState, reset } = useAppStore()
 
   useEffect(() => {
@@ -25,45 +23,6 @@ export default function ResultPage() {
   }
 
 
-  const handleDownload = () => {
-    if (!resultData) return
-
-    const markdownContent = `
-# AI 脚本分析结果
-
-## 逐字稿
-
-${resultData.transcript}
-
----
-
-## AI 结构化分析
-
-### 🚀 钩子 (Hook)
-${resultData.analysis.hook}
-
-### 💡 核心 (Core)
-${resultData.analysis.core}
-
-### 🎯 行动号召 (CTA)
-${resultData.analysis.cta}
-`
-    const blob = new Blob([markdownContent.trim()], { type: "text/markdown" })
-    const url = URL.createObjectURL(blob)
-    const a = document.createElement("a")
-    a.href = url
-    a.download = "script-analysis-result.md"
-    document.body.appendChild(a)
-    a.click()
-    document.body.removeChild(a)
-    URL.revokeObjectURL(url)
-
-    toast({
-      title: "结果已开始下载",
-      description: "文件将保存为 script-analysis-result.md",
-      duration: 3000,
-    })
-  }
 
   if (appState === "ERROR" && error) {
     return (
@@ -79,7 +38,6 @@ ${resultData.analysis.cta}
         <ResultSection
           result={resultData}
           onReset={handleReset}
-          onDownload={handleDownload}
         />
       </main>
     )
