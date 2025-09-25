@@ -43,7 +43,7 @@ load_env() {
 
 # 检查必需的环境变量
 check_required_env() {
-    local required_vars=("TCR_REGION" "TCR_INSTANCE_NAME" "TCR_NAMESPACE")
+    local required_vars=("TCR_REGISTRY" "TCR_NAMESPACE")
     local missing_vars=()
     
     for var in "${required_vars[@]}"; do
@@ -71,13 +71,14 @@ check_docker() {
 tcr_login() {
     echo -e "${BLUE}🔐 登录腾讯云TCR...${NC}"
     
-    # 构建TCR登录地址
-    local tcr_endpoint="${TCR_REGION}.tencentcloudcr.com"
+    # 腾讯云个人版TCR固定地址
+    local tcr_endpoint="$TCR_REGISTRY"
     
     # 检查是否已配置TCR凭证
     if [ -z "$TCR_USERNAME" ] || [ -z "$TCR_PASSWORD" ]; then
         echo -e "${YELLOW}⚠️  TCR凭证未配置，请确保Docker已通过其他方式登录TCR${NC}"
         echo -e "${YELLOW}💡 或在.env文件中设置 TCR_USERNAME 和 TCR_PASSWORD${NC}"
+        echo -e "${YELLOW}💡 手动登录：docker login $tcr_endpoint${NC}"
     else
         echo "$TCR_PASSWORD" | docker login "$tcr_endpoint" -u "$TCR_USERNAME" --password-stdin
         echo -e "${GREEN}✅ TCR登录成功${NC}"
@@ -94,10 +95,9 @@ build_and_push() {
     check_docker
     tcr_login
     
-    # 构建镜像标记
-    local registry="${TCR_REGION}.tencentcloudcr.com"
-    local web_image="${registry}/${TCR_INSTANCE_NAME}/${TCR_NAMESPACE}/${PROJECT_NAME}-web:latest"
-    local coprocessor_image="${registry}/${TCR_INSTANCE_NAME}/${TCR_NAMESPACE}/${PROJECT_NAME}-coprocessor:latest"
+    # 构建镜像标记（腾讯云个人版TCR格式）
+    local web_image="${TCR_REGISTRY}/${TCR_NAMESPACE}/${PROJECT_NAME}-web:latest"
+    local coprocessor_image="${TCR_REGISTRY}/${TCR_NAMESPACE}/${PROJECT_NAME}-coprocessor:latest"
     
     echo -e "${YELLOW}📦 构建 Web 应用...${NC}"
     cd "$PROJECT_ROOT"

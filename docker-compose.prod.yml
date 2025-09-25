@@ -33,7 +33,7 @@ services:
 
   # Next.js Web应用 - 使用TCR镜像
   web:
-    image: ${TCR_REGISTRY}/${TCR_INSTANCE_NAME}/${TCR_NAMESPACE}/scriptparser-web:latest
+    image: ${TCR_REGISTRY}/${TCR_NAMESPACE}/scriptparser-web:latest
     container_name: ${PROJECT_PREFIX}_web
     restart: always
     environment:
@@ -52,7 +52,7 @@ services:
 
   # FastAPI AI协处理器 - 使用TCR镜像  
   coprocessor:
-    image: ${TCR_REGISTRY}/${TCR_INSTANCE_NAME}/${TCR_NAMESPACE}/scriptparser-coprocessor:latest
+    image: ${TCR_REGISTRY}/${TCR_NAMESPACE}/scriptparser-coprocessor:latest
     container_name: ${PROJECT_PREFIX}_coprocessor
     restart: always
     environment:
