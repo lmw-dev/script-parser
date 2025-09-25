@@ -4,7 +4,7 @@ import ResultPage from './page';
 import { AnalysisResult } from '@/types';
 
 jest.mock('@/components/sections/ResultSection', () => ({
-  ResultSection: ({ result, onReset }: { result: AnalysisResult; onReset: () => void }) => (
+  ResultSection: ({ result }: { result: AnalysisResult }) => (
     <div>
       <h1>完整逐字稿</h1>
       <p>{result.transcript}</p>

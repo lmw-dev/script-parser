@@ -117,12 +117,7 @@ export function useProgressAnimation(
   const [startTime] = useState(Date.now())
 
   useEffect(() => {
-    if (apiCompleted) {
-      // API completed, immediately set to 100% and trigger completion
-      setProgress(100)
-      setTimeout(() => onComplete(), 500) // Small delay for smooth transition
-      return
-    }
+    let animationId: number;
 
     const updateProgress = () => {
       const elapsedTime = Date.now() - startTime
@@ -132,17 +127,29 @@ export function useProgressAnimation(
       setCurrentStage(newStage)
       setStageName(newStageName)
       
-      // If progress reaches 99%, stop updating and wait for API
-      if (newProgress >= 99) {
-        return
+      // If progress reaches 99%, stop the animation loop and wait for the API to complete.
+      if (newProgress < 99) {
+        animationId = requestAnimationFrame(updateProgress)
       }
-      
-      // Continue animation
-      requestAnimationFrame(updateProgress)
     }
 
-    const animationId = requestAnimationFrame(updateProgress)
-    return () => cancelAnimationFrame(animationId)
+    if (apiCompleted) {
+      // API has finished, so we stop any running animation.
+      // The `cancelAnimationFrame` would be for an animationId set in a previous render.
+      // Since we are re-running the effect, we just need to not start a new loop.
+      setProgress(100)
+      setTimeout(() => onComplete(), 500) // Small delay for smooth transition
+    } else {
+      // API is not complete, run the animation.
+      animationId = requestAnimationFrame(updateProgress)
+    }
+
+    return () => {
+      // Cleanup: cancel the animation frame when the component unmounts or dependencies change.
+      if (animationId) {
+        cancelAnimationFrame(animationId)
+      }
+    }
   }, [startTime, onComplete, apiCompleted])
 
   return { progress, currentStage, stageName }

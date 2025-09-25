@@ -16,8 +16,7 @@ export const copyToClipboard = (text: string): boolean => {
   try {
     copy(text)
     return true
-  } catch (error) {
-    console.error('Failed to copy text to clipboard:', error)
+  } catch {
     return false
   }
 }

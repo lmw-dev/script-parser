@@ -1,27 +1,35 @@
 ---
-description: "Defines the testing strategy and best practices for both frontend and backend services."
-globs: **/*.test.ts,**/*.test.tsx,**/test_*.py
+description: "Defines the testing strategy and best practices, prioritizing backend stability and agentic test generation."
+globs: ["**/*.test.ts", "**/*.test.tsx", "**/test_*.py"]
 alwaysApply: false
 ---
-# Rule: Testing Guide and Strategy (v2.1)
+# Rule: Testing Guide and Strategy (v3.0 - Agentic & Backend-First)
 
-*Note: This guide defines **how** to write tests. Our core development workflow, `[[SOP - Vibe Coding 端到端开发工作流 V3.0]]`, defines **when** to write them (Test-First).*
+*Note: This guide defines **how** and **what** to test. Our core development workflow, `[[SOP - Vibe Coding 端到端开发工作流]]`, defines **when** to write them (in a TDD loop).*
 
-## 1. General Testing Principles
-- **Test Behavior, Not Implementation:** Tests should verify the public-facing behavior of a function or component, not its internal implementation details. 
-- **Clear Descriptions:** Each test case should have a clear, human-readable description of the behavior it is testing. 
-- **AAA Pattern:** Structure tests using the Arrange-Act-Assert pattern. 
+## 1. Core Strategy: Agentic Testing & Backend-First
+*This strategy is inspired by Andrew Ng's insights on ensuring stability in the era of AI-assisted development[cite: 2].*
 
-## 2. Frontend Testing (web - Next.js)
-- **Tools:** Use **Vitest** and **React Testing Library (RTL)**. 
-- **Focus:** Unit test complex hooks and utilities; integration test user flows. 
+- **Backend-First Principle**: Our testing efforts **must** be prioritized for backend (FastAPI) and infrastructure code. Backend bugs are often hidden, hard to trace, and can cause significant long-term damage like data corruption[cite: 2]. Frontend bugs, while important, are typically easier to visually identify and fix[cite: 2]. This aligns with the principle of "Move fast with stable infrastructure"[cite: 2].
+
+- **AI Generation Principle (Agentic Testing)**: The primary method for generating test cases (the "Red" in our Red-Green-Refactor loop) is to instruct an AI to act as a rigorous QA agent. AI is highly effective at writing the comprehensive and sometimes tedious test cases required for robust TDD, overcoming a common barrier to its adoption[cite: 2]. The human developer's role is to define the required behaviors and validate the generated tests.
+
+## 2. General Testing Principles
+- **Test Behavior, Not Implementation:** Tests should verify the public-facing behavior of a function or component, not its internal implementation details.
+- **Clear Descriptions:** Each test case should have a clear, human-readable description of the behavior it is testing.
+- **AAA Pattern:** Structure tests using the Arrange-Act-Assert pattern.
+
+## 3. Frontend Testing (web - Next.js)
+- **Tools:** Use **Vitest** and **React Testing Library (RTL)**.
+- **Focus:** Prioritize end-to-end and integration tests for critical user flows. Unit tests are for complex, isolated hooks and utility functions.
 - **File Location:** Test files **must** be co-located with the source file they are testing.
-  - **Good:** `/components/ui/Button.tsx` and `/components/ui/Button.test.tsx`
-- **Querying:** Always prefer user-facing queries like `getByRole` and `getByLabelText`.  Avoid implementation-detail queries like `getByTestId`. 
+  - **Good:** `/components/ui/Button.tsx` and `/components/ui/Button.test.tsx` 
+- **Querying:** Always prefer user-facing queries like `getByRole` and `getByLabelText`. Avoid implementation-detail queries like `getByTestId`.
 
-## 3. Backend Testing (ai - FastAPI)
-- **Tools:** Use **Pytest**. 
-- **Focus:** The primary focus is **integration testing API endpoints** using FastAPI's `TestClient`.  Unit tests are for complex, isolated business logic. 
+## 4. Backend Testing (coprocessor - FastAPI)
+- **Tools:** Use **Pytest**.
+- **Focus:** The primary focus is **integration testing API endpoints** using FastAPI's `TestClient`. This is our highest priority.
+- Unit tests are for complex, isolated business logic (e.g., specific data transformation algorithms).
 - **File Location:** All test files **must** be placed in a top-level `tests/` directory, which mirrors the structure of the `app/` directory.
-  - **Good:** Test for `apps/coprocessor/app/services/factory.py` should be at `apps/coprocessor/tests/services/test_factory.py`
-- **Dependencies:** Tests should **not** interact with the real database or external APIs. Use mocking/patching to simulate their responses. 
+  - **Good:** The test for `apps/coprocessor/app/services/factory.py` should be at `apps/coprocessor/tests/services/test_factory.py` 
+- **Dependencies:** Tests must **never** interact with the real database or external APIs. Use mocking/patching (e.g., Pytest's `monkeypatch` or `unittest.mock`) to simulate their behavior and responses.

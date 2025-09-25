@@ -54,7 +54,7 @@ export const extractAndValidateUrl = (text: string): ExtractValidationResult => 
   if (!text || typeof text !== 'string' || text.trim() === '') {
     return {
       isValid: false,
-      error: 'No valid URL found in text'
+      error: '输入内容中未找到有效链接'
     }
   }
 
@@ -65,7 +65,7 @@ export const extractAndValidateUrl = (text: string): ExtractValidationResult => 
   if (!matches || matches.length === 0) {
     return {
       isValid: false,
-      error: 'No valid URL found in text'
+      error: '输入内容中未找到有效链接'
     }
   }
 
@@ -84,7 +84,7 @@ export const extractAndValidateUrl = (text: string): ExtractValidationResult => 
 
   return {
     isValid: false,
-    error: 'No supported video platform URL found'
+    error: '未找到支持的视频平台链接，请检查输入内容'
   }
 }
 
@@ -104,19 +104,17 @@ export const validateVideoFile = (file: File): ValidationResult => {
 
   const MAX_SIZE = 100 * 1024 * 1024 // 100MB
 
-  // Support common MOV file MIME types (video/mov and video/quicktime)
-
   if (!VALID_TYPES.includes(file.type as (typeof VALID_TYPES)[number])) {
     return {
       isValid: false,
-      error: `Unsupported file type: ${file.type}. Please upload MP4, MOV, AVI, MKV or WEBM video files`,
+      error: `不支持的文件类型: ${file.type}。请上传 MP4, MOV, AVI, MKV 或 WEBM 格式的视频文件`,
     }
   }
 
   if (file.size > MAX_SIZE) {
     return {
       isValid: false,
-      error: "File size exceeds 100MB limit. Please upload a smaller video file",
+      error: "文件大小超过 100MB 限制，请上传更小的视频文件",
     }
   }
 

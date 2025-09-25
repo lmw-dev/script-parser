@@ -12,7 +12,11 @@ const nextConfig: NextConfig = {
   // 环境变量配置
   env: {
     NEXT_PUBLIC_API_URL:
-      process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000',
+      process.env.NEXT_PUBLIC_API_URL || 
+      (process.env.NODE_ENV === 'production' 
+        ? 'http://localhost/api'    // Docker 生产环境
+        : 'http://localhost:8000'   // 本地开发环境
+      ),
   },
 
   // 服务器外部包配置

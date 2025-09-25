@@ -22,19 +22,19 @@ export const useAppStore = create<AppStore>((set) => ({
   resultData: null,
   error: null,
 
-  startProcessing: (data) => set({
-    requestData: data,
+  startProcessing: (requestData) => set({
+    requestData,
     appState: 'PROCESSING',
     error: null,
   }),
 
-  setSuccess: (result) => set({
-    resultData: result,
+  setSuccess: (resultData) => set({
+    resultData,
     appState: 'SUCCESS',
   }),
 
-  setError: (errorMsg) => set({
-    error: errorMsg,
+  setError: (error) => set({
+    error,
     appState: 'ERROR',
   }),
 

@@ -7,7 +7,7 @@
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { Copy, Download, RefreshCw, CheckCircle, FileText, Target, Zap } from "lucide-react"
+import { Copy, Download, RefreshCw, CheckCircle, FileText, Lightbulb, Diamond, Goal } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
 import { copyToClipboard, downloadAsMarkdown } from "@/lib/utils"
 import type { AnalysisResult } from "@/types/script-parser.types"
@@ -32,7 +32,7 @@ export function ResultSection({ result, onReset }: ResultSectionProps) {
       } else {
         throw new Error("copyToClipboard returned false")
       }
-    } catch (error) {
+    } catch {
       toast({
         title: "复制失败",
         description: "无法访问剪贴板，请检查浏览器权限。",
@@ -49,7 +49,7 @@ export function ResultSection({ result, onReset }: ResultSectionProps) {
         description: "文件将保存为 script-analysis.md",
         duration: 3000,
       })
-    } catch (error) {
+    } catch {
       toast({
         title: "下载失败",
         description: "无法生成下载文件，请稍后重试。",
@@ -59,134 +59,118 @@ export function ResultSection({ result, onReset }: ResultSectionProps) {
   }
 
   return (
-    <div className="space-y-8">
-      <div className="text-center space-y-6">
-        <div className="relative">
-          <div className="absolute inset-0 flex items-center justify-center">
-            <div className="w-20 h-20 rounded-full bg-green-500/20 animate-pulse" />
-          </div>
-          <div className="relative flex items-center justify-center">
-            <div className="w-12 h-12 rounded-full bg-green-500 flex items-center justify-center glow-effect-strong">
-              <CheckCircle className="h-6 w-6 text-white" />
-            </div>
-          </div>
+    <div className="w-full max-w-7xl mx-auto p-4 sm:p-6 lg:p-8 space-y-6 md:space-y-8">
+      {/* Header */}
+      <div className="text-center space-y-2 md:space-y-4">
+        <div className="inline-flex items-center justify-center w-14 h-14 md:w-16 md:h-16 rounded-full bg-green-500/10 border-2 border-green-500/20">
+          <CheckCircle className="h-7 w-7 md:h-8 md:w-8 text-green-500" />
         </div>
-
-        <div className="space-y-2">
-          <h2 className="text-4xl font-bold text-gradient">分析完成</h2>
-          <p className="text-lg text-muted-foreground">AI已为您完成脚本结构化分析</p>
+        <div>
+          <h2 className="text-2xl md:text-3xl font-bold text-foreground">分析完成</h2>
+          <p className="text-sm md:text-md text-muted-foreground">AI已为您完成脚本结构化分析，结果如下。</p>
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-        <Card className="bg-white/80 backdrop-blur-sm border border-slate-200/60 shadow-lg hover:shadow-xl transition-all duration-300">
-          <CardHeader className="pb-4">
-            <CardTitle className="flex items-center justify-between text-xl">
-              <div className="flex items-center space-x-2">
-                <FileText className="h-5 w-5 text-primary" />
-                <span>完整逐字稿</span>
-              </div>
+      {/* Main Content Grid */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 md:gap-8">
+        
+        {/* Left Column: Transcript */}
+        <div className="lg:col-span-2">
+          <Card className="h-full bg-card/80 backdrop-blur-sm border border-border shadow-lg transition-all duration-300">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
+              <CardTitle className="flex items-center text-lg md:text-xl font-semibold">
+                <FileText className="h-5 w-5 mr-3 text-primary" />
+                完整逐字稿
+              </CardTitle>
               <Button
-                variant="outline"
-                size="sm"
+                variant="ghost"
+                size="icon"
                 onClick={() => handleCopy(result.transcript, "完整逐字稿")}
-                className="border-primary/20 bg-transparent hover:bg-primary/10"
+                className="text-muted-foreground hover:bg-primary/10 hover:text-primary"
               >
+                <Copy className="h-5 w-5" />
+              </Button>
+            </CardHeader>
+            <CardContent>
+              <div className="prose prose-sm max-w-none h-[400px] lg:h-[600px] overflow-y-auto rounded-lg bg-input/50 p-4 border border-border">
+                <p className="whitespace-pre-wrap leading-relaxed text-foreground/90">
+                  {result.transcript}
+                </p>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Right Column: Actions and Analysis */}
+        <div className="space-y-6">
+          {/* Action Panel */}
+          <Card className="bg-card/80 backdrop-blur-sm border border-border shadow-lg">
+            <CardHeader>
+              <CardTitle className="text-base md:text-lg font-semibold">操作面板</CardTitle>
+            </CardHeader>
+            <CardContent className="flex flex-col space-y-3">
+              <Button onClick={onReset} size="lg" className="w-full h-12 text-base">
+                <RefreshCw className="h-5 w-5 mr-3" />
+                再分析一个
+              </Button>
+              <Button
+                onClick={handleDownload}
+                variant="secondary"
+                size="lg"
+                className="w-full h-12 text-base"
+              >
+                <Download className="h-5 w-5 mr-3" />
+                下载 Markdown
+              </Button>
+            </CardContent>
+          </Card>
+
+          {/* Analysis Cards */}
+          <Card className="bg-card/80 backdrop-blur-sm border border-border shadow-lg">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3">
+              <CardTitle className="flex items-center text-base md:text-lg font-semibold">
+                <Lightbulb className="h-5 w-5 mr-3 text-yellow-500" />
+                钩子 (Hook)
+              </CardTitle>
+              <Button variant="ghost" size="icon" onClick={() => handleCopy(result.analysis.hook, "钩子")}>
                 <Copy className="h-4 w-4" />
               </Button>
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="code-block p-4 rounded-lg max-h-96 overflow-y-auto">
-              <p className="whitespace-pre-wrap text-sm leading-relaxed text-foreground/90">{result.transcript}</p>
-            </div>
-          </CardContent>
-        </Card>
-
-        <div className="space-y-6">
-          <Card className="bg-white/80 backdrop-blur-sm border border-slate-200/60 shadow-lg hover:shadow-xl transition-all duration-300">
-            <CardHeader className="pb-4">
-              <CardTitle className="flex items-center justify-between text-lg">
-                <div className="flex items-center space-x-2">
-                  <Zap className="h-5 w-5 text-yellow-500" />
-                  <span>🚀 钩子 (Hook)</span>
-                </div>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => handleCopy(result.analysis.hook, "钩子")}
-                  className="border-primary/20 bg-transparent hover:bg-primary/10"
-                >
-                  <Copy className="h-4 w-4" />
-                </Button>
-              </CardTitle>
             </CardHeader>
             <CardContent>
-              <p className="text-sm leading-relaxed text-foreground/90">{result.analysis.hook}</p>
+              <p className="text-sm leading-relaxed text-muted-foreground">{result.analysis.hook}</p>
             </CardContent>
           </Card>
 
-          <Card className="bg-white/80 backdrop-blur-sm border border-slate-200/60 shadow-lg hover:shadow-xl transition-all duration-300">
-            <CardHeader className="pb-4">
-              <CardTitle className="flex items-center justify-between text-lg">
-                <div className="flex items-center space-x-2">
-                  <div className="w-5 h-5 rounded-full bg-blue-500 flex items-center justify-center">
-                    <span className="text-xs text-white">💡</span>
-                  </div>
-                  <span>核心 (Core)</span>
-                </div>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => handleCopy(result.analysis.core, "核心")}
-                  className="border-primary/20 bg-transparent hover:bg-primary/10"
-                >
-                  <Copy className="h-4 w-4" />
-                </Button>
+          <Card className="bg-card/80 backdrop-blur-sm border border-border shadow-lg">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3">
+              <CardTitle className="flex items-center text-base md:text-lg font-semibold">
+                <Diamond className="h-5 w-5 mr-3 text-cyan-500" />
+                核心 (Core)
               </CardTitle>
+              <Button variant="ghost" size="icon" onClick={() => handleCopy(result.analysis.core, "核心")}>
+                <Copy className="h-4 w-4" />
+              </Button>
             </CardHeader>
             <CardContent>
-              <p className="text-sm leading-relaxed text-foreground/90">{result.analysis.core}</p>
+              <p className="text-sm leading-relaxed text-muted-foreground">{result.analysis.core}</p>
             </CardContent>
           </Card>
 
-          <Card className="bg-white/80 backdrop-blur-sm border border-slate-200/60 shadow-lg hover:shadow-xl transition-all duration-300">
-            <CardHeader className="pb-4">
-              <CardTitle className="flex items-center justify-between text-lg">
-                <div className="flex items-center space-x-2">
-                  <Target className="h-5 w-5 text-green-500" />
-                  <span>🎯 行动号召 (CTA)</span>
-                </div>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => handleCopy(result.analysis.cta, "行动号召")}
-                  className="border-primary/20 bg-transparent hover:bg-primary/10"
-                >
-                  <Copy className="h-4 w-4" />
-                </Button>
+          <Card className="bg-card/80 backdrop-blur-sm border border-border shadow-lg">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3">
+              <CardTitle className="flex items-center text-base md:text-lg font-semibold">
+                <Goal className="h-5 w-5 mr-3 text-green-500" />
+                行动号召 (CTA)
               </CardTitle>
+              <Button variant="ghost" size="icon" onClick={() => handleCopy(result.analysis.cta, "行动号召")}>
+                <Copy className="h-4 w-4" />
+              </Button>
             </CardHeader>
             <CardContent>
-              <p className="text-sm leading-relaxed text-foreground/90">{result.analysis.cta}</p>
+              <p className="text-sm leading-relaxed text-muted-foreground">{result.analysis.cta}</p>
             </CardContent>
           </Card>
         </div>
-      </div>
-
-      <div className="flex justify-center space-x-4">
-        <Button
-          onClick={handleDownload}
-          variant="outline"
-          className="border-primary/20 bg-transparent hover:bg-primary/10 px-6 py-3"
-        >
-          <Download className="h-4 w-4 mr-2" />
-          下载结果
-        </Button>
-        <Button onClick={onReset} className="bg-primary hover:bg-primary/90 text-white px-6 py-3">
-          <RefreshCw className="h-4 w-4 mr-2" />
-          重新分析
-        </Button>
       </div>
     </div>
   )

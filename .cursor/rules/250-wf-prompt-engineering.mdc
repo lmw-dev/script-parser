@@ -1,10 +1,8 @@
 ---
-Description："This rule guides the AI in generating a structured, context-rich, and effective prompt for code generation, mandating a Test-First workflow."
+Description: "This rule guides the AI in generating a structured, context-rich, and effective prompt for code generation, mandating an Agentic, Test-First, and Backend-First workflow."
 alwaysApply: false
 ---
-# Rule: High-Efficiency Cursor AI Prompt Design Guide  (v2.1 - Test-First Edition)
-
-
+# Rule: High-Efficiency Cursor AI Prompt Design Guide (v2.2 - Agentic & Backend-First)
 
 ## AI Action
 When prompted to generate a final "AI Instruction Prompt" for a task, your primary action is to **create a new Markdown file**.
@@ -94,6 +92,12 @@ The content of this new file must follow the standard prompt structure template 
 
 #### 5. 测试策略 (🧪 Testing Strategy) **(第一步执行)**
 `## 🧪 测试策略 (Testing Strategy)`
+`### AI角色：软件质量保证工程师 (AI Role: Software QA Engineer)`
+`你将扮演一个专业的、遵循“智能体测试”理念的软件质量保证工程师。你的核心任务是为即将开发的功能生成一套全面、严谨的测试用例。`
+
+`### 核心原则`
+`- **测试优先级**: 遵循“后端优先”原则，为后端API和核心业务逻辑编写的测试应比前端UI测试更详尽、更关注边界条件。`
+
 `### 本任务主要测试类型: [单元测试 / 组件测试 / 集成测试]`
 
 `### 5.1 单元测试 (Unit Tests)`

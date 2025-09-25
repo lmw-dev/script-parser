@@ -8,7 +8,10 @@ import { ErrorSection } from "@/components/sections/ErrorSection"
 
 export default function ResultPage() {
   const router = useRouter()
-  const { resultData, error, appState, reset } = useAppStore()
+  const resultData = useAppStore((state) => state.resultData)
+  const error = useAppStore((state) => state.error)
+  const appState = useAppStore((state) => state.appState)
+  const reset = useAppStore((state) => state.reset)
 
   useEffect(() => {
     // Redirect if user lands here without going through the process
@@ -34,7 +37,7 @@ export default function ResultPage() {
 
   if (appState === "SUCCESS" && resultData) {
     return (
-      <main className="flex min-h-screen flex-col items-center justify-center p-24 bg-background">
+      <main className="flex-grow flex flex-col items-center justify-center p-6">
         <ResultSection
           result={resultData}
           onReset={handleReset}

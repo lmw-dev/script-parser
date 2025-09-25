@@ -106,9 +106,8 @@ class ErrorHandler:
         # Get error mapping for the exception type
         exception_type = type(exception)
         if exception_type in cls.ERROR_MAPPINGS:
-            http_status, business_code, user_message = cls.ERROR_MAPPINGS[
-                exception_type
-            ]
+            http_status, business_code, _ = cls.ERROR_MAPPINGS[exception_type]
+            user_message = str(exception)  # Use the specific exception message
         else:
             # Handle unknown exceptions
             http_status = 500
