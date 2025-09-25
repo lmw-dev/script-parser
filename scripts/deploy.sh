@@ -74,14 +74,26 @@ tcr_login() {
     # 腾讯云个人版TCR固定地址
     local tcr_endpoint="$TCR_REGISTRY"
     
-    # 检查是否已配置TCR凭证
-    if [ -z "$TCR_USERNAME" ] || [ -z "$TCR_PASSWORD" ]; then
-        echo -e "${YELLOW}⚠️  TCR凭证未配置，请确保Docker已通过其他方式登录TCR${NC}"
-        echo -e "${YELLOW}💡 或在.env文件中设置 TCR_USERNAME 和 TCR_PASSWORD${NC}"
-        echo -e "${YELLOW}💡 手动登录：docker login $tcr_endpoint${NC}"
+    # 使用腾讯云提供的用户名直接登录（需要密码输入）
+    if [ ! -z "$TCR_USERNAME" ]; then
+        echo -e "${YELLOW}🔑 使用用户名 $TCR_USERNAME 登录TCR...${NC}"
+        docker login "$tcr_endpoint" --username="$TCR_USERNAME"
+        
+        if [ $? -eq 0 ]; then
+            echo -e "${GREEN}✅ TCR登录成功${NC}"
+        else
+            echo -e "${RED}❌ TCR登录失败${NC}"
+            exit 1
+        fi
     else
-        echo "$TCR_PASSWORD" | docker login "$tcr_endpoint" -u "$TCR_USERNAME" --password-stdin
-        echo -e "${GREEN}✅ TCR登录成功${NC}"
+        echo -e "${YELLOW}⚠️  TCR_USERNAME 未配置，请先配置或手动登录${NC}"
+        echo -e "${YELLOW}💡 手动登录命令: docker login $tcr_endpoint --username=100042158591${NC}"
+        read -p "是否已手动登录TCR？(y/N): " -n 1 -r
+        echo
+        if [[ ! $REPLY =~ ^[Yy]$ ]]; then
+            echo -e "${RED}❌ 请先登录TCR后再继续${NC}"
+            exit 1
+        fi
     fi
 }
 
