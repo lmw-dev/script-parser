@@ -23,7 +23,7 @@ services:
       - web
       - coprocessor
     networks:
-      - sp_services_network
+      - sp_default
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost/nginx-health"]
       interval: 30s
@@ -34,7 +34,7 @@ services:
   # Next.js Web应用 - 使用TCR镜像
   web:
     image: ${TCR_REGISTRY}/${TCR_NAMESPACE}/scriptparser-web:latest
-    container_name: ${PROJECT_PREFIX}_web
+    container_name: ${PROJECT_PREFIX}_frontend
     restart: always
     environment:
       - NODE_ENV=${NODE_ENV}
@@ -42,7 +42,7 @@ services:
     expose:
       - "3000"
     networks:
-      - sp_services_network
+      - sp_default
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:3000"]
       interval: 30s
@@ -53,7 +53,7 @@ services:
   # FastAPI AI协处理器 - 使用TCR镜像  
   coprocessor:
     image: ${TCR_REGISTRY}/${TCR_NAMESPACE}/scriptparser-coprocessor:latest
-    container_name: ${PROJECT_PREFIX}_coprocessor
+    container_name: ${PROJECT_PREFIX}_backend
     restart: always
     environment:
       # 服务基础配置
@@ -89,7 +89,7 @@ services:
     expose:
       - "8000"
     networks:
-      - sp_services_network
+      - sp_default
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
       interval: 30s
@@ -99,15 +99,15 @@ services:
 
 # 网络配置 - 使用项目前缀确保隔离
 networks:
-  sp_services_network:
+  sp_default:
     driver: bridge
-    name: ${PROJECT_PREFIX}_services_network
+    name: ${PROJECT_PREFIX}_default
 
 # 数据卷配置（如需持久化存储）
 volumes:
-  # Nginx日志持久化
-  sp_nginx_logs:
-    name: ${PROJECT_PREFIX}_nginx_logs
+  # Nginx日志数据卷
+  sp_nginx_data:
+    name: ${PROJECT_PREFIX}_nginx_data
   
   # 应用数据持久化（如需要）
   # sp_app_data:
