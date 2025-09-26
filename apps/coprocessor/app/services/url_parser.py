@@ -114,7 +114,7 @@ class ShareURLParser:
                     # 第一次请求，只为获取 video_id
                     share_response = await client.get(url)
                     final_url = str(share_response.url)
-                    video_id = self._extract_video_id_from_url(final_url)
+                    video_id = self._extract_item_id_from_url(final_url)
                     
                     if not video_id:
                         raise URLParserError("无法从 URL 中提取视频 ID")
@@ -251,6 +251,8 @@ class ShareURLParser:
 
             # Final cleanup and return
             title = video_info.get('title') or f"xiaohongshu_{item_id}"
+
+            print(f"---- Extracted Xiaohongshu Download URL: {download_url} ----")
 
             return VideoInfo(
                 video_id=item_id,
@@ -399,6 +401,11 @@ class ShareURLParser:
 
             data = original_video_info["item_list"][0]
 
+            # --- DEBUG: Print the entire play_addr object ---
+            print("---- DOUYIN PLAY_ADDR OBJECT ----")
+            print(json.dumps(data["video"].get("play_addr"), indent=2))
+            print("---------------------------------")
+
             # 获取视频信息
             video_url = data["video"]["play_addr"]["url_list"][0].replace(
                 "playwm", "play"
@@ -407,6 +414,8 @@ class ShareURLParser:
 
             # 替换文件名中的非法字符
             desc = re.sub(r'[\\/:*?"<>|]', "_", desc)
+
+            print(f"---- Extracted Douyin Download URL: {video_url} ----")
 
             return VideoInfo(
                 video_id=video_id,
