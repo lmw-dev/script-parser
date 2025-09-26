@@ -1,5 +1,5 @@
 # 使用简化的单阶段构建
-FROM node:20-alpine AS builder
+FROM node:18-alpine AS builder
 
 RUN apk add --no-cache libc6-compat
 WORKDIR /app
@@ -23,7 +23,7 @@ RUN pnpm install --frozen-lockfile
 RUN pnpm --filter web build
 
 # 运行阶段
-FROM node:20-alpine AS runner
+FROM node:18-alpine AS runner
 WORKDIR /app
 
 ENV NODE_ENV production
