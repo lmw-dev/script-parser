@@ -76,7 +76,7 @@ class ShareURLParser:
             raise URLParserError(f"Unsupported platform in URL: {url}")
 
     async def _parse_douyin(self, url: str) -> VideoInfo:
-        """Parse Douyin video URL and extract video information - 改进的健壮性处理"""
+        """Parse Douyin video URL and extract video information - with actual HTML parsing"""
         max_retries = 2
         last_error = None
         
@@ -106,7 +106,7 @@ class ShareURLParser:
                 )
                 
                 try:
-                    # 第一步：获取重定向 URL
+                    # 第一步：获取重定向 URL 和页面内容
                     if attempt > 0:
                         await asyncio.sleep(1)  # 重试前稍等
                     
@@ -119,13 +119,22 @@ class ShareURLParser:
                     if not video_id:
                         raise URLParserError("无法从 URL 中提取视频 ID")
                     
-                    # 返回模拟数据（由于无法稳定获取页面内容）
-                    return VideoInfo(
-                        video_id=video_id,
-                        platform="douyin",
-                        title=f"douyin_video_{video_id}",
-                        download_url=f"https://www.douyin.com/video/{video_id}"  # 原始 URL
-                    )
+                    # 尝试解析页面内容
+                    html_content = share_response.text
+                    
+                    try:
+                        # 尝试从页面内容中提取路由器数据
+                        router_data = self._extract_router_data(html_content)
+                        return self._parse_douyin_router_data_optimized(router_data, video_id)
+                        
+                    except URLParserError as parse_error:
+                        # 如果解析失败，返回模拟数据作为后备方案
+                        return VideoInfo(
+                            video_id=video_id,
+                            platform="douyin",
+                            title=f"douyin_video_{video_id}",
+                            download_url=f"https://www.douyin.com/video/{video_id}"  # 原始 URL
+                        )
                 
                 finally:
                     await client.aclose()
@@ -148,7 +157,7 @@ class ShareURLParser:
             ) from last_error
         
         raise URLParserError("未知错误")
-    
+
     def _extract_video_id_from_url(self, url: str) -> str:
         """从 URL 中提取视频 ID"""
         # 尝试多种模式提取 video_id
