@@ -99,7 +99,7 @@ tcr_login() {
 
 # 构建并推送镜像
 build_and_push() {
-    echo -e "${GREEN}🚀 开始构建 ScriptParser 项目${NC}"
+    echo -e "${GREEN}🚀 开始构建 ScriptParser 项目 (多平台)${NC}"
     echo -e "${BLUE}=================================================${NC}"
     
     load_env
@@ -111,29 +111,30 @@ build_and_push() {
     local web_image="${TCR_REGISTRY}/${TCR_NAMESPACE}/${PROJECT_NAME}-web:latest"
     local coprocessor_image="${TCR_REGISTRY}/${TCR_NAMESPACE}/${PROJECT_NAME}-coprocessor:latest"
     
-    echo -e "${YELLOW}📦 构建 Web 应用...${NC}"
+    echo -e "${YELLOW}📦 构建多平台 Web 应用 (linux/amd64,linux/arm64)...${NC}"
     cd "$PROJECT_ROOT"
-    docker build -t "${PROJECT_NAME}-web:latest" \
+    docker buildx build \
+        --platform linux/amd64,linux/arm64 \
         --build-arg NEXT_PUBLIC_API_URL="${NEXT_PUBLIC_API_URL}" \
-        -f "./apps/web/Dockerfile" .
+        -t "$web_image" \
+        -f "./apps/web/Dockerfile" \
+        --push \
+        .
     
-    echo -e "${YELLOW}🤖 构建 AI 协处理器...${NC}"
-    docker build -t "${PROJECT_NAME}-coprocessor:latest" "./apps/coprocessor"
+    echo -e "${YELLOW}🤖 构建多平台 AI 协处理器 (linux/amd64,linux/arm64)...${NC}"
+    docker buildx build \
+        --platform linux/amd64,linux/arm64 \
+        -t "$coprocessor_image" \
+        --push \
+        "./apps/coprocessor"
     
-    echo -e "${YELLOW}🏷️  标记镜像...${NC}"
-    docker tag "${PROJECT_NAME}-web:latest" "$web_image"
-    docker tag "${PROJECT_NAME}-coprocessor:latest" "$coprocessor_image"
-    
-    echo -e "${YELLOW}📤 推送镜像到 TCR...${NC}"
-    docker push "$web_image"
-    docker push "$coprocessor_image"
-    
-    echo -e "${GREEN}✅ 镜像构建和推送完成${NC}"
+    echo -e "${GREEN}✅ 多平台镜像构建和推送完成${NC}"
     echo -e "${BLUE}=================================================${NC}"
     echo -e "${GREEN}🎉 构建完成！${NC}"
     echo -e "${YELLOW}镜像已推送到:${NC}"
     echo -e "  Web: $web_image"
     echo -e "  Coprocessor: $coprocessor_image"
+    echo -e "${BLUE}支持架构: linux/amd64, linux/arm64${NC}"
 }
 
 # 服务器部署
