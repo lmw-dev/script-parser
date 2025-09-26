@@ -192,10 +192,8 @@ class WorkflowOrchestrator:
                 self.perf_logger.log_error(
                     "ASR transcription failed", asr_error, video_id=video_info.video_id
                 )
-                # If ASR fails, use fallback transcript with error info
-                transcript_text = (
-                    f"Video: {video_info.title} (ASR failed: {str(asr_error)})"
-                )
+                # Re-raise the error to stop the workflow and return a proper error response
+                raise asr_error
 
         # Perform LLM analysis on the transcript
         llm_analysis = {}

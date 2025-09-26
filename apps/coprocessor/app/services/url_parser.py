@@ -2,6 +2,7 @@ import asyncio
 import json
 import re
 from typing import Any
+import os
 
 import httpx
 from pydantic import BaseModel
@@ -30,6 +31,8 @@ class ShareURLParser:
         self.headers = {
             "User-Agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 17_2 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) EdgiOS/121.0.2277.107 Version/17.0 Mobile/15E148 Safari/604.1"
         }
+        # 从环境变量中读取代理配置
+        self.proxy_url = os.getenv("PROXY_URL")
 
     async def parse(self, share_text: str) -> VideoInfo:
         """
@@ -91,50 +94,42 @@ class ShareURLParser:
                 
                 headers = {
                     "User-Agent": user_agents[attempt % len(user_agents)],
-                    "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8",
-                    "Accept-Language": "zh-CN,zh;q=0.8,en-US;q=0.5,en;q=0.3",
-                    "Accept-Encoding": "gzip, deflate, br",
-                    "Connection": "keep-alive",
-                    "Upgrade-Insecure-Requests": "1"
                 }
                 
+                proxies = {"all://": self.proxy_url} if self.proxy_url else None
+
                 client = httpx.AsyncClient(
                     headers=headers,
+                    proxies=proxies,  # 添加代理配置
                     timeout=httpx.Timeout(20.0, connect=10.0),
                     follow_redirects=True,
                     verify=False  # 禁用 SSL 验证以解决某些 SSL 问题
                 )
                 
                 try:
-                    # 第一步：获取重定向 URL 和页面内容
+                    # 第一步：获取重定向 URL 和 video_id
                     if attempt > 0:
                         await asyncio.sleep(1)  # 重试前稍等
                     
+                    # 第一次请求，只为获取 video_id
                     share_response = await client.get(url)
-                    
-                    # 从重定向 URL 提取 video_id
                     final_url = str(share_response.url)
                     video_id = self._extract_video_id_from_url(final_url)
                     
                     if not video_id:
                         raise URLParserError("无法从 URL 中提取视频 ID")
-                    
+
+                    # 第二步：构建干净的 URL 并获取页面内容
+                    clean_url = f'https://www.iesdouyin.com/share/video/{video_id}'
+                    page_response = await client.get(clean_url)
+                    page_response.raise_for_status() # 确保请求成功
+
                     # 尝试解析页面内容
-                    html_content = share_response.text
+                    html_content = page_response.text
                     
-                    try:
-                        # 尝试从页面内容中提取路由器数据
-                        router_data = self._extract_router_data(html_content)
-                        return self._parse_douyin_router_data_optimized(router_data, video_id)
-                        
-                    except URLParserError as parse_error:
-                        # 如果解析失败，返回模拟数据作为后备方案
-                        return VideoInfo(
-                            video_id=video_id,
-                            platform="douyin",
-                            title=f"douyin_video_{video_id}",
-                            download_url=f"https://www.douyin.com/video/{video_id}"  # 原始 URL
-                        )
+                    # 尝试从页面内容中提取路由器数据
+                    router_data = self._extract_router_data_optimized(html_content)
+                    return self._parse_douyin_router_data_optimized(router_data, video_id)
                 
                 finally:
                     await client.aclose()
