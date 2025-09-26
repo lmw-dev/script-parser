@@ -153,7 +153,7 @@ class ShareURLParser:
         
         raise URLParserError("未知错误")
 
-    def _extract_video_id_from_url(self, url: str) -> str:
+    def _extract_item_id_from_url(self, url: str) -> str:
         """从 URL 中提取视频 ID"""
         # 尝试多种模式提取 video_id
         patterns = [
@@ -179,126 +179,125 @@ class ShareURLParser:
         return None
 
     async def _parse_xiaohongshu(self, url: str) -> VideoInfo:
-        """Parse Xiaohongshu video URL and extract video information"""
+        """Parse Xiaohongshu video URL using a robust, multi-layered approach."""
         try:
-            # 提取小红书的 item ID
-            item_id = self._extract_xiaohongshu_item_id(url)
+            async with httpx.AsyncClient(headers=self.headers, follow_redirects=True) as client:
+                response = await client.get(url)
+                response.raise_for_status()
+                html_content = response.text
+                final_url = str(response.url)
 
-            # 调用第三方解析服务
-            video_data = await self._fetch_xiaohongshu_data(item_id)
+            # Extract item_id from the final URL
+            item_id_match = re.search(r'/item/([a-f0-9]+)', final_url)
+            if not item_id_match:
+                raise URLParserError("Could not extract item_id from Xiaohongshu URL")
+            item_id = item_id_match.group(1)
 
-            # 解析返回的数据
-            return self._parse_xiaohongshu_data(video_data, item_id)
+            # --- Start of robust extraction logic ---
+            video_info = {
+                'title': None,
+                'video_urls': [],
+            }
 
-        except Exception as e:
-            raise URLParserError(f"Failed to parse Xiaohongshu video: {str(e)}") from e
+            # 1. Attempt to parse JSON from script tags
+            json_patterns = [
+                r'window.__INITIAL_STATE__\s*=\s*(.+?);?\s*</script>',
+                r'window.__NEXT_DATA__\s*=\s*(.+?);?\s*</script>'
+            ]
+            
+            found_json = False
+            for pattern in json_patterns:
+                match = re.search(pattern, html_content, re.DOTALL)
+                if match:
+                    try:
+                        json_text = match.group(1).strip()
+                        if json_text.endswith(';'):
+                            json_text = json_text[:-1]
+                        json_text = json_text.replace("undefined", "null")
+                        json_data = json.loads(json_text)
+                        
+                        extracted_info = self._extract_from_xhs_json(json_data)
+                        if extracted_info.get('video_urls'):
+                            video_info.update(extracted_info)
+                            found_json = True
+                            break # Stop after first successful extraction
+                    except (json.JSONDecodeError, KeyError):
+                        continue
+            
+            # 2. Fallback: Direct regex search for video URLs if JSON fails
+            if not video_info.get('video_urls'):
+                video_url_patterns = [
+                    r'"originVideoKey"\s*:\s*"([^"]+)"', # From previous findings
+                    r'"masterUrl"\s*:\s*"([^"]+)"',
+                    r'https://[^\s"\\]*.(?:mp4|m3u8)[^\s"\\]*'
+                ]
+                
+                found_urls = set()
+                for pattern in video_url_patterns:
+                    matches = re.findall(pattern, html_content)
+                    for match_url in matches:
+                        clean_url = match_url.replace('\\u002F', '/')
+                        if 'sns-video' in clean_url or '.mp4' in clean_url:
+                            found_urls.add(clean_url)
+                video_info['video_urls'] = list(found_urls)
 
-    def _extract_xiaohongshu_item_id(self, url: str) -> str:
-        """从小红书 URL 中提取 item ID"""
-        # 从 URL 中提取 item ID: /discovery/item/68c94ab0000000001202ca84
-        import re
+            if not video_info.get('video_urls'):
+                raise URLParserError("Could not find any video URL in the page.")
 
-        pattern = r"/item/([a-f0-9]+)"
-        match = re.search(pattern, url)
-        if not match:
-            raise URLParserError("无法从小红书 URL 中提取 item ID")
-        return match.group(1)
+            # Use the first found URL
+            download_url = video_info['video_urls'][0]
+            if 'originVideoKey' in download_url: # Handle case where we only found the key
+                 download_url = f"https://sns-video-bd.xhscdn.com/{download_url}"
 
-    async def _fetch_xiaohongshu_data(self, item_id: str) -> dict:
-        """调用第三方解析服务获取小红书视频数据"""
-        # 这里需要你提供第三方解析服务的 API 端点
-        # 暂时返回模拟数据，你需要替换为实际的 API 调用
-
-        # 模拟 API 调用
-        # async with httpx.AsyncClient(headers=self.headers) as client:
-        #     # 这里应该是实际的第三方 API 端点
-        #     # api_url = f"https://your-api-service.com/parse?url=xiaohongshu&item_id={item_id}"
-        #     # response = await client.get(api_url)
-        #     # return response.json()
-
-        # 暂时返回你提供的示例数据结构
-        return {
-            "code": 200,
-            "message": "操作成功",
-            "data": {
-                "vid": item_id,
-                "host": "xiaohongshu",
-                "hostAlias": "小红书",
-                "displayTitle": "升级mac os26，变化太大了？",
-                "status": "finish",
-                "videoItemVoList": [
-                    {
-                        "baseUrl": "https://sns-video-hw.xhscdn.com/stream/79/110/258/01e8c94a61bce4ac4f03700199524c593d_258.mp4",
-                        "quality": "未知",
-                        "qualityAlias": "未知清晰度",
-                        "fileType": "video",
-                        "size": 0,
-                        "mustUseDownloader": False,
-                        "hlsType": False,
-                        "dashType": False,
-                        "live": False,
-                        "canDownload": True,
-                        "canDirectPlay": True,
-                        "canDirectDownload": False,
-                        "onlyForVip": False,
-                    },
-                    {
-                        "baseUrl": "https://sns-webpic.xhscdn.com/1040g00831mg8iahp4u004a031hprq9f1r7a89j8?imageView2/2/w/0/format/jpg",
-                        "quality": "封面",
-                        "qualityAlias": "图片(封面)",
-                        "fileType": "image",
-                        "size": 0,
-                        "mustUseDownloader": False,
-                        "hlsType": False,
-                        "dashType": False,
-                        "live": False,
-                        "canDownload": True,
-                        "canDirectPlay": True,
-                        "canDirectDownload": False,
-                        "onlyForVip": False,
-                    },
-                ],
-            },
-        }
-
-    def _parse_xiaohongshu_data(self, api_response: dict, item_id: str) -> VideoInfo:
-        """解析第三方 API 返回的小红书数据"""
-        try:
-            if api_response.get("code") != 200:
-                raise URLParserError(
-                    f"第三方解析服务返回错误: {api_response.get('message', 'Unknown error')}"
-                )
-
-            data = api_response["data"]
-
-            # 获取视频信息
-            video_id = data.get("vid", item_id)
-            title = data.get("displayTitle", f"xiaohongshu_{video_id}")
-
-            # 查找视频文件
-            video_url = None
-            for item in data.get("videoItemVoList", []):
-                if item.get("fileType") == "video" and item.get("canDownload"):
-                    video_url = item.get("baseUrl")
-                    break
-
-            if not video_url:
-                raise URLParserError("未找到可下载的视频文件")
-
-            # 清理标题中的非法字符
-            title = re.sub(r'[\\/:*?"<>|]', "_", title)
+            # Final cleanup and return
+            title = video_info.get('title') or f"xiaohongshu_{item_id}"
 
             return VideoInfo(
-                video_id=video_id,
+                video_id=item_id,
                 platform="xiaohongshu",
                 title=title,
-                download_url=video_url,
+                download_url=download_url,
             )
 
-        except (KeyError, IndexError, TypeError) as e:
-            raise URLParserError(
-                f"Failed to parse Xiaohongshu video data: Missing required fields - {str(e)}"
-            ) from e
+        except (httpx.RequestError, json.JSONDecodeError, KeyError, IndexError) as e:
+            raise URLParserError(f"Failed to parse Xiaohongshu video: {str(e)}") from e
+
+    def _extract_from_xhs_json(self, data: dict) -> dict:
+        """Recursively extract video information from Xiaohongshu JSON data."""
+        result = {
+            'title': None,
+            'video_urls': [],
+        }
+
+        def recursive_search(obj):
+            if isinstance(obj, dict):
+                # Check for title
+                if not result['title'] and obj.get('title') and isinstance(obj['title'], str):
+                    result['title'] = obj['title']
+                
+                # Check for video key
+                video_key = obj.get("video", {}).get("consumer", {}).get("originVideoKey")
+                if video_key:
+                    url = f"https://sns-video-bd.xhscdn.com/{video_key}"
+                    if url not in result['video_urls']:
+                        result['video_urls'].append(url)
+
+                # Check for direct video URLs in streams
+                for stream_type in obj.get("stream", {}).get("h264", []):
+                    if stream_type.get('masterUrl'):
+                         if stream_type['masterUrl'] not in result['video_urls']:
+                            result['video_urls'].append(stream_type['masterUrl'])
+
+                for key, value in obj.items():
+                    recursive_search(value)
+            elif isinstance(obj, list):
+                for item in obj:
+                    recursive_search(item)
+        
+        recursive_search(data)
+        return result
+
+
 
     def _extract_router_data(self, html_content: str) -> dict[str, Any]:
         """Extract _ROUTER_DATA JSON from HTML content"""
