@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation"
 import { useToast } from "@/hooks/use-toast"
 import { InputSection } from "@/components/sections/InputSection"
 import { AboutSection } from "@/components/sections/AboutSection"
+import { CommunitySection } from "@/components/sections/CommunitySection"
 import { extractAndValidateUrl, validateVideoFile } from "@/lib/validation"
 import { useAppStore } from "@/stores/app-store"
 import type { VideoParseRequest } from "@/types/script-parser.types"
@@ -182,6 +183,9 @@ export default function HomePage() {
 
       {/* 关于作者板块 */}
       <AboutSection />
+
+      {/* 社群入口板块 */}
+      <CommunitySection />
     </>
   )
 }
