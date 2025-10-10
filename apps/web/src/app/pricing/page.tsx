@@ -1,5 +1,6 @@
 "use client"
 
+import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Check } from "lucide-react"
 
@@ -55,9 +56,9 @@ export default function PricingPage() {
             className="w-full"
             asChild
           >
-            <a href="/">
+            <Link href="/">
               开始使用
-            </a>
+            </Link>
           </Button>
         </div>
 

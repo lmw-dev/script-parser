@@ -17,7 +17,7 @@ export function CommunitySection() {
           {/* 标题与价值主张 */}
           <div className="space-y-4">
             <h2 className="text-3xl lg:text-4xl font-bold text-foreground tracking-tight">
-              加入我们的创作"篝火"
+              加入我们的创作&ldquo;篝火&rdquo;
             </h2>
             <p className="text-base lg:text-lg text-muted-foreground leading-relaxed">
               与数百位效率工具爱好者和独立开发者，共同交流心得、分享洞见，并第一时间体验新功能。
@@ -32,7 +32,7 @@ export function CommunitySection() {
               加入微信社群
             </Button>
             <p className="text-sm text-muted-foreground">
-              扫码备注"脚本快拆"
+              扫码备注&ldquo;脚本快拆&rdquo;
             </p>
           </div>
 
