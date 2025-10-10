@@ -412,3 +412,295 @@ docker-compose restart coprocessor
 - 项目地址: [GitHub Repository]
 - 问题反馈: [GitHub Issues]
 - 文档地址: [Documentation]
+## 🚀 生产环境部署更新流程
+
+### 快速更新部署
+
+在腾讯云VPS上完整的更新部署流程：
+
+```bash
+# 1. 停止现有服务
+echo "⏹️ 停止现有Docker服务..."
+docker-compose -f docker-compose.prod.yml down
+
+# 2. 拉取最新代码
+echo "📥 拉取最新代码..."
+git pull origin main
+
+# 3. 启动服务（使用预构建镜像）
+echo "🚀 启动服务..."
+docker-compose -f docker-compose.prod.yml up -d
+
+# 4. 验证部署状态
+echo "📊 检查服务状态..."
+docker-compose -f docker-compose.prod.yml ps
+
+# 5. 健康检查
+echo "🔍 健康检查..."
+curl -f http://localhost:8081/api/health
+
+# 6. 查看日志
+echo "📋 查看日志..."
+docker-compose -f docker-compose.prod.yml logs --tail=10
+```
+
+### 一键部署脚本
+
+创建自动化部署脚本：
+
+```bash
+# 创建部署脚本
+cat > deploy.sh << 'SCRIPT'
+#!/bin/bash
+
+echo "🚀 开始部署 ScriptParser..."
+echo "=================================="
+
+# 检查当前目录
+if [ ! -f "docker-compose.prod.yml" ]; then
+    echo "❌ 错误: 请在项目根目录运行此脚本"
+    exit 1
+fi
+
+# 停止现有服务
+echo "⏹️ 停止现有服务..."
+docker-compose -f docker-compose.prod.yml down
+
+# 拉取最新代码
+echo "📥 拉取最新代码..."
+if git pull origin main; then
+    echo "✅ 代码更新成功"
+else
+    echo "❌ 代码更新失败"
+    exit 1
+fi
+
+# 启动服务
+echo "🚀 启动服务..."
+if docker-compose -f docker-compose.prod.yml up -d; then
+    echo "✅ 服务启动成功"
+else
+    echo "❌ 服务启动失败"
+    exit 1
+fi
+
+# 等待服务启动
+echo "⏳ 等待服务启动..."
+sleep 15
+
+# 验证服务状态
+echo "📊 服务状态:"
+docker-compose -f docker-compose.prod.yml ps
+
+# 健康检查
+echo "🔍 健康检查:"
+if curl -f -s http://localhost:8081/api/health > /dev/null; then
+    echo "✅ API 健康检查通过"
+else
+    echo "⚠️  API 健康检查可能失败，请查看日志"
+fi
+
+# 获取外网IP
+EXTERNAL_IP=$(curl -s ifconfig.me)
+echo ""
+echo "🎉 部署完成!"
+echo "🌐 访问地址: http://${EXTERNAL_IP}:8081"
+echo "📋 查看日志: docker-compose -f docker-compose.prod.yml logs -f"
+echo "=================================="
+SCRIPT
+
+# 给脚本执行权限
+chmod +x deploy.sh
+
+# 运行部署
+./deploy.sh
+```
+
+### 环境要求
+
+#### 腾讯云VPS配置建议
+- **CPU**: 2核以上
+- **内存**: 4GB以上 
+- **磁盘**: 20GB以上
+- **带宽**: 根据访问量选择
+- **操作系统**: Ubuntu 20.04+ / CentOS 8+ / OpenCloudOS
+
+#### 必要软件
+```bash
+# 安装 Docker
+curl -fsSL https://get.docker.com | bash
+systemctl start docker
+systemctl enable docker
+
+# 安装 Docker Compose（如果没有）
+sudo curl -L "https://github.com/docker/compose/releases/latest/download/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
+sudo chmod +x /usr/local/bin/docker-compose
+
+# 安装 Git
+sudo apt update && sudo apt install git -y  # Ubuntu/Debian
+# 或
+sudo yum install git -y  # CentOS/RHEL
+```
+
+### 安全配置
+
+#### 防火墙设置
+```bash
+# 配置防火墙（Ubuntu/Debian）
+sudo ufw allow 22     # SSH
+sudo ufw allow 8081   # 应用端口
+sudo ufw enable
+
+# 或者（CentOS/RHEL）
+sudo firewall-cmd --permanent --add-port=22/tcp
+sudo firewall-cmd --permanent --add-port=8081/tcp
+sudo firewall-cmd --reload
+```
+
+#### SSL/HTTPS配置（可选）
+```bash
+# 使用 Let's Encrypt 配置 HTTPS
+# 1. 安装 Certbot
+sudo apt install certbot python3-certbot-nginx -y
+
+# 2. 获取证书
+sudo certbot --nginx -d your-domain.com
+
+# 3. 修改 docker-compose.prod.yml 中的 nginx 端口映射
+# ports:
+#   - "80:80"
+#   - "443:443"
+```
+
+### 监控和维护
+
+#### 日志管理
+```bash
+# 查看实时日志
+docker-compose -f docker-compose.prod.yml logs -f
+
+# 查看特定服务日志
+docker-compose -f docker-compose.prod.yml logs -f web
+docker-compose -f docker-compose.prod.yml logs -f coprocessor
+docker-compose -f docker-compose.prod.yml logs -f nginx
+
+# 清理日志（谨慎使用）
+docker system prune -f
+```
+
+#### 系统监控
+```bash
+# 查看系统资源使用
+docker stats
+
+# 查看磁盘使用
+df -h
+
+# 查看内存使用
+free -m
+
+# 查看服务端口占用
+netstat -tulpn | grep :8081
+```
+
+#### 备份策略
+```bash
+# 备份重要配置文件
+cp docker-compose.prod.yml docker-compose.prod.yml.backup.$(date +%Y%m%d)
+cp .env .env.backup.$(date +%Y%m%d)
+
+# 定期备份（添加到 crontab）
+# 0 2 * * * cd /opt/script-parser && cp docker-compose.prod.yml docker-compose.prod.yml.backup.$(date +\%Y\%m\%d)
+```
+
+### 故障排除
+
+#### 常见问题
+
+**1. 端口冲突**
+```bash
+# 检查端口占用
+lsof -i :8081
+netstat -tulpn | grep :8081
+
+# 修改 docker-compose.prod.yml 中的端口映射
+ports:
+  - "8080:80"  # 改为其他端口
+```
+
+**2. 服务启动失败**
+```bash
+# 查看详细错误日志
+docker-compose -f docker-compose.prod.yml logs <service-name>
+
+# 重新拉取镜像
+docker-compose -f docker-compose.prod.yml pull
+
+# 强制重创建容器
+docker-compose -f docker-compose.prod.yml up -d --force-recreate
+```
+
+**3. API 调用失败**
+```bash
+# 检查服务健康状态
+curl -v http://localhost:8081/api/health
+
+# 检查网络连通性
+docker-compose -f docker-compose.prod.yml exec web ping coprocessor
+docker-compose -f docker-compose.prod.yml exec coprocessor ping web
+```
+
+**4. 环境变量未生效**
+```bash
+# 检查环境变量文件
+cat .env
+
+# 重启服务使环境变量生效
+docker-compose -f docker-compose.prod.yml restart coprocessor
+```
+
+### 性能优化
+
+#### 服务器优化
+```bash
+# 增加文件描述符限制
+echo "* soft nofile 65536" >> /etc/security/limits.conf
+echo "* hard nofile 65536" >> /etc/security/limits.conf
+
+# 优化内核参数
+echo "net.core.somaxconn = 65535" >> /etc/sysctl.conf
+sysctl -p
+```
+
+#### Docker 优化
+```bash
+# 配置 Docker daemon
+cat > /etc/docker/daemon.json << 'JSON'
+{
+  "log-driver": "json-file",
+  "log-opts": {
+    "max-size": "10m",
+    "max-file": "3"
+  },
+  "storage-driver": "overlay2"
+}
+JSON
+
+systemctl restart docker
+```
+
+### 更新记录
+
+| 日期 | 版本 | 更新内容 |
+|------|------|---------|
+| 2024-10-10 | v1.1 | 添加定价页面、Footer组件、SEO优化 |
+| 2024-09-27 | v1.0 | 初始生产环境部署 |
+
+### 联系支持
+
+如果在部署过程中遇到问题，请：
+1. 查看上述故障排除指南
+2. 检查服务日志: `docker-compose -f docker-compose.prod.yml logs`
+3. 提交 Issue 到 GitHub 仓库
+4. 联系技术支持
+
