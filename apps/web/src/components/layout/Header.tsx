@@ -1,33 +1,53 @@
 'use client'
 
 import Link from 'next/link'
-import { Sparkles, Wand2, DollarSign, Github } from 'lucide-react'
+import { Sparkles, Github } from 'lucide-react'
 
 export function Header() {
   return (
-    <header className="h-14 bg-primary border-b border-primary/20 flex items-center justify-between px-6 flex-shrink-0">
-      <Link href="/" className="flex items-center space-x-3">
-        <div className="flex items-center space-x-2">
-          <div className="w-6 h-6 bg-white/20 rounded flex items-center justify-center">
-            <Sparkles className="w-4 h-4 text-white" />
+    <header className="w-full bg-background/80 backdrop-blur-sm border-b border-border sticky top-0 z-50">
+      <div className="container mx-auto flex h-16 items-center justify-between px-6 lg:px-12">
+        
+        {/* Left Side: Brand */}
+        <Link href="/" className="flex items-center space-x-2 hover:opacity-80 transition-opacity">
+          <div className="w-8 h-8 bg-primary/10 rounded-lg flex items-center justify-center">
+            <Sparkles className="w-5 h-5 text-primary" />
           </div>
-          <span className="text-white font-semibold text-sm">AI 脚本快拆</span>
-          <span className="text-white/60 text-xs">by v0</span>
-        </div>
-      </Link>
-      <div className="flex items-center space-x-2">
-        <button className="px-3 py-1.5 text-white/80 hover:text-white text-xs font-medium rounded-md transition-colors flex items-center space-x-2">
-          <Wand2 className="w-4 h-4" />
-          <span>工作原理</span>
-        </button>
-        <button className="px-3 py-1.5 text-white/80 hover:text-white text-xs font-medium rounded-md transition-colors flex items-center space-x-2">
-          <DollarSign className="w-4 h-4" />
-          <span>价格</span>
-        </button>
-        <a href="https://github.com" target="_blank" rel="noopener noreferrer" className="px-3 py-1.5 text-white/80 hover:text-white text-xs font-medium rounded-md transition-colors flex items-center space-x-2">
-          <Github className="w-4 h-4" />
-          <span>GitHub</span>
-        </a>
+          <span className="font-bold text-lg text-foreground">AI 脚本快拆</span>
+        </Link>
+
+        {/* Right Side: Navigation */}
+        <nav className="flex items-center space-x-6">
+          <Link 
+            href="/" 
+            className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
+          >
+            首页
+          </Link>
+          <Link 
+            href="/pricing" 
+            className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
+          >
+            价格
+          </Link>
+          <Link 
+            href="https://blog.lmw.dev" 
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
+          >
+            博客
+          </Link>
+          <a 
+            href="https://github.com/lmw-dev" 
+            target="_blank" 
+            rel="noopener noreferrer" 
+            className="text-muted-foreground hover:text-foreground transition-colors"
+            aria-label="GitHub"
+          >
+            <Github className="w-5 h-5" />
+          </a>
+        </nav>
       </div>
     </header>
   )
