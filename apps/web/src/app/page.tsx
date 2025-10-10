@@ -165,14 +165,6 @@ export default function HomePage() {
       </div>
 
       <div className="flex-1 flex flex-col items-center justify-center p-6 lg:p-12">
-        <div className="text-center mb-10">
-          <h1 className="text-4xl lg:text-5xl font-bold text-gray-900 dark:text-gray-100 tracking-tight">
-            AI 脚本快拆
-          </h1>
-          <p className="mt-4 text-lg text-gray-600 dark:text-gray-400 max-w-xl">
-            粘贴视频链接，即刻获取AI结构化分析脚本，让你的内容创作效率倍增。
-          </p>
-        </div>
         <InputSection 
           currentState={isValid ? "INPUT_VALID" : "IDLE"}
           inputValue={inputValue}
