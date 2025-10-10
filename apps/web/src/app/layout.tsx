@@ -6,6 +6,7 @@ import { Analytics } from "@vercel/analytics/next"
 import { Toaster } from "@/components/ui/toaster"
 
 import { Header } from "@/components/layout/Header"
+import { Footer } from "@/components/layout/Footer"
 import "./globals.css"
 
 export const metadata: Metadata = {
@@ -27,6 +28,7 @@ export default function RootLayout({
           <main className="flex-grow flex flex-col">
             {children}
           </main>
+          <Footer />
         </div>
         <Toaster />
         <Analytics />
