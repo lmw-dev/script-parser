@@ -4,8 +4,6 @@
 # 说明：此文件专用于生产环境部署，使用腾讯云TCR镜像
 # 使用方法：docker-compose -f docker-compose.prod.yml up -d
 
-version: '3.8'
-
 services:
   # Nginx 反向代理
   nginx:
@@ -33,7 +31,7 @@ services:
 
   # Next.js Web应用 - 使用TCR镜像
   web:
-    image: scriptparser-web-local:latest
+    image: ccr.ccs.tencentyun.com/baokuan-jieqouqi/scriptparser-web:latest
     container_name: ${PROJECT_PREFIX}_frontend
     restart: always
     environment:

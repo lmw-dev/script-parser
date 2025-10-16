@@ -24,11 +24,11 @@ fi
 
 # 构建 Web 应用
 echo -e "${YELLOW}📦 构建 Web 应用...${NC}"
-docker build -t ${PROJECT_NAME}-web:${TAG} ./apps/web
+docker build -f apps/web/Dockerfile -t ${PROJECT_NAME}-web:${TAG} .
 
 # 构建 AI 协处理器
 echo -e "${YELLOW}🤖 构建 AI 协处理器...${NC}"
-docker build -t ${PROJECT_NAME}-coprocessor:${TAG} ./apps/coprocessor
+docker build -f apps/coprocessor/Dockerfile -t ${PROJECT_NAME}-coprocessor:${TAG} apps/coprocessor
 
 # 如果指定了 registry，则推送镜像
 if [ ! -z "$REGISTRY" ]; then

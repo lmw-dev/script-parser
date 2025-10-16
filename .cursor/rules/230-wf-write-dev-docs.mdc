@@ -46,6 +46,17 @@ The content of this new file must follow the template structure below.
 >         # 4. Parse JSON and extract no-watermark URL
 >         # ...
 > ```
+> > [!example] **用法示例 (Usage Example)**
+> > ```python
+>    async def main():
+>        parser = DouyinParser()
+>        share_text = "抖音分享文案..."
+>        try:
+>            video_info = await parser.parse(share_text)
+>            print(f"成功解析！下载链接: {video_info.download_url}")
+>        except Exception as e:
+>            print(f"解析失败: {e}")
+> > ```
 
 ---
 

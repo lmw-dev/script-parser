@@ -37,54 +37,56 @@ The content of this new file must follow the standard prompt structure template 
 ### 必需部分 (Required Sections)
 
 #### 1. 目标部分 (🎯 Objective)
-`## 🎯 目标 (Objective)`
-`**Linear Issue**: [任务ID] - [任务标题]`
-`**核心指令**: [一句话描述要完成的核心任务，强调测试先行]`
+## 🎯 目标 (Objective)`
+**Linear Issue**: [任务ID] - [任务标题]`
+**核心指令**: [一句话描述要完成的核心任务，强调测试先行]`
 
 #### 2. 上下文参考 (📋 Context References)
-`## 📋 上下文参考 (Context References)`
+## 📋 上下文参考 (Context References)`
 
-`### 主要操作文件`
-`- 核心文件: @path/to/main-file.ts (待创建/已存在)`
-`- 测试文件: @path/to/main-file.test.ts (待创建)`
+### 主要操作文件`
+- 核心文件: @path/to/main-file.ts (待创建/已存在)`
+- 测试文件: @path/to/main-file.test.ts (待创建)`
 
-`### 需要遵循的内部规则`
-`- @.cursor/rules/130-spec-testing-guide.mdc`
-`- @.cursor/rules/[...其他相关规则]`
+### 需要遵循的内部规则`
+- @.cursor/rules/130-spec-testing-guide.mdc`
+- @.cursor/rules/[...其他相关规则]`
 
 #### 3. 具体要求与约束 (🔧 Requirements & Constraints)
-`## 🔧 具体要求与约束 (Requirements & Constraints)`
+## 🔧 具体要求与约束 (Requirements & Constraints)`
 
-`### 技术栈约束`
-`- **语言**: TypeScript (strict mode)`
-`- **测试框架**: Vitest + React Testing Library`
+### 技术栈约束`
+- **语言**: TypeScript (strict mode)`
+- **测试框架**: Vitest + React Testing Library`
 
-`### 功能要求`
-`[详细的功能规范和约束条件]`
+### 功能要求`
+[详细的功能规范和约束条件]`
 
-`### 类型安全要求 (🛡️ Type Safety)`
-`- **类型优先设计**: 先定义完整的TypeScript接口，再编写测试和实现。`
+### 类型安全要求 (🛡️ Type Safety)`
+- **类型优先设计**: 先定义完整的TypeScript接口，再编写测试和实现。`
 
-#### 4. 期望输出结构 (📝 Expected Output Structure)
-`## 📝 期望输出结构 (Expected Output Structure)`
+#### 4. 示例与输出结构 (Example & Output Structure)
 
-`### 4.1 测试文件结构 (e.g., /path/to/file.test.ts)`
-`// 提供具体的、可执行的测试用例代码骨架`
-`import { describe, it, expect } from 'vitest';`
-`import { functionToTest } from './file-to-test';`
+> [!example] **用法示例 (将被转化为测试用例)**
+> *AI, 你将要实现的功能，最终会被这样调用。你的实现必须能让这个示例成功运行。*
+> ```typescript
+> // 这是一个最简化的、展示核心用法的示例
+> const result = await downloadAsMarkdown(mockAnalysisResult);
+> // 预期 result 字符串中包含 "## 完整逐字稿"
+> ```
 
-`describe('functionToTest', () => {`
-`  it('should handle case A correctly', () => {`
-`    // expect(...).toBe(...);`
-`  });`
-`});`
+### 4.1 核心实现文件结构 (e.g., /path/to/file.ts)`
+// 在理解了上面的用法之后，请实现以下函数签名`
+export const downloadAsMarkdown = (result: AnalysisResult): string => {`
+  // Implementation goes here`
+};
 
 
-`### 4.2 核心实现文件结构 (e.g., /path/to/file.ts)`
-`// 提供函数签名、类结构或接口定义`
-`export const functionToTest = (param: Type): ReturnType => {`
-`  // Implementation goes here`
-`};`
+### 4.2 核心实现文件结构 (e.g., /path/to/file.ts)`
+// 提供函数签名、类结构或接口定义`
+export const functionToTest = (param: Type): ReturnType => {`
+  // Implementation goes here`
+};`
 
 ---
 **(关键流程变更)**
