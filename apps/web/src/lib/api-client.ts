@@ -43,6 +43,8 @@ export const parseVideo = async (request: VideoParseRequest): Promise<AnalysisRe
         body: JSON.stringify({
           url: request.url
         }),
+        // Extended timeout for video processing (2 minutes)
+        signal: AbortSignal.timeout(120000),
       })
     } else {
       // File mode - send as multipart/form-data
@@ -52,18 +54,28 @@ export const parseVideo = async (request: VideoParseRequest): Promise<AnalysisRe
       response = await fetch(apiUrl, {
         method: "POST",
         body: formData,
+        // Extended timeout for video processing (2 minutes)
+        signal: AbortSignal.timeout(120000),
       })
     }
 
     if (!response.ok) {
+      // Clone the response to avoid "body stream already read" error
+      const responseClone = response.clone();
+      
       // Attempt to parse the JSON error response from the API
       try {
         const errorData: VideoParseResponse = await response.json();
         throw new Error(errorData.message || `API request failed with status ${response.status}`);
-      } catch {
-        // If the error response isn't JSON, fall back to the raw text
-        const errorText = await response.text();
-        throw new Error(`API request failed: ${response.status} ${response.statusText} - ${errorText}`);
+      } catch (jsonError) {
+        // If the error response isn't JSON, fall back to the raw text from the cloned response
+        try {
+          const errorText = await responseClone.text();
+          throw new Error(`API request failed: ${response.status} ${response.statusText}${errorText ? ` - ${errorText}` : ''}`);
+        } catch {
+          // If both fail, provide a generic error message
+          throw new Error(`API request failed with status ${response.status} ${response.statusText}`);
+        }
       }
     }
 
@@ -88,7 +100,17 @@ export const parseVideo = async (request: VideoParseRequest): Promise<AnalysisRe
     return frontendResult;
 
   } catch (error) {
-    // Re-throw the error to be handled by the caller
+    // Handle timeout errors specifically
+    if (error instanceof Error && error.name === 'TimeoutError') {
+      throw new Error('视频处理超时，请尝试上传较小的视频文件或稍后重试');
+    }
+    
+    // Handle network errors
+    if (error instanceof TypeError && error.message.includes('fetch')) {
+      throw new Error('网络连接失败，请检查网络连接后重试');
+    }
+    
+    // Re-throw other errors to be handled by the caller
     throw error
   }
 }

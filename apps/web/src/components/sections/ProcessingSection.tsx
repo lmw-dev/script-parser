@@ -65,9 +65,12 @@ export function ProcessingSection({
           />
         </div>
 
-        <div className="space-y-1">
+        <div className="space-y-2">
           <h2 className="text-2xl md:text-3xl font-bold text-gradient">AI 正在分析中</h2>
           <p className="text-base md:text-lg text-muted-foreground">请稍候，我们的AI正在为您解析视频内容</p>
+          <p className="text-sm text-muted-foreground/80">
+            视频处理通常需要 1-2 分钟，请耐心等待
+          </p>
         </div>
       </div>
 

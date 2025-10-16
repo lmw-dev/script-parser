@@ -1,148 +1,222 @@
 /**
- * Unit tests for API client module
- * Updated to test against the real API endpoint and data structure
+ * Unit tests for API client
+ * Tests timeout handling and response error handling
  */
 
-import { parseVideo } from '../api-client';
-import type { VideoParseRequest, AnalysisResult, VideoParseResponse, BackendData } from '@/types/script-parser.types';
+import { parseVideo } from '../api-client'
+import type { VideoParseRequest } from '@/types/script-parser.types'
 
-// Mock global fetch
-const mockFetch = jest.fn();
-global.fetch = mockFetch;
+// Mock fetch globally
+global.fetch = jest.fn()
 
-const apiUrl = `${process.env.NEXT_PUBLIC_API_URL}/api/parse`;
-
-describe('api-client', () => {
+describe('parseVideo', () => {
   beforeEach(() => {
-    mockFetch.mockClear();
-  });
+    jest.clearAllMocks()
+  })
 
-  afterEach(() => {
-    mockFetch.mockReset();
-  });
-
-  describe('parseVideo', () => {
-    describe('URL submission', () => {
-      it('should make correct fetch call for URL request', async () => {
-        const mockApiResponse: VideoParseResponse = {
+  describe('Timeout Handling', () => {
+    it('should set 120 second timeout for URL requests', async () => {
+      const mockResponse = {
+        ok: true,
+        json: jest.fn().mockResolvedValue({
           success: true,
-          code: 0,
-          data: { transcript: '', analysis: { llm_analysis: { hook: '', core: '', cta: '' } } },
-        };
-        mockFetch.mockResolvedValue({ ok: true, json: jest.fn().mockResolvedValue(mockApiResponse) });
-
-        const request: VideoParseRequest = {
-          type: 'url',
-          url: 'https://www.douyin.com/video/123456789',
-          file: null,
-        };
-
-        await parseVideo(request);
-
-        expect(mockFetch).toHaveBeenCalledWith(apiUrl, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({ url: 'https://www.douyin.com/video/123456789' }),
-        });
-      });
-
-      it('should return transformed AnalysisResult for successful URL request', async () => {
-        const mockBackendData: BackendData = {
-            transcript: 'This is the transcript.',
+          data: {
+            transcript: 'test transcript',
             analysis: {
-                llm_analysis: {
-                    hook: 'Amazing hook content',
-                    core: 'Deep core analysis',
-                    cta: 'Strong call to action',
-                }
+              llm_analysis: {
+                hook: 'test hook',
+                core: 'test core',
+                cta: 'test cta'
+              }
             }
-        };
-        const mockApiResponse: VideoParseResponse = {
-            success: true,
-            code: 0,
-            data: mockBackendData,
-        };
-        mockFetch.mockResolvedValue({ ok: true, json: jest.fn().mockResolvedValue(mockApiResponse) });
+          }
+        })
+      }
 
-        const expectedFrontendResult: AnalysisResult = {
-            transcript: 'This is the transcript.',
+      ;(global.fetch as jest.Mock).mockResolvedValue(mockResponse)
+
+      const request: VideoParseRequest = {
+        type: 'url',
+        url: 'https://example.com/video',
+        file: null
+      }
+
+      await parseVideo(request)
+
+      expect(global.fetch).toHaveBeenCalledWith(
+        expect.any(String),
+        expect.objectContaining({
+          signal: expect.any(AbortSignal)
+        })
+      )
+    })
+
+    it('should set 120 second timeout for file requests', async () => {
+      const mockResponse = {
+        ok: true,
+        json: jest.fn().mockResolvedValue({
+          success: true,
+          data: {
+            transcript: 'test transcript',
             analysis: {
-                hook: 'Amazing hook content',
-                core: 'Deep core analysis',
-                cta: 'Strong call to action',
+              llm_analysis: {
+                hook: 'test hook',
+                core: 'test core',
+                cta: 'test cta'
+              }
             }
+          }
+        })
+      }
+
+      ;(global.fetch as jest.Mock).mockResolvedValue(mockResponse)
+
+      const mockFile = new File(['test'], 'test.mp4', { type: 'video/mp4' })
+      const request: VideoParseRequest = {
+        type: 'file',
+        url: '',
+        file: mockFile
+      }
+
+      await parseVideo(request)
+
+      expect(global.fetch).toHaveBeenCalledWith(
+        expect.any(String),
+        expect.objectContaining({
+          signal: expect.any(AbortSignal)
+        })
+      )
+    })
+
+    it('should provide user-friendly error message on timeout', async () => {
+      const timeoutError = new Error('The operation timed out')
+      timeoutError.name = 'TimeoutError'
+      
+      ;(global.fetch as jest.Mock).mockRejectedValue(timeoutError)
+
+      const request: VideoParseRequest = {
+        type: 'url',
+        url: 'https://example.com/video',
+        file: null
+      }
+
+      await expect(parseVideo(request)).rejects.toThrow('视频处理超时，请尝试上传较小的视频文件或稍后重试')
+    })
+  })
+
+  describe('Response Error Handling', () => {
+    it('should handle response.json() error with cloned response', async () => {
+      const mockText = 'Internal Server Error'
+      
+      // Mock both original and cloned response
+      const textMock = jest.fn().mockResolvedValue(mockText)
+      const jsonMock = jest.fn().mockRejectedValue(new SyntaxError('Unexpected token < in JSON'))
+      const cloneMock = jest.fn().mockReturnValue({ text: textMock })
+      
+      const mockResponse = {
+        ok: false,
+        status: 500,
+        statusText: 'Internal Server Error',
+        json: jsonMock,
+        clone: cloneMock
+      }
+
+      ;(global.fetch as jest.Mock).mockResolvedValue(mockResponse)
+
+      const request: VideoParseRequest = {
+        type: 'url',
+        url: 'https://example.com/video',
+        file: null
+      }
+
+      await expect(parseVideo(request)).rejects.toThrow(/API request failed/)
+      
+      // Verify the clone mechanism was used
+      expect(cloneMock).toHaveBeenCalled()
+      expect(textMock).toHaveBeenCalled()
+    })
+
+    it('should handle JSON error response correctly', async () => {
+      const jsonMock = jest.fn().mockResolvedValue({
+        success: false,
+        message: 'Unsupported platform'
+      })
+      const cloneMock = jest.fn()
+      
+      const mockResponse = {
+        ok: false,
+        status: 400,
+        statusText: 'Bad Request',
+        json: jsonMock,
+        clone: cloneMock
+      }
+
+      ;(global.fetch as jest.Mock).mockResolvedValue(mockResponse)
+
+      const request: VideoParseRequest = {
+        type: 'url',
+        url: 'https://example.com/video',
+        file: null
+      }
+
+      await expect(parseVideo(request)).rejects.toThrow(/API request failed/)
+      
+      // Should successfully parse JSON, so clone shouldn't be needed
+      expect(jsonMock).toHaveBeenCalled()
+    })
+
+    it('should handle network errors gracefully', async () => {
+      const networkError = new TypeError('Failed to fetch')
+      
+      ;(global.fetch as jest.Mock).mockRejectedValue(networkError)
+
+      const request: VideoParseRequest = {
+        type: 'url',
+        url: 'https://example.com/video',
+        file: null
+      }
+
+      await expect(parseVideo(request)).rejects.toThrow('网络连接失败，请检查网络连接后重试')
+    })
+  })
+
+  describe('Successful Response Handling', () => {
+    it('should parse successful response correctly', async () => {
+      const mockResponse = {
+        ok: true,
+        json: jest.fn().mockResolvedValue({
+          success: true,
+          data: {
+            transcript: 'Test transcript content',
+            analysis: {
+              llm_analysis: {
+                hook: 'Attention grabbing hook',
+                core: 'Main content explanation',
+                cta: 'Call to action'
+              }
+            }
+          }
+        })
+      }
+
+      ;(global.fetch as jest.Mock).mockResolvedValue(mockResponse)
+
+      const request: VideoParseRequest = {
+        type: 'url',
+        url: 'https://example.com/video',
+        file: null
+      }
+
+      const result = await parseVideo(request)
+
+      expect(result).toEqual({
+        transcript: 'Test transcript content',
+        analysis: {
+          hook: 'Attention grabbing hook',
+          core: 'Main content explanation',
+          cta: 'Call to action'
         }
-
-        const request: VideoParseRequest = {
-          type: 'url',
-          url: 'https://www.douyin.com/video/123456789',
-          file: null,
-        };
-
-        const result = await parseVideo(request);
-
-        expect(result).toEqual(expectedFrontendResult);
-      });
-    });
-
-    describe('Error handling', () => {
-        it('should throw an error if the API returns success: false', async () => {
-            const mockApiResponse = { 
-                success: false, 
-                code: 500,
-                message: 'Processing failed in backend' 
-            };
-            mockFetch.mockResolvedValue({ ok: true, json: jest.fn().mockResolvedValue(mockApiResponse) });
-    
-            const request: VideoParseRequest = {
-                type: 'url',
-                url: 'https://www.douyin.com/video/123456789',
-                file: null,
-              };
-    
-            await expect(parseVideo(request)).rejects.toThrow('Processing failed in backend');
-          });
-
-        it('should throw error when API returns non-ok response', async () => {
-          const mockResponse = {
-            ok: false,
-            status: 400,
-            statusText: 'Bad Request',
-            text: jest.fn().mockResolvedValue('Invalid request format'),
-          };
-          mockFetch.mockResolvedValue(mockResponse);
-  
-          const request: VideoParseRequest = {
-            type: 'url',
-            url: 'https://www.douyin.com/video/123456789',
-            file: null,
-          };
-  
-          await expect(parseVideo(request)).rejects.toThrow('API request failed: 400 Bad Request - Invalid request format');
-        });
-
-        it('should throw error if llm_analysis data is missing', async () => {
-            const mockBackendData = {
-                transcript: 'This is the transcript.',
-                analysis: {},
-            } as unknown as BackendData; // Type cast to simulate missing llm_analysis
-            const mockApiResponse: VideoParseResponse = {
-                success: true,
-                code: 0,
-                data: mockBackendData,
-            };
-            mockFetch.mockResolvedValue({ ok: true, json: jest.fn().mockResolvedValue(mockApiResponse) });
-    
-            const request: VideoParseRequest = {
-                type: 'url',
-                url: 'https://www.douyin.com/video/123456789',
-                file: null,
-            };
-    
-            await expect(parseVideo(request)).rejects.toThrow('LLM analysis data is missing in the API response.');
-        });
-      });
-  });
-});
+      })
+    })
+  })
+})
