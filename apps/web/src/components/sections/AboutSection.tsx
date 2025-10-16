@@ -1,6 +1,7 @@
 import Image from 'next/image'
 import { Github, Twitter, BookOpen, Instagram } from 'lucide-react'
 import { Button } from '@/components/ui/button'
+import { config } from '@/lib/config'
 
 export function AboutSection() {
   return (
@@ -28,12 +29,12 @@ export function AboutSection() {
               <h2 className="text-3xl lg:text-4xl font-bold text-foreground">
                 关于创作者
               </h2>
-              <p className="text-muted-foreground">独立开发者 · 效率工具探索者</p>
+              <p className="text-muted-foreground">{config.author.title}</p>
             </div>
             
             <div className="space-y-4 text-base lg:text-lg text-foreground/80 leading-relaxed">
               <p>
-                嗨，我是刘明伟（LMW）👋 一名独立开发者和效率工具的探索者。
+                嗨，我是{config.author.name}（LMW）👋 一名独立开发者和效率工具的探索者。
               </p>
               <p>
                 我相信「工匠精神 + 商业思维」的结合。通过AI技术，我希望打造真正能提升创作者效率的工具，
@@ -47,25 +48,25 @@ export function AboutSection() {
             {/* 社交媒体链接 */}
             <div className="flex flex-wrap justify-center md:justify-start gap-3 pt-4">
               <Button variant="outline" size="sm" asChild>
-                <a href="https://github.com/lmw-dev" target="_blank" rel="noopener noreferrer">
+                <a href={config.social.github} target="_blank" rel="noopener noreferrer">
                   <Github className="w-4 h-4 mr-2" />
                   GitHub
                 </a>
               </Button>
               <Button variant="outline" size="sm" asChild>
-                <a href="https://twitter.com/lmw_dev" target="_blank" rel="noopener noreferrer">
+                <a href={config.social.twitter} target="_blank" rel="noopener noreferrer">
                   <Twitter className="w-4 h-4 mr-2" />
                   Twitter
                 </a>
               </Button>
               <Button variant="outline" size="sm" asChild>
-                <a href="https://blog.lmw.dev" target="_blank" rel="noopener noreferrer">
+                <a href={config.social.blog} target="_blank" rel="noopener noreferrer">
                   <BookOpen className="w-4 h-4 mr-2" />
                   博客
                 </a>
               </Button>
               <Button variant="outline" size="sm" asChild>
-                <a href="https://xiaohongshu.com/user/profile/xxx" target="_blank" rel="noopener noreferrer">
+                <a href={config.social.xiaohongshu} target="_blank" rel="noopener noreferrer">
                   <Instagram className="w-4 h-4 mr-2" />
                   小红书
                 </a>

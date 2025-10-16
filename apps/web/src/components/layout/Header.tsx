@@ -2,6 +2,7 @@
 
 import Link from 'next/link'
 import { Sparkles, Github } from 'lucide-react'
+import { config } from '@/lib/config'
 
 export function Header() {
   return (
@@ -31,7 +32,7 @@ export function Header() {
             价格
           </Link>
           <Link 
-            href="https://blog.lmw.dev" 
+            href={config.social.blog} 
             target="_blank"
             rel="noopener noreferrer"
             className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
@@ -39,7 +40,7 @@ export function Header() {
             博客
           </Link>
           <a 
-            href="https://github.com/lmw-dev" 
+            href={config.social.github} 
             target="_blank" 
             rel="noopener noreferrer" 
             className="text-muted-foreground hover:text-foreground transition-colors"
