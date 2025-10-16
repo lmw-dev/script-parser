@@ -12,7 +12,7 @@ export function AboutSection() {
           <div className="md:col-span-2 flex justify-center md:justify-end">
             <div className="relative">
               <Image
-                src="/placeholder-user.jpg"
+                src="/placeholder-user.png"
                 alt="刘明伟的头像"
                 width={200}
                 height={200}
