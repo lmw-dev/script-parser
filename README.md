@@ -414,50 +414,57 @@ docker-compose restart coprocessor
 - 文档地址: [Documentation]
 ## 🚀 生产环境部署更新流程
 
+### 架构说明
+
+生产环境采用 **volumes 挂载** 模式：
+- 容器使用预构建镜像提供基础环境
+- 本地代码通过 volumes 挂载到容器
+- **优势**：`git pull` 后只需重启服务即可生效，无需重新构建镜像
+
 ### 快速更新部署
 
-在腾讯云VPS上完整的更新部署流程：
+在腾讯云VPS上更新代码的流程：
 
 ```bash
-# 1. 停止现有服务
-echo "⏹️ 停止现有Docker服务..."
-docker-compose -f docker-compose.prod.yml down
-
-# 2. 拉取最新代码
-echo "📥 拉取最新代码..."
+# 1. 拉取最新代码
 git pull origin main
 
-# 3. 启动服务（使用预构建镜像）
-echo "🚀 启动服务..."
-docker-compose -f docker-compose.prod.yml up -d
+# 2. 重启后端服务（应用代码变更）
+docker-compose -f docker-compose.prod.yml restart coprocessor
 
-# 4. 验证部署状态
-echo "📊 检查服务状态..."
-docker-compose -f docker-compose.prod.yml ps
-
-# 5. 健康检查
-echo "🔍 健康检查..."
+# 3. 验证服务状态
 curl -f http://localhost:8081/api/health
-
-# 6. 查看日志
-echo "📋 查看日志..."
-docker-compose -f docker-compose.prod.yml logs --tail=10
+docker-compose -f docker-compose.prod.yml logs --tail=10 coprocessor
 ```
 
 ### 一键部署脚本
 
-创建自动化部署脚本：
+项目提供了自动化部署脚本 `deploy.sh`：
 
 ```bash
-# 创建部署脚本
-cat > deploy.sh << 'SCRIPT'
-#!/bin/bash
+# 直接运行
+./deploy.sh
+```
 
-echo "🚀 开始部署 ScriptParser..."
-echo "=================================="
+脚本会自动完成：
+1. ✅ 拉取最新代码
+2. ✅ 重启后端服务
+3. ✅ 健康检查
+4. ✅ 显示服务状态和日志
 
-# 检查当前目录
-if [ ! -f "docker-compose.prod.yml" ]; then
+### 完整重启（如需重启所有服务）
+
+```bash
+# 停止所有服务
+docker-compose -f docker-compose.prod.yml down
+
+# 启动所有服务
+docker-compose -f docker-compose.prod.yml up -d
+
+# 验证
+docker-compose -f docker-compose.prod.yml ps
+curl -f http://localhost:8081/api/health
+```
     echo "❌ 错误: 请在项目根目录运行此脚本"
     exit 1
 fi

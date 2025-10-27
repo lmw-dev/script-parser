@@ -53,6 +53,8 @@ services:
     image: ccr.ccs.tencentyun.com/baokuan-jieqouqi/scriptparser-coprocessor:latest
     container_name: ${PROJECT_PREFIX}_backend
     restart: always
+    volumes:
+      - ./apps/coprocessor/app:/app/app:ro  # 挂载本地代码目录（只读）
     environment:
       # 服务基础配置
       - HOST=${HOST}
