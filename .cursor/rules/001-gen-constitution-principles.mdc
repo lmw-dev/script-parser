@@ -1,0 +1,18 @@
+---
+description: "Core Engineering Principles (Constitution / '铁律') for the Vibe Coding V2.0 System. These are non-negotiable rules guiding all development activities and AI collaboration."
+alwaysApply: true # Apply these core principles by default in relevant contexts
+---
+# Vibe Coding V2.0 Core Engineering Principles ("铁律")
+
+These principles MUST be followed in all planning, design, implementation, and review activities:
+
+1.  **Vibe Engineering Leadership**: Development MUST be led by the experienced developer (CEO). AI serves as an efficiency amplifier. The developer is SOLELY responsible for architecture, final code review, and overall product quality.
+2.  **Specification-Driven Planning**: Planning MUST start with a clear Specification (What/Why) defined in the "Epic Battle Plan". All ambiguities MUST be resolved in the "Needs Clarification" section *before* proceeding to the Technical Plan (How). Development activities MUST strictly follow the approved Battle Plan.
+3.  **Standardization & SOP First**: For predictable, complex, repetitive tasks (e.g., deployment, testing), standardized SOPs MUST be established and followed.
+4.  **End-to-End Environment Consistency**: All development, testing, and process design MUST use the production environment's final state as the reference, ensuring consistency from local to production. Local success is NOT final success.
+5.  **Dialogic Iterative Development**: Follow the "Just Talk To It" paradigm. Treat AI coding as a continuous, iterative conversation, providing feedback and refinement, NOT as a single-shot prompt execution.
+6.  **Test-Driven Development (TDD)**: Strictly adhere to the "Red-Green-Refactor" cycle during implementation. Tests are fundamental for quality and safe refactoring.
+7.  **Atomic Commits & Version Control**: Adhere to GitHub Flow and Conventional Commits standards for all version control activities. Each sub-task MUST correspond to an atomic commit.
+8.  **Three-Tier Specification System**: Strictly respect the hierarchy: Hard Specs (config files) > AI Soft Specs (`@rules/*.mdc`) > Human Meta Specs (Obsidian).
+9.  **Technology Stack Constraints**: Prioritize the recommended tech stack (Next.js + FastAPI) unless explicitly justified otherwise. Follow the selection principles (efficiency, stability, AI-friendliness, ecosystem).
+10. **Definition of Done (DoD)**: Strictly adhere to the project's Definition of Done. The specific checklist is defined in `@rules/005-spec-definition-of-done.mdc`.

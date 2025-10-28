@@ -1,0 +1,53 @@
+---
+description: "Core visual design principles and rules for the Rondo product matrix (V2.1), optimized for AI consumption. Ensures UI consistency and adherence to the design system."
+globs: **/*.tsx, **/*.css, **/*.scss
+alwaysApply: true # Core design principles should always be considered
+---
+# Rule: Rondo Visual Design Principles & Rules (V2.1 - Core)
+
+When generating UI components or styles, strictly adhere to the following principles and rules:
+
+## 1. Core Design Philosophy
+- **Minimalism**: Remove all non-essential elements. Every pixel must serve function ("法则#7: 少即是多").
+- **Trustworthiness**: Ensure clear layout, consistent styles, and timely feedback.
+- **Efficiency**: Minimize user clicks and cognitive load.
+
+## 2. Color Usage (Strict)
+- **Primary Color**: Use `brand-purple: #5E6AD2` ONLY for primary interactive elements (buttons, links, focus states).
+- **Neutral Colors**: Use the defined gray palette (`#111827`, `#4B5563`, `#D1D5DB`, `#F3F4F6`, `#FFFFFF`) for text, backgrounds, and borders.
+- **Functional Colors**: Use error (`#EF4444`), success (`#10B981`), warning (`#F59E0B`) colors only for their specific semantic purpose.
+- **Rule**: Limit color usage; prioritize grayscale for hierarchy ("法则#3：学习用色").
+
+## 3. Typography (Strict)
+- **Font**: Use `Inter` or system default UI fonts ONLY ("法则#4：使用单一字体族").
+- **Weights**: Use `Regular (400)` for body, `Medium (500)` for buttons/labels, `Semibold (600)` for titles. Limit weight variations ("法则#11：减少字体粗细变化").
+
+## 4. Spacing & Layout (Strict)
+- **Base Unit**: `4px`. ALL `margin` and `padding` MUST be multiples of 4px (`4px, 8px, 16px, 24px, 32px`) ("法则#1：使用4的倍数进行间距设计").
+- **Alignment**: Ensure strict left, right, or center alignment for ALL elements ("法则#2：对齐所有元素").
+- **Borders**: Minimize border usage. Prefer whitespace or background color for separation ("法则#8：减少边框").
+
+## 5. Core Component Styles
+- **Buttons**:
+    - Primary: `#5E6AD2` background, white text.
+    - Secondary: `#D1D5DB` border, `#4B5563` text.
+- **Inputs**: Use consistent height and clear focus states (see below).
+- **Rule**: Maximize usage of existing component library (shadcn/ui) default styles and behavior ("法则#12"). Adapt them only when necessary, following these rules.
+
+## 6. States & Interactions
+- **Focus State**: All interactive elements MUST have a `2px` `#5E6AD2` outline/border with `4px` offset on focus.
+- **Hover State (Buttons)**: Background darken by 10%.
+- **Loading (Progress Bar)**: Height `4px`, background `#F3F4F6`, progress `#5E6AD2`.
+
+## 7. Responsive Design Breakpoints
+- `mobile`: `< 768px`
+- `tablet`: `768px - 1024px`
+- `desktop`: `> 1024px`
+
+## 8. Accessibility Minimums
+- **Contrast**: Text >= 4.5:1, Large Titles >= 3:1.
+- **Semantics**: Use correct HTML tags.
+
+## 9. Specific Component Rules (from Extension Spec)
+- **Error Card**: Background `#FEF2F2`, Border `#EF4444`.
+- **Code Block**: Background `#111827`, Text `#F3F4F6`, Rounded `rounded-md`.

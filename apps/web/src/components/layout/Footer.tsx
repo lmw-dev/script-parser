@@ -1,6 +1,7 @@
 import Link from 'next/link'
 import { Github, Twitter, BookOpen, Instagram } from 'lucide-react'
 import { DonationSection } from '@/components/feature/DonationSection'
+import { EmailSubscriptionForm } from '@/components/feature/EmailSubscriptionForm'
 
 export function Footer() {
   const currentYear = new Date().getFullYear()
@@ -79,6 +80,11 @@ export function Footer() {
             </div>
           </div>
 
+        </div>
+
+        {/* Email Subscription Section */}
+        <div className="mt-12 border-t border-border pt-12">
+          <EmailSubscriptionForm />
         </div>
 
         {/* Donation Section */}

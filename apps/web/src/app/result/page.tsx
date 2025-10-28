@@ -6,6 +6,7 @@ import { useAppStore } from "@/stores/app-store"
 import { ResultSection } from "@/components/sections/ResultSection"
 import { ErrorSection } from "@/components/sections/ErrorSection"
 import { DonationSection } from "@/components/feature/DonationSection"
+import { EmailSubscriptionForm } from "@/components/feature/EmailSubscriptionForm"
 
 export default function ResultPage() {
   const router = useRouter()
@@ -53,6 +54,9 @@ export default function ResultPage() {
               />
             </div>
           )}
+          <div className="mt-12">
+            <EmailSubscriptionForm />
+          </div>
         </div>
       </main>
     )

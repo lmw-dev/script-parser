@@ -1,83 +1,89 @@
 ---
-description: "A unified and powerful template to create 'Epic Battle Plan' documents. This document serves as the single source of truth for an Epic's technical design, project management, and quality strategy."
+description: "A unified and powerful template to create 'Epic Battle Plan' documents V2.1, incorporating Spec-Driven Development principles. This document serves as the single source of truth for an Epic's specification (What/Why) and technical plan (How)." 
 alwaysApply: false
 ---
-# Rule: Guide for Writing Epic Battle Plan Documents (v2.1)
+# Rule: Guide for Writing Epic Battle Plan Documents (v2.1 - SDD Enhanced) 
 
 When prompted to create a plan for a new Epic, your primary action is to **create a new Markdown file**.
 - **File Location**: The new file **must** be saved in the `/docs/battle-plans/` directory.
 - **File Naming**: The filename **must** follow the format: `[Epic-ID]-battle-plan-[epic-title-in-kebab-case].md`.
 - **Example**: `TOM-326-battle-plan-implement-api-parse-endpoint.md`
 
-The content of this new file must follow the template structure below.
----
-
-# [Epic-ID]: [Epic Title] - 史诗作战计划
-
-- **Status**: 🎯 Designing / ✅ Plan Approved
+The content of this new file must follow the **two-part structure** outlined below, emphasizing the separation between **Specification (What/Why)** and **Technical Plan (How)**.
 
 ---
+# [Epic-ID]: [Epic Title] - 史诗作战计划 V2.1
 
-## 1. 🎯 核心目标与决策摘要 (Objective & Decision Summary)
+- **Status**: ❓ Specifying / 🎯 Designing / ✅ Plan Approved
+
+---
+
+**Part 1: 📜 规格 (Specification - WHAT/WHY)**
+*This part focuses SOLELY on the business requirements, user value, and functional scope. **DO NOT include implementation details (HOW) here.** It serves as the primary input for the Technical Plan.*
+
+## 1. 🎯 核心目标与价值 (Objective & Value)
 - **所属项目 (Project)**: [Link to the parent Project in Linear]
-- **核心价值 (Core Value)**: [A single sentence describing the user value and business objective.]
-- **关键决策 (Core Decisions)**:
-    1. **[技术选型]**: [e.g., Adopting a synchronous API model for the MVP.]
-    2. **[架构模式]**: [e.g., Implementing the LLM service using an Adapter Pattern.]
-- **预估时间 (Time Estimate)**: [e.g., ~3 developer-days]
+- **核心价值 (Core Value)**: [A single sentence describing the user value and business objective this Epic delivers.]
+- **用户故事 (User Story / Scenario)**: [Describe the primary scenario(s) this Epic enables from the user's perspective.]
+
+## 2. 🗺️ 核心功能与范围 (Core Features & Scope)
+- **核心功能 (Features)**: [Use a checklist to list the specific functionalities included in this Epic.]
+    - [ ] Feature 1
+    - [ ] Feature 2
+- **范围边界 (Out of Scope)**: [Explicitly list functionalities or aspects NOT included in this Epic.]
+    - [ ] Excluded Feature A
+    - [ ] Excluded Feature B
+
+## 3. ✅ 验收标准 (Acceptance Criteria)
+*A checklist of observable conditions that must be met for the user-facing functionality to be considered "Done". Focus on *what* the system should do, not *how*.*
+- [ ] [Functional Acceptance Criterion 1 related to Feature 1]
+- [ ] [Functional Acceptance Criterion 2 related to Feature 2]
+- [ ] [Non-Functional Requirement Criterion (e.g., performance target from user perspective)]
+
+## 4. ❓ 待澄清点 (Needs Clarification) 
+***THIS SECTION IS MANDATORY.** List all ambiguities, assumptions, or open questions identified during the specification phase that need clarification before proceeding to the technical plan. Use `[CLARIFIED on YYYY-MM-DD: Answer]` format once resolved.*
+- [ ] **[Question 1]**: [e.g., What should happen if the user uploads a file larger than 100MB?] - *[CLARIFIED on 2025-10-21: Show an error message and reject the upload.]*
+- [ ] **[Assumption 1]**: [e.g., Assuming the external API has a rate limit of X requests/minute.]
 
 ---
 
-## 2. 🏗️ 技术设计与架构 (Technical Design & Architecture)
+**Part 2: 🛠️ 技术计划 (Technical Plan - HOW)**
+*This part details the technical implementation strategy based *strictly* on the Specification defined above.*
+
+## 5. 🧭 关键决策与约束 (Core Decisions & Constraints)
+- **关键技术决策 (Core Technical Decisions)**:
+    1. **[技术选型]**: [e.g., Using Next.js App Router, Zustand for state management.]
+    2. **[架构模式]**: [e.g., Implementing the processing logic via a serverless function.]
+- **约束与原则 (Constraints & Principles)**: [Reference relevant Constitution rules (@rules/constitution.mdc) or specific project constraints. e.g., Must adhere to offline-first principle.]
+
+## 6. 🏗️ 技术设计与架构 (Technical Design & Architecture)
 - **核心工作流 (Core Workflow)**: [Use a Mermaid diagram to visualize the end-to-end data flow and component interaction.]
 - **API 契约 (API Contract)**: [Define the API endpoints, request/response schemas using code blocks.]
 - **数据模型 (Data Models)**: [Define the core data structures and types.]
 
-### 2.1 关键技术方案 (Key Technical Solutions)
-*[在此处详细描述核心算法、关键函数的伪代码或具体的实现思路。这部分内容是AI执行具体子任务时的重要参考。]*
+### 6.1 关键技术方案 (Key Technical Solutions)
+*[Provide detailed pseudo-code, algorithms, or specific implementation approaches for complex parts, referencing the Specification section (e.g., "To meet AC 1.1...").]*
 **示例:**
-> #### **抖音URL解析器 (`DouyinParser`)**
-> ```python
-> class DouyinParser:
->     def parse_share_url(self, share_text: str) -> VideoInfo:
->         # 1. Regex to find URL in text
->         # 2. Follow redirects to get video_id
->         # 3. Scrape page HTML for window._ROUTER_DATA
->         # 4. Parse JSON and extract no-watermark URL
->         # ...
+> #### **模拟进度条算法 (Simulated Progress Algorithm)** - *Implements Spec Requirement X.Y*
+> - **Total Duration**: 48s
+> - **Algorithm**: [Describe the 3-stage non-linear algorithm]
+> ```typescript
+> function calculateProgress(elapsedTime: number): number {
+>   // ... implementation details ...
+> }
 > ```
-> > [!example] **用法示例 (Usage Example)**
-> > ```python
->    async def main():
->        parser = DouyinParser()
->        share_text = "抖音分享文案..."
->        try:
->            video_info = await parser.parse(share_text)
->            print(f"成功解析！下载链接: {video_info.download_url}")
->        except Exception as e:
->            print(f"解析失败: {e}")
-> > ```
 
 ---
 
-## 3. 🚀 作战序列 (Implementation Sequence)
-*This section lists the atomic, ordered sub-tasks (Issues) required to complete the Epic.*
-
-- [ ] **1. [子任务标题]**: [一句话描述此子任务的目标]
-- [ ] **2. [子任务标题]**: [一句话描述此子任务的目标]
-- [ ] **3. [子任务标题]**: [一句话描述此子任务的目标]
-
----
-
-## 4. 🧪 质量与测试策略 (Quality & Testing Strategy)
-- **主要测试层级**: [明确本次Epic开发将重点覆盖的测试类型: Unit, Component, Integration]
-- **关键测试场景**: [列出必须覆盖的、最重要的几个端到端测试场景]
-- **性能要求 (If any)**: [e.g., The p99 latency for the `/api/parse` endpoint must be under 50 seconds for a 1-minute video.]
+## 7. 🚀 作战序列 (Implementation Sequence)
+*This section lists the atomic, ordered sub-tasks (Issues) required to implement the Technical Plan.*
+- [ ] **1. [子任务标题]**: [一句话描述此子任务的目标, relates to Plan section X.Y]
+- [ ] **2. [子任务标题]**: [一句话描述此子任务的目标, relates to Plan section A.B]
+- [ ] **3. [子任务标题]**: [一句话描述此子任务的目标, relates to Plan section C.D]
 
 ---
 
-## 5. ✅ 验收标准 (Acceptance Criteria)
-*A checklist of conditions that must be met for the entire Epic to be considered "Done".*
-- [ ] [端到端功能验收标准 1]
-- [ ] [性能验收标准 2]
-- [ ] [错误处理验收标准 3]
+## 8. 🧪 质量与测试策略 (Quality & Testing Strategy)
+- **主要测试层级**: [Identify primary testing levels: Unit, Integration, E2E, based on the Plan.]
+- **关键测试场景**: [List specific technical test scenarios needed to verify the Plan, linking back to Acceptance Criteria.]
+- **性能要求 (If any)**: [Specify technical performance targets, e.g., API latency p99 < 500ms.]

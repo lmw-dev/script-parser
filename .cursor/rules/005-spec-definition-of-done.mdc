@@ -1,0 +1,23 @@
+---
+description: "Core checklist for the Definition of Done (DoD) V2.0 for AI consumption within the project context. Ensures consistent quality standards."
+alwaysApply: false
+---
+# Definition of Done (DoD) - Core Checklist V2.0
+
+A feature or task is considered "Done" ONLY when ALL the following conditions are met:
+
+- **[功能 Functional]**: All Acceptance Criteria (AC) defined in the corresponding Linear Issue are implemented and verified.
+- **[代码 Code]**:
+    - [ ] All new code (including AI-generated code) adheres to the project's coding standards (`@rules/010-gen-coding-standards.mdc`) and naming conventions (`@rules/011-gen-naming-conventions.mdc`).
+    - [ ] Relevant unit and integration tests are written and passing (`@rules/130-spec-testing-guide.mdc`).
+    - [ ] Code passes all `lint` and `build` checks without errors or warnings.
+    - [ ] **Developer Accountability**: The developer has thoroughly reviewed ALL code (including AI-generated parts), understands its logic, and takes full responsibility for its quality (Vibe Engineering principle, see `@rules/001-gen-constitution-principles.mdc`).
+- **[版本控制 Version Control]**:
+    - [ ] All code changes are committed to the feature branch via a single, atomic commit adhering to Conventional Commits standard (see `@rules/210-wf-git-commit.mdc`).
+    - [ ] The feature branch has been merged into the `main` branch via Pull Request.
+- **[文档与沟通 Documentation & Communication]**:
+    - [ ] Relevant development documentation (e.g., "Epic Battle Plan", AI interaction logs if applicable) is updated.
+    - [ ] The corresponding Linear Issue status is updated to `Done` with a detailed completion summary comment.
+- **[部署 Deployment]**:
+    - [ ] The feature is successfully deployed to the testing environment.
+    - [ ] Core functionality has been manually verified on the testing environment.
