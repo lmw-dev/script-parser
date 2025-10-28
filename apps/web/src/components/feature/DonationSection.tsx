@@ -1,3 +1,5 @@
+'use client'
+
 import Image from 'next/image'
 import { Coffee } from 'lucide-react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
