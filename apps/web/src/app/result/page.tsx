@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation"
 import { useAppStore } from "@/stores/app-store"
 import { ResultSection } from "@/components/sections/ResultSection"
 import { ErrorSection } from "@/components/sections/ErrorSection"
+import { DonationSection } from "@/components/feature/DonationSection"
 
 export default function ResultPage() {
   const router = useRouter()
@@ -38,10 +39,18 @@ export default function ResultPage() {
   if (appState === "SUCCESS" && resultData) {
     return (
       <main className="flex-grow flex flex-col items-center justify-center p-6">
-        <ResultSection
-          result={resultData}
-          onReset={handleReset}
-        />
+        <div className="w-full max-w-4xl space-y-8">
+          <ResultSection
+            result={resultData}
+            onReset={handleReset}
+          />
+          <div className="mt-12">
+            <DonationSection
+              wechatQrPath="/wechat_donate_qr.png"
+              alipayQrPath="/alipay_donate_qr.png"
+            />
+          </div>
+        </div>
       </main>
     )
   }

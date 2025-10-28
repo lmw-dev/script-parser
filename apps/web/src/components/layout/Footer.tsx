@@ -1,5 +1,6 @@
 import Link from 'next/link'
 import { Github, Twitter, BookOpen, Instagram } from 'lucide-react'
+import { DonationSection } from '@/components/feature/DonationSection'
 
 export function Footer() {
   const currentYear = new Date().getFullYear()
@@ -77,6 +78,14 @@ export function Footer() {
             </div>
           </div>
 
+        </div>
+
+        {/* Donation Section */}
+        <div className="mt-12 border-t border-border pt-12">
+          <DonationSection
+            wechatQrPath="/wechat_donate_qr.png"
+            alipayQrPath="/alipay_donate_qr.png"
+          />
         </div>
 
         {/* Copyright */}
