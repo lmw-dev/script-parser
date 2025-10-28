@@ -13,6 +13,7 @@ export default function ResultPage() {
   const error = useAppStore((state) => state.error)
   const appState = useAppStore((state) => state.appState)
   const reset = useAppStore((state) => state.reset)
+  const enableDonation = process.env.NEXT_PUBLIC_ENABLE_DONATION === 'true'
 
   useEffect(() => {
     // Redirect if user lands here without going through the process
@@ -44,12 +45,14 @@ export default function ResultPage() {
             result={resultData}
             onReset={handleReset}
           />
-          <div className="mt-12">
-            <DonationSection
-              wechatQrPath="/wechat_donate_qr.png"
-              alipayQrPath="/alipay_donate_qr.png"
-            />
-          </div>
+          {enableDonation && (
+            <div className="mt-12">
+              <DonationSection
+                wechatQrPath="/wechat_donate_qr.png"
+                alipayQrPath="/alipay_donate_qr.png"
+              />
+            </div>
+          )}
         </div>
       </main>
     )

@@ -4,6 +4,7 @@ import { DonationSection } from '@/components/feature/DonationSection'
 
 export function Footer() {
   const currentYear = new Date().getFullYear()
+  const enableDonation = process.env.NEXT_PUBLIC_ENABLE_DONATION === 'true'
   
   const socialLinks = [
     { name: 'GitHub', icon: Github, href: 'https://github.com/lmw-dev' },
@@ -81,12 +82,14 @@ export function Footer() {
         </div>
 
         {/* Donation Section */}
-        <div className="mt-12 border-t border-border pt-12">
-          <DonationSection
-            wechatQrPath="/wechat_donate_qr.png"
-            alipayQrPath="/alipay_donate_qr.png"
-          />
-        </div>
+        {enableDonation && (
+          <div className="mt-12 border-t border-border pt-12">
+            <DonationSection
+              wechatQrPath="/wechat_donate_qr.png"
+              alipayQrPath="/alipay_donate_qr.png"
+            />
+          </div>
+        )}
 
         {/* Copyright */}
         <div className="mt-12 border-t border-border pt-8 text-center">
