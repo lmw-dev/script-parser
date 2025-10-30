@@ -14,7 +14,7 @@ const nextConfig: NextConfig = {
     NEXT_PUBLIC_API_URL:
       process.env.NEXT_PUBLIC_API_URL || 
       (process.env.NODE_ENV === 'production' 
-        ? 'http://43.142.178.200:8081'    // Docker 生产环境
+        ? 'https://sp.persimorrow.online/api'    // 使用 HTTPS，通过系统 Nginx 代理
         : 'http://localhost:8000'   // 本地开发环境
       ),
   },

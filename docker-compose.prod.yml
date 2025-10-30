@@ -1,8 +1,6 @@
 # ==================================================
 # ScriptParser 生产环境 Docker Compose 配置
 # ==================================================
-# 说明：此文件专用于生产环境部署，使用腾讯云TCR镜像
-# 使用方法：docker-compose -f docker-compose.prod.yml up -d
 
 services:
   # Nginx 反向代理
@@ -14,23 +12,25 @@ services:
       - "${NGINX_PORT}:80"
     volumes:
       - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
-      # SSL证书挂载（如需HTTPS，取消注释）
-      # - ${SSL_CERT_PATH}:/etc/nginx/certs/cert.pem:ro
-      # - ${SSL_KEY_PATH}:/etc/nginx/certs/key.pem:ro
     depends_on:
       - web
       - coprocessor
     networks:
       - sp_default
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost/nginx-health"]
+      test: ["CMD", "wget", "--spider", "-q", "http://localhost/nginx-health"]
       interval: 30s
       timeout: 10s
       retries: 3
       start_period: 40s
 
-  # Next.js Web应用 - 使用TCR镜像
+  # Next.js Web应用 - 本地构建模式
   web:
+    build:
+      context: .
+      dockerfile: ./apps/web/Dockerfile
+      args:
+        NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL}
     image: ccr.ccs.tencentyun.com/baokuan-jieqouqi/scriptparser-web:latest
     container_name: ${PROJECT_PREFIX}_frontend
     restart: always
@@ -42,7 +42,7 @@ services:
     networks:
       - sp_default
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:3000"]
+      test: ["CMD", "wget", "--spider", "-q", "http://localhost:3000"]
       interval: 30s
       timeout: 10s
       retries: 3
@@ -54,35 +54,24 @@ services:
     container_name: ${PROJECT_PREFIX}_backend
     restart: always
     volumes:
-      - ./apps/coprocessor/app:/app/app:ro  # 挂载本地代码目录（只读）
+      - ./apps/coprocessor/app:/app/app:ro
     environment:
-      # 服务基础配置
       - HOST=${HOST}
       - PORT=${PORT}
       - DEBUG=${DEBUG}
       - NODE_ENV=${NODE_ENV}
-      
-      # 阿里云ASR配置
       - ALIYUN_ASR_API_KEY=${ALIYUN_ASR_API_KEY}
       - ALIYUN_ASR_API_SECRET=${ALIYUN_ASR_API_SECRET}
       - DASHSCOPE_API_KEY=${DASHSCOPE_API_KEY}
-      
-      # 阿里云通用配置
       - ALIBABA_CLOUD_ACCESS_KEY_ID=${ALIBABA_CLOUD_ACCESS_KEY_ID}
       - ALIBABA_CLOUD_ACCESS_KEY_SECRET=${ALIBABA_CLOUD_ACCESS_KEY_SECRET}
-      
-      # 通义听悟配置
       - ALIBABA_TINWU_APPKEY=${ALIBABA_TINWU_APPKEY}
       - TINGWU_ENDPOINT=${TINGWU_ENDPOINT}
       - TINGWU_REGION=${TINGWU_REGION}
-      
-      # LLM服务配置
       - DEEPSEEK_API_KEY=${DEEPSEEK_API_KEY}
       - DEEPSEEK_BASE_URL=${DEEPSEEK_BASE_URL}
       - KIMI_API_KEY=${KIMI_API_KEY}
       - KIMI_BASE_URL=${KIMI_BASE_URL}
-      
-      # LLM通用参数
       - MAX_TOKENS=${MAX_TOKENS}
       - TEMPERATURE=${TEMPERATURE}
       - TIMEOUT=${TIMEOUT}
@@ -91,24 +80,17 @@ services:
     networks:
       - sp_default
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      test: ["CMD", "wget", "--spider", "-q", "http://localhost:8000/health"]
       interval: 30s
       timeout: 10s
       retries: 3
       start_period: 60s
 
-# 网络配置 - 使用项目前缀确保隔离
 networks:
   sp_default:
     driver: bridge
     name: ${PROJECT_PREFIX}_default
 
-# 数据卷配置（如需持久化存储）
 volumes:
-  # Nginx日志数据卷
   sp_nginx_data:
     name: ${PROJECT_PREFIX}_nginx_data
-  
-  # 应用数据持久化（如需要）
-  # sp_app_data:
-  #   name: ${PROJECT_PREFIX}_app_data

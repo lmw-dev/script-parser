@@ -711,3 +711,260 @@ systemctl restart docker
 3. 提交 Issue 到 GitHub 仓库
 4. 联系技术支持
 
+
+---
+
+## 📚 生产环境部署指南
+
+### 生产环境架构概览
+
+```
+外网 HTTPS (443)
+    ↓
+宝塔 Nginx (80/443)
+    ↓ 反向代理
+Docker Nginx (8081)
+    ↓
+    ├─→ Web (3000) - Next.js 前端
+    └─→ API (8000) - FastAPI 后端
+```
+
+### 环境信息
+
+- **服务器**: 腾讯云 VPS (OpenCloudOS)
+- **域名**: https://sp.persimorrow.online
+- **镜像仓库**: 腾讯云 TCR (ccr.ccs.tencentyun.com/baokuan-jieqouqi)
+- **项目路径**: `/opt/script-parser`
+- **配置文件**: `docker-compose.prod.yml`
+
+### 关键配置说明
+
+#### 1. API URL 配置
+
+**⚠️ 重要**: 前端的 `NEXT_PUBLIC_API_URL` 在**构建时**被编译到代码中，不能在运行时修改。
+
+```bash
+# .env 文件配置
+NEXT_PUBLIC_API_URL=https://sp.persimorrow.online
+
+# 前端代码会自动拼接 /api 路径
+# 实际请求: https://sp.persimorrow.online/api/parse
+```
+
+#### 2. 端口映射
+
+```yaml
+# 宝塔 Nginx: 80/443 (外网)
+#   ↓ 代理到
+# Docker Nginx: 8081 (内网)
+#   ↓ 分发到
+# Web: 3000 (容器内部)
+# API: 8000 (容器内部)
+```
+
+#### 3. 健康检查
+
+容器使用 `wget` 而非 `curl` 进行健康检查：
+
+```yaml
+healthcheck:
+  test: ["CMD", "wget", "--spider", "-q", "http://localhost:3000"]
+```
+
+### 标准部署流程
+
+#### 方式一：仅更新后端代码（推荐）
+
+后端使用 volumes 挂载，代码更改后只需重启：
+
+```bash
+cd /opt/script-parser
+git pull origin main
+docker-compose -f docker-compose.prod.yml restart coprocessor
+docker-compose -f docker-compose.prod.yml logs -f coprocessor
+```
+
+#### 方式二：更新前端代码
+
+前端需要重新构建镜像并推送到 TCR：
+
+```bash
+cd /opt/script-parser
+git pull origin main
+
+# 构建并推送镜像（需要 docker login）
+REGISTRY=ccr.ccs.tencentyun.com/baokuan-jieqouqi ./scripts/build-push.sh
+
+# 拉取最新镜像并重启
+docker-compose -f docker-compose.prod.yml pull web
+docker-compose -f docker-compose.prod.yml up -d
+```
+
+#### 方式三：完整重新部署
+
+```bash
+cd /opt/script-parser
+git pull origin main
+
+# 停止所有服务
+docker-compose -f docker-compose.prod.yml down
+
+# 重新构建并推送（如果前端有改动）
+REGISTRY=ccr.ccs.tencentyun.com/baokuan-jieqouqi ./scripts/build-push.sh
+
+# 启动服务
+docker-compose -f docker-compose.prod.yml pull
+docker-compose -f docker-compose.prod.yml up -d
+
+# 查看状态
+docker-compose -f docker-compose.prod.yml ps
+docker-compose -f docker-compose.prod.yml logs -f
+```
+
+### 常见问题排查
+
+#### 1. Mixed Content 错误（HTTPS 请求 HTTP）
+
+**症状**: 浏览器控制台显示 Mixed Content 错误，前端请求被阻止
+
+**原因**: 前端使用了 HTTP URL 而非 HTTPS
+
+**排查**:
+```bash
+# 检查前端容器的环境变量
+docker exec sp_frontend printenv NEXT_PUBLIC_API_URL
+
+# 应该输出: https://sp.persimorrow.online
+```
+
+**解决**: 重新构建前端镜像（参考"方式二"）
+
+#### 2. 健康检查失败
+
+**症状**: `docker ps` 显示容器 `unhealthy`
+
+**常见原因**:
+- 容器内缺少 `curl` 或 `wget`
+- 应用启动失败
+- 端口配置错误
+
+**排查**:
+```bash
+# 查看健康检查日志
+docker inspect sp_frontend --format='{{json .State.Health}}' | python3 -m json.tool
+docker inspect sp_backend --format='{{json .State.Health}}' | python3 -m json.tool
+
+# 查看应用日志
+docker-compose -f docker-compose.prod.yml logs web --tail 50
+docker-compose -f docker-compose.prod.yml logs coprocessor --tail 50
+```
+
+#### 3. API 调用 404
+
+**症状**: 前端请求 API 返回 404
+
+**排查**:
+```bash
+# 测试 Docker Nginx
+curl http://localhost:8081/api/health
+
+# 测试外网访问
+curl https://sp.persimorrow.online/api/health
+
+# 查看 Nginx 日志
+docker-compose -f docker-compose.prod.yml logs nginx --tail 50
+
+# 检查宝塔 Nginx 配置
+cat /www/server/panel/vhost/nginx/sp.persimorrow.online.conf
+cat /www/server/panel/vhost/nginx/proxy/sp.persimorrow.online/*.conf
+```
+
+#### 4. 镜像构建失败
+
+**症状**: `build-push.sh` 执行失败
+
+**常见原因**:
+- Docker 登录过期
+- 网络问题
+- 构建参数错误
+
+**排查**:
+```bash
+# 重新登录 TCR
+docker login ccr.ccs.tencentyun.com
+
+# 检查 Docker buildx
+docker buildx ls
+
+# 手动构建测试
+docker build --build-arg NEXT_PUBLIC_API_URL=https://sp.persimorrow.online \
+  -f apps/web/Dockerfile -t test-web .
+```
+
+### 验证部署
+
+部署完成后，运行以下命令验证：
+
+```bash
+# 1. 检查服务状态
+docker-compose -f docker-compose.prod.yml ps
+
+# 2. 测试内网 API
+curl http://localhost:8081/api/health
+
+# 3. 测试外网 API
+curl https://sp.persimorrow.online/api/health
+
+# 4. 检查前端环境变量
+docker exec sp_frontend printenv NEXT_PUBLIC_API_URL
+
+# 5. 查看最近日志
+docker-compose -f docker-compose.prod.yml logs --tail 20
+```
+
+### 监控命令
+
+```bash
+# 实时查看所有日志
+docker-compose -f docker-compose.prod.yml logs -f
+
+# 查看特定服务日志
+docker-compose -f docker-compose.prod.yml logs -f web
+docker-compose -f docker-compose.prod.yml logs -f coprocessor
+docker-compose -f docker-compose.prod.yml logs -f nginx
+
+# 查看资源使用
+docker stats
+
+# 查看容器详情
+docker inspect sp_frontend
+docker inspect sp_backend
+docker inspect sp_nginx
+```
+
+### 配置文件位置
+
+```
+/opt/script-parser/
+├── .env                        # 环境变量配置
+├── docker-compose.prod.yml     # 生产环境配置
+├── nginx/nginx.conf           # Docker Nginx 配置
+├── apps/
+│   ├── web/
+│   │   ├── Dockerfile         # 前端构建文件
+│   │   └── src/lib/api-client.ts  # API 客户端
+│   └── coprocessor/
+│       ├── Dockerfile         # 后端构建文件
+│       └── app/               # 后端代码（volumes 挂载）
+└── scripts/
+    └── build-push.sh          # 构建推送脚本
+```
+
+### 重要提醒
+
+1. **前端改动必须重新构建镜像**：`NEXT_PUBLIC_*` 变量在构建时固化
+2. **后端改动只需重启容器**：使用 volumes 挂载，代码实时生效
+3. **修改 API URL 后必须推送新镜像**：否则前端仍使用旧 URL
+4. **生产环境使用 `docker-compose.prod.yml`**：不要使用其他配置文件
+5. **推送镜像前先登录 TCR**：`docker login ccr.ccs.tencentyun.com`
+
