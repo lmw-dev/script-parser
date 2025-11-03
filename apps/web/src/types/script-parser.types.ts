@@ -9,9 +9,10 @@ export type AppState = "IDLE" | "INPUT_VALID" | "PROCESSING" | "SUCCESS" | "ERRO
 // Input types for flexible video input
 export type InputType = "url" | "file"
 
-// This is the final, clean data structure used by the frontend components.
+// This is the final, clean data structure used by the frontend components (V2.2).
 export type AnalysisResult = {
-  readonly transcript: string
+  readonly raw_transcript: string
+  readonly cleaned_transcript: string
   readonly analysis: {
     readonly hook: string
     readonly core: string
@@ -26,9 +27,10 @@ export type ApiAnalysisResult = {
   readonly cta: string
 }
 
-// This represents the structure of the `data` object in the backend response.
+// This represents the structure of the `data` object in the backend response (V2.2).
 export type BackendData = {
-  readonly transcript: string;
+  readonly raw_transcript: string;
+  readonly cleaned_transcript: string;
   readonly analysis: {
     readonly llm_analysis: ApiAnalysisResult;
     // other potential fields from the backend
