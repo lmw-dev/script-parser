@@ -1,10 +1,10 @@
 import json
 import os
+from typing import Any
 
+import httpx
 import pytest
 from dotenv import load_dotenv
-from app.http_client import get_http_client
-from app.services.llm_service import DeepSeekAdapter
 
 # Load environment variables
 load_dotenv()
@@ -13,198 +13,254 @@ load_dotenv()
 
 # 测试用的抖音视频完整文本稿
 DOUYIN_TRANSCRIPT = """
-买了原装或者是平替妙控键盘，但只会用来打字的豹子们，保姆级教程收好不屑。收到妙控键盘以后，第一件事到设置里搜索触控板，把轻点一点按打开，这样每次点击就不用费力的去按触控板了。记得把触控板也调到喜欢的速度，这样用起来才会更熟。设置辅助功能，指针控制里可以对指针进行进一步的设置，这些选项全都可以试一试，颜色、大小、圆圈的粗细都可以调节，点右上角可以调出控制中心，挪到底部以后再往下一滑能调出do栏再编辑文字的界面，轻点两下是选中字词，轻点3下是选中整段。还有一个技巧很少人知道，选中一个字词以后，按住shift键再搭配上下左右键，就可以一起选中这个字词附近的文字。两根手指上下滑动是滚动页面，左右移动是前进或后退，两根手指对角线方向移动。除了可以放大缩小界面以外，看视频的时候也可以用来打开全屏或者退出全屏。这个是我最近才发现的，非常好用。三根手指左右滑，能在最近用过的app当中来回切换。三根手指潇洒的向上滑是回到桌面，三根手指犹豫不决的向上滑，可以看到多任务界面，然后再用两根手指向下滑，就是关闭后台运行。记不住没关系啊，你上手直接这么划屏幕也是很方便的。Command加C是复制，加V粘贴加X剪切加C撤销，shift加common加3或4都是截屏。Command加tap可以在已打开的app里面快速切换浏览器里shift加common加左右中括号是切换标签页，按地图键可以切换输入法，其中以摸迹表情也在这里。不同的app快捷键不一样，长按comm键都可以看到，把常用的记忆记就行了。如果要在打字和手写两种形态之间来回切换，反复拆装iPad就会很麻烦。这个时候我们就可以把妙控整个倒过来，这个角度刚好可以写字，只要控制好力度，尽量写在屏幕的下半部分，就不容易塌下去。大家应该知道，原装调控是通过I pad背后的三个金属点直接跟iPad连接的，键盘耗的是I pad的电量，所以转轴上的这个充电口自然也是给I pad充电用的了。虽然说这个口充电会比较慢，但好处就是I pad自身的充电口就可以用来插拓展物优盘什么的还是非常必要的。在光线不足的环境里，原装妙控会自动开启键盘背光。如果你觉得不够亮，可以到设置键盘实体键盘里拉动这个滑杆。注意哦光线充足的时候，这个拉杆是拉不动的，并不是你的妙控键盘坏了。最后一个技巧，如果你觉得这种悬浮式的键盘呢保护不到iPad的侧面，pencil还容易掉，那可以去入一个这种伴侣壳，摘下来还能搭配双面夹使用。我上周刚送了我爸一个，他很喜欢。详细的测评视频可以参考这一期。
+说个真相啊，你相不相信你我这辈子如果不做出点改变，我们在这个社会注定只能做个牛马。是你愿意的吗？如果你愿意，那你就赶紧划走。如果你和我一样不认命不愿意，那请你耐心听完这段视频，我会告诉你问题出在哪里，也会告诉你我们需要做出什么改变。各位上学的时候，谁不知道好好读书就能上个好大学，找个好工作。但六年的小学，三年的初中，外加三年的高中，整整12年啊。如果让你天天刷题看书不留号，你能做到吗？你没有做到。所以能考上好大学的永远是少数人。好，我们工作了谁不知道，只要多花时间，多钻研业务，多跑客户，就能升职加薪。可看到别人到点了就下班，你加不加班？别人周末躺平了你学不学习？别人假期带着家人孩子去旅游度假了，你告诉我你能不能静下心来研究方案。好，假如你说你能，那让你坚持十年二十年，你还说你能吗？你不能。所以这种日复一日筛掉了很多心高气傲。好，我们年纪大了，医生告诉你，只要你能管住嘴，迈开腿，身体就能健康。可是又有多少人能忍得住不吃香的不喝辣的，又有多少人能雷打不动的每天坚持跑步1小时？听出来了吗？这跟人性的即时满足本能是对着干的，它会让人一点都不舒服。但学习、工作、健康，你想做好就得跟着人性反着来，这就是问题的核心。人性让我们在每个阶段都很难聚焦，我们的时间精力太容易被那些碎片化的诱惑给分散了。就像今天早晨，我明明计划要做一个重要的ppt，结果呢微信发了个没完，抖音一刷就停不下来，一抬头一上午已经没有了。我们每个人真正用在学习、工作、健康上的时间，我们算一算是不是少的可怜。时间精力的分散就是我们大多数人拿不到结果的根本原因。而真正能拿到大结果的人都选择了延迟满足，都是对抗人性的高手。老铁们，你我都不想做牛马人上人这条路很窄，因为它反人性，它违背了我们贪图舒服的本能，所以它注定艰难，但这是我们唯一的捷径。李哥送你一句话，难走的路从不拥挤，反人性的坚持才是普通人的捷径。
 """
 
 # 原始 Prompt (从文件中读取)
 with open("app/prompts/structured_analysis.prompt") as f:
     ORIGINAL_PROMPT_TEMPLATE = f.read()
 
-# 从原始 prompt 中提取 JSON 部分
-def extract_instructions_from_prompt(prompt_text: str) -> dict:
-    """从 prompt 文本中提取 JSON 指令"""
-    try:
-        # 尝试找到 JSON 部分
-        # 方法1: 从文件内容中找到包含 JSON 的部分
-        if '{' in prompt_text and '}' in prompt_text:
-            start_idx = prompt_text.find('{')
-            end_idx = prompt_text.rfind('}') + 1
-            json_part = prompt_text[start_idx:end_idx]
-            return json.loads(json_part)
-        else:
-            # 如果没有找到 JSON，返回默认结构
-            return {
-                "hook": "The first 1-3 sentences that grab the viewer's attention.",
-                "core": "The main body of the content, summarizing the key points.",
-                "cta": "The final sentence(s) that call the viewer to take a specific action (e.g., like, follow, comment)."
-            }
-    except (json.JSONDecodeError, ValueError):
-        # 如果解析失败，返回默认结构
-        return {
-            "hook": "The first 1-3 sentences that grab the viewer's attention.",
-            "core": "The main body of the content, summarizing the key points.",
-            "cta": "The final sentence(s) that call the viewer to take a specific action (e.g., like, follow, comment)."
-        }
+# 从原始 prompt 中提取配置
+ORIGINAL_PROMPT_CONFIG = json.loads(ORIGINAL_PROMPT_TEMPLATE)
 
-# 提取原始 prompt 的指令
-ORIGINAL_PROMPT_INSTRUCTIONS = extract_instructions_from_prompt(ORIGINAL_PROMPT_TEMPLATE)
-
-# 变体 A (强调中心思想)
-PROMPT_VARIANT_A = {
-    "hook": "The first 1-3 sentences that grab the viewer's attention.",
-    "core": "Identify the single most important message, argument, or value proposition the speaker wants to convey. Summarize this core idea concisely, potentially including 1-2 key supporting points or examples mentioned in the main body. Exclude introductory hooks and concluding calls to action.",
-    "cta": "The final sentence(s) that call the viewer to take a specific action (e.g., like, follow, comment)."
+# 优化后的 Prompt（语言自适应 + Clean and Analyze 两步法）2.2
+PROMPT_OPTIMIZED_CONFIG = {
+    "prompt_instruction": "You are an expert in analyzing video transcripts for content strategy. Your task is to perform a two-step 'Clean and Analyze' process based on the user-provided raw transcript. Respond ONLY with a valid JSON object in the following format, with no additional explanations. You MUST respond in the same language as the input transcript.",
+    "output_format": {
+        "raw_transcript": "The original, untouched user-provided transcript.",
+        "cleaned_transcript": "A cleaned, analysis-ready version of the transcript. You MUST: 1. [Noise Reduction]: Remove filler words (e.g., '嗯', '啊', '这个', '那个', '就是说'). 2. [Trimming]: Remove standard greetings/closings (e.g., '大家好我是...', '欢迎收看...', '点赞关注', '感谢三连'). 3. [Re-chunking]: Add logical paragraph breaks ('\\n\\n') based on semantic meaning to fix the 'wall of text' issue and improve readability.",
+        "analysis": {
+            "hook": "[Based ONLY on the cleaned_transcript] The first 1-3 sentences that grab the viewer's attention.",
+            "core": "[Based ONLY on the cleaned_transcript] First, determine the central topic or purpose of the video. Then, extract the main statement or conclusion related to that purpose. Finally, list up to two essential pieces of evidence, steps, or examples provided to support this main statement. Keep the summary focused and distinct from the hook/cta.",
+            "cta": "[Based ONLY on the cleaned_transcript] The final sentence(s) that call the viewer to take a specific action (e.g., like, follow, comment).",
+        },
+    },
 }
 
-# 变体 B (结构化引导)
-PROMPT_VARIANT_B = {
-    "hook": "The first 1-3 sentences that grab the viewer's attention.",
-    "core": "First, determine the central topic or purpose of the video. Then, extract the main statement or conclusion related to that purpose. Finally, list up to two essential pieces of evidence, steps, or examples provided to support this main statement. Keep the summary focused and distinct from the hook/cta. IMPORTANT: You must respond in Chinese (简体中文).",
-    "cta": "The final sentence(s) that call the viewer to take a specific action (e.g., like, follow, comment)."
-}
 
-# 变体 C (Few-shot 示例)
-PROMPT_VARIANT_C = {
-    "hook": "The first 1-3 sentences that grab the viewer's attention.",
-    "core": "Analyze the main body to find the core message. It should explain the central 'what' and 'why' or 'how'. Similar to these examples: [Example 1 Core Text], [Example 2 Core Text]. Extract the core message and its 1-2 main supporting details from the provided transcript. IMPORTANT: You must respond in Chinese (简体中文).",
-    "cta": "The final sentence(s) that call the viewer to take a specific action (e.g., like, follow, comment)."
-}
+def build_system_prompt(config: dict) -> str:
+    """构建 system prompt"""
+    instruction = config.get("prompt_instruction", "")
+    output_format = config.get("output_format", {})
 
-# 优化后的 Prompt（语言自适应 + 结构化引导）
-PROMPT_OPTIMIZED = {
-    "hook": "The first 1-3 sentences that grab the viewer's attention.",
-    "core": "First, determine the central topic or purpose of the video. Then, extract the main statement or conclusion related to that purpose. Finally, list up to two essential pieces of evidence, steps, or examples provided to support this main statement. Keep the summary focused and distinct from the hook/cta.",
-    "cta": "The final sentence(s) that call the viewer to take a specific action (e.g., like, follow, comment)."
-}
+    if instruction:
+        return f"{instruction}\n\n{json.dumps(output_format, indent=2, ensure_ascii=False)}"
+    else:
+        # 兼容旧格式
+        return json.dumps(output_format, indent=2, ensure_ascii=False)
 
-# 优化的 system prompt
-def build_optimized_prompt():
-    """构建优化后的 prompt"""
-    prompt_instruction = """You are an expert in analyzing video transcripts. Your task is to extract the core structure of the content based on the user-provided transcript. You must identify three key parts: the Hook, the Core, and the Call to Action (CTA). Respond ONLY with a valid JSON object in the following format, with no additional explanations. You MUST respond in the same language as the input transcript."""
-    return prompt_instruction
 
-def build_prompt(template, instructions):
-    """辅助函数，用于将新的指令注入到原始模板中"""
-    # 构建完整的 prompt
-    prompt_intro = """You are an expert in analyzing video transcripts. Your task is to extract the core structure of the content based on the user-provided transcript.
-Respond ONLY with a valid JSON object in the following format, with no additional explanations:"""
+async def call_llm_with_prompt(config: dict, transcript: str) -> dict[str, Any]:
+    """调用 LLM API 进行分析"""
+    api_key = os.getenv("DEEPSEEK_API_KEY")
+    if not api_key:
+        raise ValueError("DEEPSEEK_API_KEY not set")
 
-    return f"{prompt_intro}\n{json.dumps(instructions, indent=2)}"
+    base_url = os.getenv("DEEPSEEK_BASE_URL", "https://api.deepseek.com")
+    system_prompt = build_system_prompt(config)
+
+    async with httpx.AsyncClient(timeout=60.0) as client:
+        response = await client.post(
+            f"{base_url}/v1/chat/completions",
+            headers={
+                "Authorization": f"Bearer {api_key}",
+                "Content-Type": "application/json",
+            },
+            json={
+                "model": "deepseek-chat",
+                "messages": [
+                    {"role": "system", "content": system_prompt},
+                    {"role": "user", "content": transcript},
+                ],
+                "temperature": 0.7,
+                "max_tokens": 2000,
+            },
+        )
+
+        response.raise_for_status()
+        result = response.json()
+
+        # 提取响应内容
+        content = result["choices"][0]["message"]["content"]
+
+        # 去掉 markdown 代码块标记
+        cleaned_content = content.strip()
+        if cleaned_content.startswith("```json"):
+            cleaned_content = cleaned_content[7:]
+        elif cleaned_content.startswith("```"):
+            cleaned_content = cleaned_content[3:]
+        if cleaned_content.endswith("```"):
+            cleaned_content = cleaned_content[:-3]
+        cleaned_content = cleaned_content.strip()
+
+        # 解析 JSON
+        return json.loads(cleaned_content)
+
+
+def print_analysis_result(prompt_name: str, result: dict[str, Any]) -> None:
+    """格式化打印分析结果"""
+    print(f"\n{'='*80}")
+    print(f"Prompt: {prompt_name}")
+    print(f"{'='*80}")
+    print(json.dumps(result, indent=2, ensure_ascii=False))
+    print(f"{'='*80}\n")
+
+
+def compare_results(original: dict[str, Any], optimized: dict[str, Any]) -> None:
+    """对比两个 prompt 的结果"""
+    print(f"\n{'#'*80}")
+    print("结果对比分析")
+    print(f"{'#'*80}\n")
+
+    # 1. 输出结构对比
+    print("【1. 输出结构对比】")
+    print(f"  Original Keys: {list(original.keys())}")
+    print(f"  Optimized Keys: {list(optimized.keys())}")
+    print()
+
+    # 2. Hook 对比
+    print("【2. Hook (开场) 对比】")
+    original_hook = original.get("hook") or original.get("analysis", {}).get("hook")
+    optimized_hook = optimized.get("analysis", {}).get("hook")
+    print(f"  Original:  {original_hook}")
+    print(f"  Optimized: {optimized_hook}")
+    print()
+
+    # 3. Core (核心内容) 对比
+    print("【3. Core (核心内容) 对比】")
+    original_core = original.get("core") or original.get("analysis", {}).get("core")
+    optimized_core = optimized.get("analysis", {}).get("core")
+    print(f"  Original:\n    {original_core}")
+    print(f"  Optimized:\n    {optimized_core}")
+    print()
+
+    # 4. CTA (行动号召) 对比
+    print("【4. CTA (行动号召) 对比】")
+    original_cta = original.get("cta") or original.get("analysis", {}).get("cta")
+    optimized_cta = optimized.get("analysis", {}).get("cta")
+    print(f"  Original:  {original_cta}")
+    print(f"  Optimized: {optimized_cta}")
+    print()
+
+    # 5. 优化版特有功能
+    if "cleaned_transcript" in optimized:
+        print("【5. 优化版特有功能 - 文本清洗】")
+        print(f"  Raw Transcript Length: {len(optimized.get('raw_transcript', ''))}")
+        print(f"  Cleaned Transcript Length: {len(optimized.get('cleaned_transcript', ''))}")
+        print("  Cleaned Transcript Preview (前200字符):")
+        cleaned_preview = optimized.get('cleaned_transcript', '')[:200]
+        print(f"    {cleaned_preview}...")
+        print()
+
+    # 6. 总结
+    print("【6. 分析总结】")
+    print("  - 原始版本: 直接从原文提取三段式结构")
+    print("  - 优化版本: 先清洗文本，再基于清洗后的文本进行结构化分析")
+    print("  - 优化点: 1) 去除语气词和无效内容 2) 语义分段 3) 提高可读性")
+    print(f"\n{'#'*80}\n")
 
 
 # --- Test Cases ---
 
-@pytest.mark.parametrize(
-    "prompt_name, prompt_instructions, use_optimized_prompt",
-    [
-        ("Original", ORIGINAL_PROMPT_INSTRUCTIONS, False),
-        ("Variant_A", PROMPT_VARIANT_A, False),
-        ("Variant_B", PROMPT_VARIANT_B, False),
-        ("Variant_C", PROMPT_VARIANT_C, False),
-        ("Optimized", PROMPT_OPTIMIZED, True),
-    ],
-)
+
 @pytest.mark.asyncio
-async def test_prompt_variants_for_structured_analysis(prompt_name, prompt_instructions, use_optimized_prompt):
-    """
-    测试不同的prompt变体对抖音脚本的结构化分析效果。
-    这个测试会调用真实的LLM服务，用于评估和对比结果。
-    """
-    print(f"\n--- Testing Prompt: {prompt_name} ---")
+async def test_original_prompt():
+    """测试原始 Prompt"""
+    print("\n" + "="*80)
+    print("测试 1/2: 原始 Prompt")
+    print("="*80)
 
-    # 1. Arrange
-    # 构建最终的prompt - 这里我们需要创建一个自定义的 prompt 来测试不同的变体
-    # 注意：这将进行真实的API调用，请确保您的环境已配置API密钥
+    result = await call_llm_with_prompt(ORIGINAL_PROMPT_CONFIG, DOUYIN_TRANSCRIPT)
+    print_analysis_result("Original", result)
 
-    client = None
-    try:
-        # 为这个测试创建一个修改过的 prompt
-        # 这里我们需要直接调用底层 API，因为我们想测试不同的 prompt 指令
+    # 基本断言
+    assert isinstance(result, dict)
+    # 兼容两种格式
+    if "analysis" in result:
+        assert "hook" in result["analysis"]
+        assert "core" in result["analysis"]
+        assert "cta" in result["analysis"]
+    else:
+        assert "hook" in result
+        assert "core" in result
+        assert "cta" in result
 
-        api_key = os.getenv("DEEPSEEK_API_KEY")
-        if not api_key:
-            pytest.skip("DEEPSEEK_API_KEY not set, skipping test")
+    return result
 
-        base_url = os.getenv("DEEPSEEK_BASE_URL", "https://api.deepseek.com")
 
-        # 构建完整的 prompt
-        if use_optimized_prompt:
-            # 使用优化后的 system prompt
-            system_prompt = build_optimized_prompt()
-            # 提取 output_format
-            output_format = json.dumps(prompt_instructions, indent=2)
-            system_prompt = f"{system_prompt}\n{output_format}"
-        else:
-            # 使用标准的 build_prompt 函数
-            system_prompt = build_prompt(ORIGINAL_PROMPT_TEMPLATE, prompt_instructions)
+@pytest.mark.asyncio
+async def test_optimized_prompt():
+    """测试优化后的 Prompt"""
+    print("\n" + "="*80)
+    print("测试 2/2: 优化后的 Prompt")
+    print("="*80)
 
-        # 2. Act - 调用LLM进行分析
-        # 使用同步的 httpx 客户端避免事件循环问题
-        import httpx
-        async with httpx.AsyncClient(timeout=30.0) as client:
-            response = await client.post(
-                f"{base_url}/v1/chat/completions",
-                headers={
-                    "Authorization": f"Bearer {api_key}",
-                    "Content-Type": "application/json",
-                },
-                json={
-                    "model": "deepseek-chat",
-                    "messages": [
-                        {"role": "system", "content": system_prompt},
-                        {"role": "user", "content": DOUYIN_TRANSCRIPT},
-                    ],
-                    "temperature": 0.7,
-                    "max_tokens": 1000,
-                },
-            )
+    result = await call_llm_with_prompt(PROMPT_OPTIMIZED_CONFIG, DOUYIN_TRANSCRIPT)
+    print_analysis_result("Optimized", result)
 
-            response.raise_for_status()
-            result = response.json()
+    # 基本断言
+    assert isinstance(result, dict)
+    assert "raw_transcript" in result
+    assert "cleaned_transcript" in result
+    assert "analysis" in result
+    assert "hook" in result["analysis"]
+    assert "core" in result["analysis"]
+    assert "cta" in result["analysis"]
 
-            # 提取响应内容
-            content = result["choices"][0]["message"]["content"]
-            
-            # 去掉 markdown 代码块标记
-            cleaned_content = content.strip()
-            if cleaned_content.startswith("```json"):
-                cleaned_content = cleaned_content[7:]  # 移除 ```json
-            elif cleaned_content.startswith("```"):
-                cleaned_content = cleaned_content[3:]  # 移除 ```
-            if cleaned_content.endswith("```"):
-                cleaned_content = cleaned_content[:-3]  # 移除末尾的 ```
-            cleaned_content = cleaned_content.strip()
+    # 验证清洗功能
+    assert len(result["cleaned_transcript"]) > 0
+    assert result["raw_transcript"] != result["cleaned_transcript"]
 
-            # 尝试解析结果为JSON
-            analysis_json = json.loads(cleaned_content)
+    return result
 
-            # 打印结果用于手动比对
-            print(f"Prompt ({prompt_name}) Analysis Result:")
-            print(json.dumps(analysis_json, indent=2, ensure_ascii=False))
 
-            # 3. Assert
-            # 基本断言：确保返回的是一个包含预期键的字典
-            assert isinstance(analysis_json, dict)
-            assert "hook" in analysis_json
-            assert "core" in analysis_json
-            assert "cta" in analysis_json
+@pytest.mark.asyncio
+async def test_compare_prompts():
+    """对比两个 Prompt 的效果"""
+    print("\n" + "="*80)
+    print("开始对比测试")
+    print("="*80)
 
-    except json.JSONDecodeError as e:
-        print(f"Result for {prompt_name} is not valid JSON:")
-        if 'result' in locals():
-            print(result)
-        pytest.fail(f"LLM response for {prompt_name} was not valid JSON: {e}")
-    except Exception as e:
-        print(f"Error for {prompt_name}: {type(e).__name__}: {e}")
-        raise
+    # 调用两个 prompt
+    original_result = await call_llm_with_prompt(
+        ORIGINAL_PROMPT_CONFIG, DOUYIN_TRANSCRIPT
+    )
+    optimized_result = await call_llm_with_prompt(
+        PROMPT_OPTIMIZED_CONFIG, DOUYIN_TRANSCRIPT
+    )
+
+    # 打印结果
+    print_analysis_result("Original", original_result)
+    print_analysis_result("Optimized", optimized_result)
+
+    # 对比分析
+    compare_results(original_result, optimized_result)
+
 
 """
 如何运行这个测试:
-1.  将抖音视频的文本稿粘贴到 `DOUYIN_TRANSCRIPT` 变量中。
-2.  确保您的 `.env` 文件中已配置好有效的 LLM API 密钥。
-3.  在 `apps/coprocessor` 目录下，激活虚拟环境并运行 pytest:
-    source .venv/bin/activate
-    pytest app/test_prompt_variants.py -sv
-    (-s 会显示print输出, -v 提供详细信息)
-4.  观察每个 prompt 变体的输出结果，进行比较。
+
+1. 确保您的 `.env` 文件中已配置好有效的 LLM API 密钥:
+   DEEPSEEK_API_KEY=your_api_key_here
+
+2. 在 `apps/coprocessor` 目录下，激活虚拟环境并运行 pytest:
+
+   # 运行所有测试
+   pytest app/test_prompt_variants.py -sv
+
+   # 只运行对比测试
+   pytest app/test_prompt_variants.py::test_compare_prompts -sv
+
+   # 只运行单个测试
+   pytest app/test_prompt_variants.py::test_original_prompt -sv
+   pytest app/test_prompt_variants.py::test_optimized_prompt -sv
+
+3. 参数说明:
+   -s: 显示 print 输出
+   -v: 显示详细信息
+
+4. 观察输出结果，重点关注:
+   - 原始版本和优化版本的结构差异
+   - cleaned_transcript 的清洗效果
+   - hook/core/cta 的提取质量差异
 """

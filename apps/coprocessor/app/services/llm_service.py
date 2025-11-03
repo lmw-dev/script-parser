@@ -25,12 +25,20 @@ class LLMError(Exception):
     pass
 
 
-class AnalysisResult(BaseModel):
-    """分析结果数据模型"""
+class AnalysisDetail(BaseModel):
+    """分析详情数据模型"""
 
     hook: str
     core: str
     cta: str
+
+
+class AnalysisResult(BaseModel):
+    """V2.2 分析结果数据模型 - 包含原始稿、清洗稿和分析结果"""
+
+    raw_transcript: str
+    cleaned_transcript: str
+    analysis: AnalysisDetail
 
 
 class LLMService(Protocol):
@@ -103,13 +111,27 @@ class DeepSeekAdapter:
             # 提取响应内容
             content = result["choices"][0]["message"]["content"]
 
-            # 解析JSON响应
+            # 解析JSON响应 (支持 V2.2 格式)
             try:
-                analysis_data = json.loads(content)
+                # 移除可能的 markdown 代码块标记
+                cleaned_content = content.strip()
+                if cleaned_content.startswith("```json"):
+                    cleaned_content = cleaned_content[7:]
+                elif cleaned_content.startswith("```"):
+                    cleaned_content = cleaned_content[3:]
+                if cleaned_content.endswith("```"):
+                    cleaned_content = cleaned_content[:-3]
+                cleaned_content = cleaned_content.strip()
+
+                analysis_data = json.loads(cleaned_content)
                 return AnalysisResult(
-                    hook=analysis_data["hook"],
-                    core=analysis_data["core"],
-                    cta=analysis_data["cta"],
+                    raw_transcript=analysis_data["raw_transcript"],
+                    cleaned_transcript=analysis_data["cleaned_transcript"],
+                    analysis=AnalysisDetail(
+                        hook=analysis_data["analysis"]["hook"],
+                        core=analysis_data["analysis"]["core"],
+                        cta=analysis_data["analysis"]["cta"],
+                    ),
                 )
             except (json.JSONDecodeError, KeyError) as e:
                 raise LLMError(f"Failed to parse DeepSeek response: {str(e)}") from e
@@ -182,13 +204,27 @@ class KimiAdapter:
             # 提取响应内容
             content = result["choices"][0]["message"]["content"]
 
-            # 解析JSON响应
+            # 解析JSON响应 (支持 V2.2 格式)
             try:
-                analysis_data = json.loads(content)
+                # 移除可能的 markdown 代码块标记
+                cleaned_content = content.strip()
+                if cleaned_content.startswith("```json"):
+                    cleaned_content = cleaned_content[7:]
+                elif cleaned_content.startswith("```"):
+                    cleaned_content = cleaned_content[3:]
+                if cleaned_content.endswith("```"):
+                    cleaned_content = cleaned_content[:-3]
+                cleaned_content = cleaned_content.strip()
+
+                analysis_data = json.loads(cleaned_content)
                 return AnalysisResult(
-                    hook=analysis_data["hook"],
-                    core=analysis_data["core"],
-                    cta=analysis_data["cta"],
+                    raw_transcript=analysis_data["raw_transcript"],
+                    cleaned_transcript=analysis_data["cleaned_transcript"],
+                    analysis=AnalysisDetail(
+                        hook=analysis_data["analysis"]["hook"],
+                        core=analysis_data["analysis"]["core"],
+                        cta=analysis_data["analysis"]["cta"],
+                    ),
                 )
             except (json.JSONDecodeError, KeyError) as e:
                 raise LLMError(f"Failed to parse Kimi response: {str(e)}") from e

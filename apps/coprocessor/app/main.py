@@ -83,8 +83,9 @@ class TextAnalysisResponse(BaseModel):
 
 
 class AnalysisData(BaseModel):
-    transcript: str
-    analysis: dict
+    raw_transcript: str  # V2.2: 原始逐字稿
+    cleaned_transcript: str  # V2.2: 清洗后的分析就绪稿
+    analysis: dict  # LLM 分析结果 (hook, core, cta)
 
 
 class VideoParseResponse(BaseModel):
@@ -197,6 +198,7 @@ class WorkflowOrchestrator:
 
         # Perform LLM analysis on the transcript
         llm_analysis = {}
+        analysis_result = None  # V2.2: 保存完整的分析结果以便后续使用
         with self.perf_logger.log_step("llm_analysis"):
             try:
                 # 确保LLMRouter正确实现主备切换机制
@@ -205,10 +207,11 @@ class WorkflowOrchestrator:
                     "LLMRouter", "analyze", self.perf_logger
                 ):
                     analysis_result = await llm_router.analyze(transcript_text)
+                    # V2.2: analysis_result 现在包含 raw_transcript, cleaned_transcript, analysis
                     llm_analysis = {
-                        "hook": analysis_result.hook,
-                        "core": analysis_result.core,
-                        "cta": analysis_result.cta,
+                        "hook": analysis_result.analysis.hook,
+                        "core": analysis_result.analysis.core,
+                        "cta": analysis_result.analysis.cta,
                     }
             except LLMError as llm_error:
                 self.perf_logger.log_error(
@@ -226,8 +229,26 @@ class WorkflowOrchestrator:
             "url_workflow", success=True, video_id=video_info.video_id
         )
 
+        # V2.2: 返回新的数据结构
+        # 如果 LLM 失败，使用原始 transcript 作为 fallback
+        if analysis_result is None:
+            return AnalysisData(
+                raw_transcript=transcript_text,
+                cleaned_transcript=transcript_text,
+                analysis={
+                    "video_info": {
+                        "video_id": video_info.video_id,
+                        "platform": video_info.platform,
+                        "title": video_info.title,
+                        "download_url": video_info.download_url,
+                    },
+                    "llm_analysis": llm_analysis,
+                },
+            )
+
         return AnalysisData(
-            transcript=transcript_text,
+            raw_transcript=analysis_result.raw_transcript,
+            cleaned_transcript=analysis_result.cleaned_transcript,
             analysis={
                 "video_info": {
                     "video_id": video_info.video_id,
@@ -282,6 +303,7 @@ class WorkflowOrchestrator:
 
         # Perform LLM analysis on the transcript
         llm_analysis = {}
+        analysis_result = None  # V2.2: 保存完整的分析结果以便后续使用
         with self.perf_logger.log_step("file_llm_analysis"):
             try:
                 # 确保LLMRouter正确实现主备切换机制
@@ -290,10 +312,11 @@ class WorkflowOrchestrator:
                     "LLMRouter", "analyze", self.perf_logger
                 ):
                     analysis_result = await llm_router.analyze(transcript_text)
+                    # V2.2: analysis_result 现在包含 raw_transcript, cleaned_transcript, analysis
                     llm_analysis = {
-                        "hook": analysis_result.hook,
-                        "core": analysis_result.core,
-                        "cta": analysis_result.cta,
+                        "hook": analysis_result.analysis.hook,
+                        "core": analysis_result.analysis.core,
+                        "cta": analysis_result.analysis.cta,
                     }
             except LLMError as llm_error:
                 self.perf_logger.log_error(
@@ -313,8 +336,25 @@ class WorkflowOrchestrator:
             "file_workflow", success=True, filename=file_info.original_filename
         )
 
+        # V2.2: 返回新的数据结构
+        # 如果 LLM 失败，使用原始 transcript 作为 fallback
+        if analysis_result is None:
+            return AnalysisData(
+                raw_transcript=transcript_text,
+                cleaned_transcript=transcript_text,
+                analysis={
+                    "file_info": {
+                        "file_path": str(file_info.file_path),
+                        "original_filename": file_info.original_filename,
+                        "size": file_info.size,
+                    },
+                    "llm_analysis": llm_analysis,
+                },
+            )
+
         return AnalysisData(
-            transcript=transcript_text,
+            raw_transcript=analysis_result.raw_transcript,
+            cleaned_transcript=analysis_result.cleaned_transcript,
             analysis={
                 "file_info": {
                     "file_path": str(file_info.file_path),
