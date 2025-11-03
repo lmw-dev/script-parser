@@ -192,7 +192,7 @@ class TestErrorScenarios:
         data = response.json()["detail"]
         assert data["code"] == 4001
         assert data["success"] is False
-        assert data["message"] == "Failed to parse video URL"
+        assert "Invalid URL format" in data["message"]  # Error message from exception
         assert "processing_time" in data
 
     @patch("app.main.WorkflowOrchestrator._get_url_parser")
@@ -227,14 +227,12 @@ class TestErrorScenarios:
             "/api/parse", json={"url": "https://www.douyin.com/video/test123"}
         )
 
-        # Current implementation continues with fallback behavior
-        assert response.status_code == 200
-        data = response.json()
-        assert data["code"] == 0
-        assert data["success"] is True
-        # V2.2: Verify fallback still provides transcript fields (even on error)
-        assert "raw_transcript" in data["data"]
-        assert "cleaned_transcript" in data["data"]
+        # ASR errors now return 503 (not fallback to 200)
+        assert response.status_code == 503
+        data = response.json()["detail"]
+        assert data["code"] == 5001  # URL ASRError code
+        assert data["success"] is False
+        assert "ASR service unavailable" in data["message"]
 
     @patch("app.main.WorkflowOrchestrator._get_url_parser")
     @patch("app.main.WorkflowOrchestrator._get_llm_router")
@@ -297,7 +295,7 @@ class TestErrorScenarios:
         data = response.json()["detail"]
         assert data["code"] == 5003
         assert data["success"] is False
-        assert data["message"] == "File processing error"
+        assert "File processing failed" in data["message"]  # Error message from exception
         assert "processing_time" in data
 
         # Verify cleanup was still called (should be called in finally block)
@@ -347,14 +345,12 @@ class TestErrorScenarios:
             "/api/parse", files={"file": ("test.mp4", b"fake_content", "video/mp4")}
         )
 
-        # Current implementation continues with fallback behavior
-        assert response.status_code == 200
-        data = response.json()
-        assert data["code"] == 0
-        assert data["success"] is True
-        # V2.2: Verify fallback still provides transcript fields (even on error)
-        assert "raw_transcript" in data["data"]
-        assert "cleaned_transcript" in data["data"]
+        # OSS errors now return 503 (not fallback to 200)
+        assert response.status_code == 503
+        data = response.json()["detail"]
+        assert data["code"] == 5004  # OSSUploaderError code
+        assert data["success"] is False
+        assert "OSS upload failed" in data["message"]
 
         # Verify cleanup was called
         mock_cleanup.assert_called_once_with(mock_temp_file_info.file_path)
@@ -377,7 +373,7 @@ class TestErrorScenarios:
         data = response.json()["detail"]
         assert data["code"] == 5005
         assert data["success"] is False
-        assert data["message"] == "Service initialization failed"
+        assert "Failed to initialize service" in data["message"]  # Error message from exception
         assert "processing_time" in data
 
     @patch("app.main.WorkflowOrchestrator._get_url_parser")
@@ -564,8 +560,8 @@ class TestResourceCleanup:
             "/api/parse", files={"file": ("test.mp4", b"content", "video/mp4")}
         )
 
-        # Current implementation continues with fallback, so response is 200
-        assert response.status_code == 200
+        # ASR errors now return 503 (not fallback to 200)
+        assert response.status_code == 503
         # Verify cleanup was still called
         mock_cleanup.assert_called_once_with(mock_temp_file_info.file_path)
 

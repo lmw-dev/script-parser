@@ -88,8 +88,8 @@ class TestDeepSeekAdapter:
 
     @pytest.mark.asyncio
     @patch("builtins.open", new_callable=mock_open, read_data="Test system prompt")
-    @patch("httpx.AsyncClient")
-    async def test_deepseek_adapter_analyze_success(self, mock_httpx_client, mock_file):
+    @patch("app.services.llm_service.get_http_client")
+    async def test_deepseek_adapter_analyze_success(self, mock_get_client, mock_file):
         """测试DeepSeek适配器成功分析 (V2.2)"""
         # Mock HTTP响应 (V2.2 结构)
         mock_response = Mock()
@@ -106,7 +106,7 @@ class TestDeepSeekAdapter:
 
         mock_client_instance = AsyncMock()
         mock_client_instance.post.return_value = mock_response
-        mock_httpx_client.return_value.__aenter__.return_value = mock_client_instance
+        mock_get_client.return_value = mock_client_instance
 
         # 测试分析
         adapter = DeepSeekAdapter(api_key="test-key")
@@ -153,9 +153,9 @@ class TestDeepSeekAdapter:
 
     @pytest.mark.asyncio
     @patch("builtins.open", new_callable=mock_open, read_data="Test system prompt")
-    @patch("httpx.AsyncClient")
+    @patch("app.services.llm_service.get_http_client")
     async def test_deepseek_adapter_analyze_json_parse_error(
-        self, mock_httpx_client, mock_file
+        self, mock_get_client, mock_file
     ):
         """测试DeepSeek适配器JSON解析错误"""
         # Mock无效JSON响应
@@ -167,7 +167,7 @@ class TestDeepSeekAdapter:
 
         mock_client_instance = AsyncMock()
         mock_client_instance.post.return_value = mock_response
-        mock_httpx_client.return_value.__aenter__.return_value = mock_client_instance
+        mock_get_client.return_value = mock_client_instance
 
         adapter = DeepSeekAdapter(api_key="test-key")
 
@@ -195,9 +195,9 @@ class TestKimiAdapter:
 
     @pytest.mark.asyncio
     @patch("builtins.open", new_callable=mock_open, read_data="Test system prompt")
-    @patch("httpx.AsyncClient")
-    async def test_kimi_adapter_analyze_success(self, mock_httpx_client, mock_file):
-        """测试Kimi适配器成功分析"""
+    @patch("app.services.llm_service.get_http_client")
+    async def test_kimi_adapter_analyze_success(self, mock_get_client, mock_file):
+        """测试Kimi适配器成功分析 (V2.2)"""
         # Mock HTTP响应
         mock_response = Mock()
         mock_response.json.return_value = {
@@ -213,7 +213,7 @@ class TestKimiAdapter:
 
         mock_client_instance = AsyncMock()
         mock_client_instance.post.return_value = mock_response
-        mock_httpx_client.return_value.__aenter__.return_value = mock_client_instance
+        mock_get_client.return_value = mock_client_instance
 
         # 测试分析
         adapter = KimiAdapter(api_key="test-key")
