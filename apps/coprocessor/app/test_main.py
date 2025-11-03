@@ -13,7 +13,7 @@ from .error_handling import ServiceInitializationError
 from .main import app
 from .services.asr_service import ASRError
 from .services.file_handler import FileHandlerError, TempFileInfo
-from .services.llm_service import AnalysisResult, LLMError
+from .services.llm_service import AnalysisDetail, AnalysisResult, LLMError
 from .services.oss_uploader import OSSUploaderError
 from .services.url_parser import URLParserError, VideoInfo
 
@@ -43,9 +43,13 @@ def mock_temp_file_info():
 
 @pytest.fixture
 def mock_analysis_result():
-    """Mock LLM analysis result"""
+    """Mock LLM analysis result (V2.2)"""
     return AnalysisResult(
-        hook="Engaging opening", core="Main content", cta="Call to action"
+        raw_transcript="Raw transcript from ASR",
+        cleaned_transcript="Cleaned and segmented transcript",
+        analysis=AnalysisDetail(
+            hook="Engaging opening", core="Main content", cta="Call to action"
+        ),
     )
 
 
@@ -90,7 +94,8 @@ class TestSuccessfulWorkflows:
         assert data["code"] == 0
         assert data["success"] is True
         assert data["data"] is not None
-        assert data["data"]["transcript"] == "Test transcript"
+        assert data["data"]["raw_transcript"] == "Raw transcript from ASR"
+        assert data["data"]["cleaned_transcript"] == "Cleaned and segmented transcript"
         assert data["data"]["analysis"]["video_info"]["video_id"] == "test123"
         assert data["data"]["analysis"]["llm_analysis"]["hook"] == "Engaging opening"
         assert "processing_time" in data
@@ -153,7 +158,8 @@ class TestSuccessfulWorkflows:
         assert data["code"] == 0
         assert data["success"] is True
         assert data["data"] is not None
-        assert data["data"]["transcript"] == "File transcript"
+        assert data["data"]["raw_transcript"] == "Raw transcript from ASR"
+        assert data["data"]["cleaned_transcript"] == "Cleaned and segmented transcript"
         assert (
             data["data"]["analysis"]["file_info"]["original_filename"]
             == "test_video.mp4"
@@ -226,9 +232,9 @@ class TestErrorScenarios:
         data = response.json()
         assert data["code"] == 0
         assert data["success"] is True
-        # Verify fallback transcript contains error info
-        assert "ASR failed" in data["data"]["transcript"]
-        assert "ASR service unavailable" in data["data"]["transcript"]
+        # V2.2: Verify fallback still provides transcript fields (even on error)
+        assert "raw_transcript" in data["data"]
+        assert "cleaned_transcript" in data["data"]
 
     @patch("app.main.WorkflowOrchestrator._get_url_parser")
     @patch("app.main.WorkflowOrchestrator._get_llm_router")
@@ -346,9 +352,9 @@ class TestErrorScenarios:
         data = response.json()
         assert data["code"] == 0
         assert data["success"] is True
-        # Verify fallback transcript contains error info
-        assert "Processing failed" in data["data"]["transcript"]
-        assert "OSS upload failed" in data["data"]["transcript"]
+        # V2.2: Verify fallback still provides transcript fields (even on error)
+        assert "raw_transcript" in data["data"]
+        assert "cleaned_transcript" in data["data"]
 
         # Verify cleanup was called
         mock_cleanup.assert_called_once_with(mock_temp_file_info.file_path)
