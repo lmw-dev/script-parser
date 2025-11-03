@@ -217,7 +217,13 @@ class WorkflowOrchestrator:
                 self.perf_logger.log_error(
                     "LLM analysis failed", llm_error, video_id=video_info.video_id
                 )
-                llm_analysis = {"error": f"LLM analysis failed: {str(llm_error)}"}
+                # Provide fallback values instead of error object for consistent frontend structure
+                llm_analysis = {
+                    "hook": "⚠️ AI分析服务暂时不可用，无法生成钩子分析",
+                    "core": "⚠️ AI分析服务暂时不可用，无法生成核心内容分析",
+                    "cta": "⚠️ AI分析服务暂时不可用，无法生成行动号召分析",
+                    "_error": f"LLM analysis failed: {str(llm_error)}"
+                }
 
             # Record LLM completion checkpoint
             self.time_monitor.checkpoint("llm_complete")
@@ -324,7 +330,13 @@ class WorkflowOrchestrator:
                     llm_error,
                     filename=file_info.original_filename,
                 )
-                llm_analysis = {"error": f"LLM analysis failed: {str(llm_error)}"}
+                # Provide fallback values instead of error object for consistent frontend structure
+                llm_analysis = {
+                    "hook": "⚠️ AI分析服务暂时不可用，无法生成钩子分析",
+                    "core": "⚠️ AI分析服务暂时不可用，无法生成核心内容分析",
+                    "cta": "⚠️ AI分析服务暂时不可用，无法生成行动号召分析",
+                    "_error": f"LLM analysis failed: {str(llm_error)}"
+                }
 
             # Record LLM completion checkpoint
             self.time_monitor.checkpoint("llm_complete")
