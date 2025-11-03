@@ -33,13 +33,11 @@ export const downloadAsMarkdown = (
   filename: string = 'script-analysis.md',
   testMode: boolean = false
 ): string | void => {
+  // V2.2: Include both raw and cleaned transcripts
   const content = `
 # 视频脚本分析结果
 
-## 完整逐字稿
-${result.transcript}
-
-## AI结构化分析
+## AI 结构化分析
 ### 🚀 钩子 (Hook)
 ${result.analysis.hook}
 
@@ -48,6 +46,16 @@ ${result.analysis.core}
 
 ### 🎯 行动号召 (CTA)
 ${result.analysis.cta}
+
+---
+
+## 完整逐字稿 (清洗后)
+${result.cleaned_transcript}
+
+---
+
+## 原始逐字稿
+${result.raw_transcript}
   `.trim()
 
   if (testMode) {

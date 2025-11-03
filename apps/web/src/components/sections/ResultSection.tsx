@@ -85,7 +85,7 @@ export function ResultSection({ result, onReset }: ResultSectionProps) {
               <Button
                 variant="ghost"
                 size="icon"
-                onClick={() => handleCopy(result.transcript, "完整逐字稿")}
+                onClick={() => handleCopy(result.cleaned_transcript, "完整逐字稿")}
                 className="text-muted-foreground hover:bg-primary/10 hover:text-primary"
               >
                 <Copy className="h-5 w-5" />
@@ -94,7 +94,7 @@ export function ResultSection({ result, onReset }: ResultSectionProps) {
             <CardContent>
               <div className="prose prose-sm max-w-none h-[400px] lg:h-[600px] overflow-y-auto rounded-lg bg-input/50 p-4 border border-border">
                 <p className="whitespace-pre-wrap leading-relaxed text-foreground/90">
-                  {result.transcript}
+                  {result.cleaned_transcript}
                 </p>
               </div>
             </CardContent>
