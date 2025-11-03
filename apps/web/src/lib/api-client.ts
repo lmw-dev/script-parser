@@ -93,8 +93,10 @@ export const parseVideo = async (request: VideoParseRequest): Promise<AnalysisRe
         throw new Error('LLM analysis data is missing in the API response.');
     }
 
+    // V2.2: Map BackendData to AnalysisResult (frontend structure)
     const frontendResult: AnalysisResult = {
-        transcript: responseData.data.transcript,
+        raw_transcript: responseData.data.raw_transcript,
+        cleaned_transcript: responseData.data.cleaned_transcript,
         analysis: llmAnalysis,
     };
     return frontendResult;
@@ -121,12 +123,15 @@ export const parseVideo = async (request: VideoParseRequest): Promise<AnalysisRe
 export const mockParseVideo = async (): Promise<VideoParseResponse> => {
   await new Promise((resolve) => setTimeout(resolve, 1000))
 
+  // V2.2 Mock Response Structure
   const mockResponse: VideoParseResponse = {
     success: true,
     code: 200,
     message: "Video parsed successfully",
     data: {
-      transcript:
+      raw_transcript:
+        "这是一个示例原始逐字稿内容（未清洗）。嗯... 那个... 这个视频转录文本，包含所有的对话、旁白和重要的音频信息...",
+      cleaned_transcript:
         "这是一个示例逐字稿内容。在这里会显示完整的视频转录文本，包含所有的对话、旁白和重要的音频信息。这个区域支持滚动查看完整内容，用户可以通过右上角的复制按钮一键复制全部文本。",
       analysis: {
         llm_analysis: {

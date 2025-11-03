@@ -16,12 +16,14 @@ describe('parseVideo', () => {
 
   describe('Timeout Handling', () => {
     it('should set 120 second timeout for URL requests', async () => {
+      // V2.2 Mock Response
       const mockResponse = {
         ok: true,
         json: jest.fn().mockResolvedValue({
           success: true,
           data: {
-            transcript: 'test transcript',
+            raw_transcript: 'test raw transcript',
+            cleaned_transcript: 'test cleaned transcript',
             analysis: {
               llm_analysis: {
                 hook: 'test hook',
@@ -52,12 +54,14 @@ describe('parseVideo', () => {
     })
 
     it('should set 120 second timeout for file requests', async () => {
+      // V2.2 Mock Response
       const mockResponse = {
         ok: true,
         json: jest.fn().mockResolvedValue({
           success: true,
           data: {
-            transcript: 'test transcript',
+            raw_transcript: 'test raw transcript',
+            cleaned_transcript: 'test cleaned transcript',
             analysis: {
               llm_analysis: {
                 hook: 'test hook',
@@ -181,13 +185,15 @@ describe('parseVideo', () => {
   })
 
   describe('Successful Response Handling', () => {
-    it('should parse successful response correctly', async () => {
+    it('should parse successful response correctly (V2.2)', async () => {
+      // V2.2 Mock Response with raw_transcript and cleaned_transcript
       const mockResponse = {
         ok: true,
         json: jest.fn().mockResolvedValue({
           success: true,
           data: {
-            transcript: 'Test transcript content',
+            raw_transcript: 'Test raw transcript content with uh... um...',
+            cleaned_transcript: 'Test cleaned transcript content',
             analysis: {
               llm_analysis: {
                 hook: 'Attention grabbing hook',
@@ -209,8 +215,10 @@ describe('parseVideo', () => {
 
       const result = await parseVideo(request)
 
+      // V2.2: Assert both raw_transcript and cleaned_transcript
       expect(result).toEqual({
-        transcript: 'Test transcript content',
+        raw_transcript: 'Test raw transcript content with uh... um...',
+        cleaned_transcript: 'Test cleaned transcript content',
         analysis: {
           hook: 'Attention grabbing hook',
           core: 'Main content explanation',
