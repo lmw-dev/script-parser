@@ -33,7 +33,15 @@ export const downloadAsMarkdown = (
   filename: string = 'script-analysis.md',
   testMode: boolean = false
 ): string | void => {
-  // V2.2: Include both raw and cleaned transcripts
+  // V3.0: Include AI analysis, key_quotes, and both transcripts
+  const keyQuotesSection = result.analysis.key_quotes && result.analysis.key_quotes.length > 0
+    ? `
+### ✨ 金句提炼 (Key Quotes)
+${result.analysis.key_quotes.map((quote, index) => `${index + 1}. ${quote}`).join('\n')}
+
+---`
+    : ''
+
   const content = `
 # 视频脚本分析结果
 
@@ -46,6 +54,7 @@ ${result.analysis.core}
 
 ### 🎯 行动号召 (CTA)
 ${result.analysis.cta}
+${keyQuotesSection}
 
 ---
 

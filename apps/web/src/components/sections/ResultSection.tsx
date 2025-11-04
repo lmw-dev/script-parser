@@ -7,7 +7,7 @@
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { Copy, Download, RefreshCw, CheckCircle, FileText, Lightbulb, Diamond, Goal } from "lucide-react"
+import { Copy, Download, RefreshCw, CheckCircle, FileText, Lightbulb, Diamond, Goal, Quote } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
 import { copyToClipboard, downloadAsMarkdown } from "@/lib/utils"
 import type { AnalysisResult } from "@/types/script-parser.types"
@@ -16,6 +16,37 @@ import type { AnalysisResult } from "@/types/script-parser.types"
 export type ResultSectionProps = {
   readonly result: AnalysisResult
   readonly onReset: () => void
+}
+
+// KeyQuotesCard component for displaying key quotes
+function KeyQuotesCard({ quotes, onCopy }: { quotes: readonly string[]; onCopy: (text: string, type: string) => void }) {
+  return (
+    <Card className="bg-card/80 backdrop-blur-sm border border-border shadow-lg">
+      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3">
+        <CardTitle className="flex items-center text-base md:text-lg font-semibold">
+          <Quote className="h-5 w-5 mr-3 text-purple-500" />
+          金句提炼 (Key Quotes)
+        </CardTitle>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        {quotes.map((quote, index) => (
+          <div key={index} className="flex items-start justify-between gap-3 p-3 rounded-lg bg-muted/50 border border-border/50">
+            <blockquote className="flex-1 text-sm leading-relaxed text-foreground/90 italic">
+              &ldquo;{quote}&rdquo;
+            </blockquote>
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => onCopy(quote, `金句 ${index + 1}`)}
+              className="flex-shrink-0 text-muted-foreground hover:bg-primary/10 hover:text-primary"
+            >
+              <Copy className="h-4 w-4" />
+            </Button>
+          </div>
+        ))}
+      </CardContent>
+    </Card>
+  )
 }
 
 export function ResultSection({ result, onReset }: ResultSectionProps) {
@@ -170,6 +201,11 @@ export function ResultSection({ result, onReset }: ResultSectionProps) {
               <p className="text-sm leading-relaxed text-muted-foreground">{result.analysis.cta}</p>
             </CardContent>
           </Card>
+
+          {/* V3.0: KeyQuotesCard - Conditionally render if key_quotes exists and has items */}
+          {result.analysis.key_quotes && result.analysis.key_quotes.length > 0 && (
+            <KeyQuotesCard quotes={result.analysis.key_quotes} onCopy={handleCopy} />
+          )}
         </div>
       </div>
     </div>
