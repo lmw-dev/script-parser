@@ -267,9 +267,9 @@ class TestErrorScenarios:
         assert data["code"] == 0
         assert data["success"] is True
         # Verify fallback analysis contains error info
-        assert "error" in data["data"]["analysis"]["llm_analysis"]
+        assert "_error" in data["data"]["analysis"]["llm_analysis"]
         assert (
-            "LLM analysis failed" in data["data"]["analysis"]["llm_analysis"]["error"]
+            "LLM analysis failed" in data["data"]["analysis"]["llm_analysis"]["_error"]
         )
 
     @patch("app.main.WorkflowOrchestrator._get_file_handler")

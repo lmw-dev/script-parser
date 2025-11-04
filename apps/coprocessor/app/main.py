@@ -208,11 +208,15 @@ class WorkflowOrchestrator:
                 ):
                     analysis_result = await llm_router.analyze(transcript_text)
                     # V2.2: analysis_result 现在包含 raw_transcript, cleaned_transcript, analysis
+                    # V3.0: 支持 key_quotes 字段
                     llm_analysis = {
                         "hook": analysis_result.analysis.hook,
                         "core": analysis_result.analysis.core,
                         "cta": analysis_result.analysis.cta,
                     }
+                    # V3.0: 如果存在 key_quotes，则添加到响应中
+                    if analysis_result.analysis.key_quotes is not None:
+                        llm_analysis["key_quotes"] = analysis_result.analysis.key_quotes
             except LLMError as llm_error:
                 self.perf_logger.log_error(
                     "LLM analysis failed", llm_error, video_id=video_info.video_id
@@ -319,11 +323,15 @@ class WorkflowOrchestrator:
                 ):
                     analysis_result = await llm_router.analyze(transcript_text)
                     # V2.2: analysis_result 现在包含 raw_transcript, cleaned_transcript, analysis
+                    # V3.0: 支持 key_quotes 字段
                     llm_analysis = {
                         "hook": analysis_result.analysis.hook,
                         "core": analysis_result.analysis.core,
                         "cta": analysis_result.analysis.cta,
                     }
+                    # V3.0: 如果存在 key_quotes，则添加到响应中
+                    if analysis_result.analysis.key_quotes is not None:
+                        llm_analysis["key_quotes"] = analysis_result.analysis.key_quotes
             except LLMError as llm_error:
                 self.perf_logger.log_error(
                     "File LLM analysis failed",

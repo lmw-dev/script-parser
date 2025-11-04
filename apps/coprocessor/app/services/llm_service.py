@@ -26,15 +26,16 @@ class LLMError(Exception):
 
 
 class AnalysisDetail(BaseModel):
-    """分析详情数据模型"""
+    """分析详情数据模型 - V3.0 支持 key_quotes"""
 
     hook: str
     core: str
     cta: str
+    key_quotes: list[str] | None = None  # V3.0: 金句提炼
 
 
 class AnalysisResult(BaseModel):
-    """V2.2 分析结果数据模型 - 包含原始稿、清洗稿和分析结果"""
+    """V3.0 分析结果数据模型 - 包含原始稿、清洗稿和分析结果（含 key_quotes）"""
 
     raw_transcript: str
     cleaned_transcript: str
@@ -125,21 +126,31 @@ class DeepSeekAdapter:
                 cleaned_content = cleaned_content.strip()
 
                 analysis_data = json.loads(cleaned_content)
-                
+
                 # 处理 LLM 可能返回结构化对象而非字符串的情况
                 def to_string(value):
                     """将值转换为字符串，如果是 dict 则转为 JSON 字符串"""
                     if isinstance(value, dict):
                         return json.dumps(value, ensure_ascii=False)
                     return str(value)
-                
+
+                # 提取 analysis 对象（支持 V3.0 key_quotes）
+                analysis_obj = analysis_data["analysis"]
+                key_quotes = None
+                if "key_quotes" in analysis_obj:
+                    # V3.0: 提取 key_quotes 数组
+                    quotes = analysis_obj["key_quotes"]
+                    if isinstance(quotes, list):
+                        key_quotes = [str(q) for q in quotes if q]  # 确保所有元素都是字符串
+
                 return AnalysisResult(
                     raw_transcript=analysis_data["raw_transcript"],
                     cleaned_transcript=analysis_data["cleaned_transcript"],
                     analysis=AnalysisDetail(
-                        hook=to_string(analysis_data["analysis"]["hook"]),
-                        core=to_string(analysis_data["analysis"]["core"]),
-                        cta=to_string(analysis_data["analysis"]["cta"]),
+                        hook=to_string(analysis_obj["hook"]),
+                        core=to_string(analysis_obj["core"]),
+                        cta=to_string(analysis_obj["cta"]),
+                        key_quotes=key_quotes,
                     ),
                 )
             except (json.JSONDecodeError, KeyError) as e:
@@ -150,7 +161,7 @@ class DeepSeekAdapter:
         except Exception as e:
             if isinstance(e, LLMError):
                 raise
-            
+
             # 提供更详细的错误信息
             import httpx
             if isinstance(e, (httpx.TimeoutException, httpx.ReadTimeout)):
@@ -239,21 +250,31 @@ class KimiAdapter:
                 cleaned_content = cleaned_content.strip()
 
                 analysis_data = json.loads(cleaned_content)
-                
+
                 # 处理 LLM 可能返回结构化对象而非字符串的情况
                 def to_string(value):
                     """将值转换为字符串，如果是 dict 则转为 JSON 字符串"""
                     if isinstance(value, dict):
                         return json.dumps(value, ensure_ascii=False)
                     return str(value)
-                
+
+                # 提取 analysis 对象（支持 V3.0 key_quotes）
+                analysis_obj = analysis_data["analysis"]
+                key_quotes = None
+                if "key_quotes" in analysis_obj:
+                    # V3.0: 提取 key_quotes 数组
+                    quotes = analysis_obj["key_quotes"]
+                    if isinstance(quotes, list):
+                        key_quotes = [str(q) for q in quotes if q]  # 确保所有元素都是字符串
+
                 return AnalysisResult(
                     raw_transcript=analysis_data["raw_transcript"],
                     cleaned_transcript=analysis_data["cleaned_transcript"],
                     analysis=AnalysisDetail(
-                        hook=to_string(analysis_data["analysis"]["hook"]),
-                        core=to_string(analysis_data["analysis"]["core"]),
-                        cta=to_string(analysis_data["analysis"]["cta"]),
+                        hook=to_string(analysis_obj["hook"]),
+                        core=to_string(analysis_obj["core"]),
+                        cta=to_string(analysis_obj["cta"]),
+                        key_quotes=key_quotes,
                     ),
                 )
             except (json.JSONDecodeError, KeyError) as e:
@@ -264,7 +285,7 @@ class KimiAdapter:
         except Exception as e:
             if isinstance(e, LLMError):
                 raise
-            
+
             # 提供更详细的错误信息
             import httpx
             if isinstance(e, httpx.TimeoutException):
@@ -306,7 +327,7 @@ class LLMRouter:
         """
         primary_error = None
         fallback_error = None
-        
+
         # 尝试主服务 (Kimi)
         try:
             return await self.primary.analyze(text)
