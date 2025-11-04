@@ -43,12 +43,15 @@ def mock_temp_file_info():
 
 @pytest.fixture
 def mock_analysis_result():
-    """Mock LLM analysis result (V2.2)"""
+    """Mock LLM analysis result (V3.0 - 包含 key_quotes)"""
     return AnalysisResult(
         raw_transcript="Raw transcript from ASR",
         cleaned_transcript="Cleaned and segmented transcript",
         analysis=AnalysisDetail(
-            hook="Engaging opening", core="Main content", cta="Call to action"
+            hook="Engaging opening",
+            core="Main content",
+            cta="Call to action",
+            key_quotes=["Key quote 1", "Key quote 2"],
         ),
     )
 
@@ -98,6 +101,12 @@ class TestSuccessfulWorkflows:
         assert data["data"]["cleaned_transcript"] == "Cleaned and segmented transcript"
         assert data["data"]["analysis"]["video_info"]["video_id"] == "test123"
         assert data["data"]["analysis"]["llm_analysis"]["hook"] == "Engaging opening"
+        # V3.0: 验证 key_quotes 在 API 响应中正确传递
+        assert "key_quotes" in data["data"]["analysis"]["llm_analysis"]
+        assert data["data"]["analysis"]["llm_analysis"]["key_quotes"] == [
+            "Key quote 1",
+            "Key quote 2",
+        ]
         assert "processing_time" in data
         assert data["message"] == "Processing completed successfully"
 
@@ -165,6 +174,12 @@ class TestSuccessfulWorkflows:
             == "test_video.mp4"
         )
         assert data["data"]["analysis"]["llm_analysis"]["core"] == "Main content"
+        # V3.0: 验证 key_quotes 在 API 响应中正确传递
+        assert "key_quotes" in data["data"]["analysis"]["llm_analysis"]
+        assert data["data"]["analysis"]["llm_analysis"]["key_quotes"] == [
+            "Key quote 1",
+            "Key quote 2",
+        ]
         assert "processing_time" in data
 
         # Verify resource cleanup was called

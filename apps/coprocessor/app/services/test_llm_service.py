@@ -31,11 +31,13 @@ class TestAnalysisResult:
     """AnalysisResult 数据模型测试"""
 
     def test_analysis_result_creation(self):
-        """测试AnalysisResult创建 (V2.2)"""
+        """测试AnalysisResult创建 (V3.0 - 支持 key_quotes)"""
+        # 测试 V3.0 结构（包含 key_quotes）
         analysis_detail = AnalysisDetail(
             hook="This is a hook",
             core="This is the core content",
             cta="Please like and subscribe",
+            key_quotes=["Quote 1", "Quote 2"],
         )
         result = AnalysisResult(
             raw_transcript="Raw transcript text",
@@ -48,6 +50,24 @@ class TestAnalysisResult:
         assert result.analysis.hook == "This is a hook"
         assert result.analysis.core == "This is the core content"
         assert result.analysis.cta == "Please like and subscribe"
+        assert result.analysis.key_quotes == ["Quote 1", "Quote 2"]
+
+    def test_analysis_result_creation_without_key_quotes(self):
+        """测试AnalysisResult创建 - 向后兼容（key_quotes 为 None）"""
+        # 测试向后兼容性（key_quotes 为 None，V2.2 兼容）
+        analysis_detail = AnalysisDetail(
+            hook="This is a hook",
+            core="This is the core content",
+            cta="Please like and subscribe",
+        )
+        result = AnalysisResult(
+            raw_transcript="Raw transcript text",
+            cleaned_transcript="Cleaned transcript text",
+            analysis=analysis_detail,
+        )
+
+        assert result.analysis.hook == "This is a hook"
+        assert result.analysis.key_quotes is None  # V2.2 兼容性
 
     def test_analysis_result_validation(self):
         """测试AnalysisResult验证"""
@@ -90,8 +110,45 @@ class TestDeepSeekAdapter:
     @patch("builtins.open", new_callable=mock_open, read_data="Test system prompt")
     @patch("app.services.llm_service.get_http_client")
     async def test_deepseek_adapter_analyze_success(self, mock_get_client, mock_file):
-        """测试DeepSeek适配器成功分析 (V2.2)"""
-        # Mock HTTP响应 (V2.2 结构)
+        """测试DeepSeek适配器成功分析 (V3.0 - 包含 key_quotes)"""
+        # Mock HTTP响应 (V3.0 结构)
+        mock_response = Mock()
+        mock_response.json.return_value = {
+            "choices": [
+                {
+                    "message": {
+                        "content": '{"raw_transcript": "Raw text", "cleaned_transcript": "Cleaned text", "analysis": {"hook": "Test hook", "core": "Test core", "cta": "Test CTA", "key_quotes": ["Quote 1", "Quote 2"]}}'
+                    }
+                }
+            ]
+        }
+        mock_response.raise_for_status.return_value = None
+
+        mock_client_instance = AsyncMock()
+        mock_client_instance.post.return_value = mock_response
+        mock_get_client.return_value = mock_client_instance
+
+        # 测试分析
+        adapter = DeepSeekAdapter(api_key="test-key")
+        result = await adapter.analyze("Test transcript")
+
+        # 验证结果 (V3.0)
+        assert isinstance(result, AnalysisResult)
+        assert result.raw_transcript == "Raw text"
+        assert result.cleaned_transcript == "Cleaned text"
+        assert result.analysis.hook == "Test hook"
+        assert result.analysis.core == "Test core"
+        assert result.analysis.cta == "Test CTA"
+        assert result.analysis.key_quotes == ["Quote 1", "Quote 2"]
+
+    @pytest.mark.asyncio
+    @patch("builtins.open", new_callable=mock_open, read_data="Test system prompt")
+    @patch("app.services.llm_service.get_http_client")
+    async def test_deepseek_adapter_analyze_success_without_key_quotes(
+        self, mock_get_client, mock_file
+    ):
+        """测试DeepSeek适配器成功分析 - 向后兼容（不包含 key_quotes）"""
+        # Mock HTTP响应 (V2.2 结构，不包含 key_quotes)
         mock_response = Mock()
         mock_response.json.return_value = {
             "choices": [
@@ -112,13 +169,10 @@ class TestDeepSeekAdapter:
         adapter = DeepSeekAdapter(api_key="test-key")
         result = await adapter.analyze("Test transcript")
 
-        # 验证结果 (V2.2)
+        # 验证结果（向后兼容性）
         assert isinstance(result, AnalysisResult)
-        assert result.raw_transcript == "Raw text"
-        assert result.cleaned_transcript == "Cleaned text"
         assert result.analysis.hook == "Test hook"
-        assert result.analysis.core == "Test core"
-        assert result.analysis.cta == "Test CTA"
+        assert result.analysis.key_quotes is None  # V2.2 兼容性
 
         # 验证HTTP调用
         mock_client_instance.post.assert_called_once()
@@ -197,14 +251,14 @@ class TestKimiAdapter:
     @patch("builtins.open", new_callable=mock_open, read_data="Test system prompt")
     @patch("app.services.llm_service.get_http_client")
     async def test_kimi_adapter_analyze_success(self, mock_get_client, mock_file):
-        """测试Kimi适配器成功分析 (V2.2)"""
-        # Mock HTTP响应
+        """测试Kimi适配器成功分析 (V3.0 - 包含 key_quotes)"""
+        # Mock HTTP响应 (V3.0 结构)
         mock_response = Mock()
         mock_response.json.return_value = {
             "choices": [
                 {
                     "message": {
-                        "content": '{"raw_transcript": "Raw text", "cleaned_transcript": "Cleaned text", "analysis": {"hook": "Kimi hook", "core": "Kimi core", "cta": "Kimi CTA"}}'
+                        "content": '{"raw_transcript": "Raw text", "cleaned_transcript": "Cleaned text", "analysis": {"hook": "Kimi hook", "core": "Kimi core", "cta": "Kimi CTA", "key_quotes": ["Kimi Quote 1", "Kimi Quote 2"]}}'
                     }
                 }
             ]
@@ -219,13 +273,14 @@ class TestKimiAdapter:
         adapter = KimiAdapter(api_key="test-key")
         result = await adapter.analyze("Test transcript")
 
-        # 验证结果 (V2.2)
+        # 验证结果 (V3.0)
         assert isinstance(result, AnalysisResult)
         assert result.raw_transcript == "Raw text"
         assert result.cleaned_transcript == "Cleaned text"
         assert result.analysis.hook == "Kimi hook"
         assert result.analysis.core == "Kimi core"
         assert result.analysis.cta == "Kimi CTA"
+        assert result.analysis.key_quotes == ["Kimi Quote 1", "Kimi Quote 2"]
 
         # 验证HTTP调用
         mock_client_instance.post.assert_called_once()
@@ -250,14 +305,17 @@ class TestLLMRouter:
 
     @pytest.mark.asyncio
     async def test_llm_router_primary_success(self):
-        """测试主服务成功场景 (V2.2)"""
+        """测试主服务成功场景 (V3.0)"""
         # Mock主服务成功
         primary = AsyncMock(spec=LLMService)
         expected_result = AnalysisResult(
             raw_transcript="Raw text",
             cleaned_transcript="Cleaned text",
             analysis=AnalysisDetail(
-                hook="Primary hook", core="Primary core", cta="Primary CTA"
+                hook="Primary hook",
+                core="Primary core",
+                cta="Primary CTA",
+                key_quotes=["Primary Quote 1"],
             ),
         )
         primary.analyze.return_value = expected_result
@@ -270,6 +328,7 @@ class TestLLMRouter:
 
         # 验证结果来自主服务
         assert result == expected_result
+        assert result.analysis.key_quotes == ["Primary Quote 1"]
 
         # 验证调用
         primary.analyze.assert_called_once_with("Test transcript")
@@ -277,7 +336,7 @@ class TestLLMRouter:
 
     @pytest.mark.asyncio
     async def test_llm_router_failover_success(self):
-        """测试故障切换成功场景 (V2.2)"""
+        """测试故障切换成功场景 (V3.0)"""
         # Mock主服务失败
         primary = AsyncMock(spec=LLMService)
         primary.analyze.side_effect = LLMError("Primary service failed")
@@ -288,7 +347,10 @@ class TestLLMRouter:
             raw_transcript="Raw text",
             cleaned_transcript="Cleaned text",
             analysis=AnalysisDetail(
-                hook="Fallback hook", core="Fallback core", cta="Fallback CTA"
+                hook="Fallback hook",
+                core="Fallback core",
+                cta="Fallback CTA",
+                key_quotes=["Fallback Quote 1", "Fallback Quote 2"],
             ),
         )
         fallback.analyze.return_value = expected_result
