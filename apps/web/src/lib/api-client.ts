@@ -93,11 +93,12 @@ export const parseVideo = async (request: VideoParseRequest): Promise<AnalysisRe
         throw new Error('LLM analysis data is missing in the API response.');
     }
 
-    // V2.2: Map BackendData to AnalysisResult (frontend structure)
+    // V3.0: Map BackendData to AnalysisResult (frontend structure)
+    // Note: llmAnalysis is ApiAnalysisResult which includes key_quotes
     const frontendResult: AnalysisResult = {
         raw_transcript: responseData.data.raw_transcript,
         cleaned_transcript: responseData.data.cleaned_transcript,
-        analysis: llmAnalysis,
+        analysis: llmAnalysis, // llmAnalysis already contains key_quotes (V3.0)
     };
     return frontendResult;
 
@@ -123,7 +124,7 @@ export const parseVideo = async (request: VideoParseRequest): Promise<AnalysisRe
 export const mockParseVideo = async (): Promise<VideoParseResponse> => {
   await new Promise((resolve) => setTimeout(resolve, 1000))
 
-  // V2.2 Mock Response Structure
+  // V3.0 Mock Response Structure
   const mockResponse: VideoParseResponse = {
     success: true,
     code: 200,
@@ -138,6 +139,10 @@ export const mockParseVideo = async (): Promise<VideoParseResponse> => {
           hook: "开头的吸引注意力的内容，通常是一个引人入胜的问题、惊人的事实或者情感化的陈述。",
           core: "视频的核心内容和主要价值点，包含关键信息、解决方案或者教学内容。",
           cta: "行动号召部分，引导观众进行下一步操作，如关注、点赞、评论或购买。",
+          key_quotes: [
+            "这是一个示例金句，具有高度概括性和传播价值。",
+            "这是另一个示例金句，适合用于社交媒体分享。"
+          ],
         },
       },
     },

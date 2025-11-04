@@ -16,7 +16,7 @@ describe('parseVideo', () => {
 
   describe('Timeout Handling', () => {
     it('should set 120 second timeout for URL requests', async () => {
-      // V2.2 Mock Response
+      // V3.0 Mock Response
       const mockResponse = {
         ok: true,
         json: jest.fn().mockResolvedValue({
@@ -28,7 +28,8 @@ describe('parseVideo', () => {
               llm_analysis: {
                 hook: 'test hook',
                 core: 'test core',
-                cta: 'test cta'
+                cta: 'test cta',
+                key_quotes: ['Test Key Quote 1', 'Test Key Quote 2']
               }
             }
           }
@@ -54,7 +55,7 @@ describe('parseVideo', () => {
     })
 
     it('should set 120 second timeout for file requests', async () => {
-      // V2.2 Mock Response
+      // V3.0 Mock Response
       const mockResponse = {
         ok: true,
         json: jest.fn().mockResolvedValue({
@@ -66,7 +67,8 @@ describe('parseVideo', () => {
               llm_analysis: {
                 hook: 'test hook',
                 core: 'test core',
-                cta: 'test cta'
+                cta: 'test cta',
+                key_quotes: ['Test Key Quote 1', 'Test Key Quote 2']
               }
             }
           }
@@ -185,8 +187,8 @@ describe('parseVideo', () => {
   })
 
   describe('Successful Response Handling', () => {
-    it('should parse successful response correctly (V2.2)', async () => {
-      // V2.2 Mock Response with raw_transcript and cleaned_transcript
+    it('should parse successful response correctly (V3.0)', async () => {
+      // V3.0 Mock Response with raw_transcript, cleaned_transcript, and key_quotes
       const mockResponse = {
         ok: true,
         json: jest.fn().mockResolvedValue({
@@ -198,7 +200,8 @@ describe('parseVideo', () => {
               llm_analysis: {
                 hook: 'Attention grabbing hook',
                 core: 'Main content explanation',
-                cta: 'Call to action'
+                cta: 'Call to action',
+                key_quotes: ['Test Key Quote 1', 'Test Key Quote 2']
               }
             }
           }
@@ -215,14 +218,15 @@ describe('parseVideo', () => {
 
       const result = await parseVideo(request)
 
-      // V2.2: Assert both raw_transcript and cleaned_transcript
+      // V3.0: Assert raw_transcript, cleaned_transcript, and key_quotes
       expect(result).toEqual({
         raw_transcript: 'Test raw transcript content with uh... um...',
         cleaned_transcript: 'Test cleaned transcript content',
         analysis: {
           hook: 'Attention grabbing hook',
           core: 'Main content explanation',
-          cta: 'Call to action'
+          cta: 'Call to action',
+          key_quotes: ['Test Key Quote 1', 'Test Key Quote 2']
         }
       })
     })
