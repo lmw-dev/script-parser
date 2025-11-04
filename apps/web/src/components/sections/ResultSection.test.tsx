@@ -25,20 +25,21 @@ jest.mock('@/lib/utils', () => ({
 const mockCopy = copy as jest.Mock;
 const mockDownload = utils.downloadAsMarkdown as jest.Mock;
 
-// Mock data for the component
+// Mock data for the component (V3.0 structure)
 const mockResult: AnalysisResult = {
-  transcript: 'This is the full transcript.',
+  raw_transcript: 'This is the raw transcript with uh... um...',
+  cleaned_transcript: 'This is the cleaned transcript.',
   analysis: {
     hook: 'This is the hook.',
     core: 'This is the core.',
     cta: 'This is the CTA.',
+    key_quotes: ['Key Quote 1', 'Key Quote 2'],
   },
 };
 
 const defaultProps = {
   result: mockResult,
   onReset: jest.fn(),
-  onDownload: jest.fn(), // This prop will be removed from the component, but is needed for the test to pass before refactoring
 };
 
 describe('ResultSection Component', () => {
@@ -50,7 +51,7 @@ describe('ResultSection Component', () => {
   });
 
   describe('Copy Functionality', () => {
-    it('should call copy-to-clipboard and show success toast when copying transcript', async () => {
+    it('should call copy-to-clipboard and show success toast when copying transcript (V3.0 - cleaned_transcript)', async () => {
       const user = userEvent.setup();
       mockCopy.mockReturnValue(true); // Simulate successful copy
   
@@ -61,9 +62,9 @@ describe('ResultSection Component', () => {
   
       await user.click(copyButton!);
   
-      // Assertions
+      // Assertions - V3.0: should use cleaned_transcript
       expect(mockCopy).toHaveBeenCalledTimes(1);
-      expect(mockCopy).toHaveBeenCalledWith(mockResult.transcript);
+      expect(mockCopy).toHaveBeenCalledWith(mockResult.cleaned_transcript);
       expect(mockToastFn).toHaveBeenCalledWith({
         title: '复制成功！',
         description: '完整逐字稿 已复制到您的剪贴板。',
@@ -76,7 +77,7 @@ describe('ResultSection Component', () => {
   
       render(<ResultSection {...defaultProps} />);
   
-      const hookCard = screen.getByText(/🚀 钩子/).closest('[data-slot="card"]');
+      const hookCard = screen.getByText('钩子 (Hook)').closest('[data-slot="card"]');
       const copyButton = hookCard!.querySelector('button');
   
       await user.click(copyButton!);
@@ -117,11 +118,83 @@ describe('ResultSection Component', () => {
       const user = userEvent.setup();
       render(<ResultSection {...defaultProps} />);
 
-      const downloadButton = screen.getByRole('button', { name: /下载结果/i });
+      const downloadButton = screen.getByRole('button', { name: /下载 Markdown/i });
       await user.click(downloadButton);
 
       expect(mockDownload).toHaveBeenCalledTimes(1);
       expect(mockDownload).toHaveBeenCalledWith(mockResult);
+    });
+  });
+
+  describe('KeyQuotesCard (V3.0)', () => {
+    it('should render KeyQuotesCard when key_quotes exist', () => {
+      render(<ResultSection {...defaultProps} />);
+
+      // Verify KeyQuotesCard title is rendered
+      expect(screen.getByText('金句提炼 (Key Quotes)')).toBeInTheDocument();
+
+      // Verify key quotes are rendered
+      expect(screen.getByText(/Key Quote 1/)).toBeInTheDocument();
+      expect(screen.getByText(/Key Quote 2/)).toBeInTheDocument();
+    });
+
+    it('should allow copying individual key quotes', async () => {
+      const user = userEvent.setup();
+      mockCopy.mockReturnValue(true);
+
+      render(<ResultSection {...defaultProps} />);
+
+      // Find KeyQuotesCard and locate copy buttons within it
+      const keyQuotesCard = screen.getByText('金句提炼 (Key Quotes)').closest('[data-slot="card"]');
+      const copyButtons = keyQuotesCard!.querySelectorAll('button');
+
+      // Should have at least one copy button (one per quote)
+      expect(copyButtons.length).toBeGreaterThan(0);
+
+      // Click the first copy button (first quote)
+      await user.click(copyButtons[0]);
+
+      expect(mockCopy).toHaveBeenCalledTimes(1);
+      expect(mockCopy).toHaveBeenCalledWith(mockResult.analysis.key_quotes![0]);
+      expect(mockToastFn).toHaveBeenCalledWith({
+        title: '复制成功！',
+        description: '金句 1 已复制到您的剪贴板。',
+      });
+    });
+
+    it('should not render KeyQuotesCard when key_quotes is undefined', () => {
+      const resultWithoutQuotes: AnalysisResult = {
+        raw_transcript: 'Raw transcript',
+        cleaned_transcript: 'Cleaned transcript',
+        analysis: {
+          hook: 'Hook',
+          core: 'Core',
+          cta: 'CTA',
+        },
+      };
+
+      render(<ResultSection result={resultWithoutQuotes} onReset={jest.fn()} />);
+
+      // KeyQuotesCard should not be rendered
+      expect(screen.queryByText('金句提炼 (Key Quotes)')).not.toBeInTheDocument();
+    });
+
+    it('should not render KeyQuotesCard when key_quotes is empty array', () => {
+      const resultWithEmptyQuotes: AnalysisResult = {
+        raw_transcript: 'Raw transcript',
+        cleaned_transcript: 'Cleaned transcript',
+        analysis: {
+          hook: 'Hook',
+          core: 'Core',
+          cta: 'CTA',
+          key_quotes: [],
+        },
+      };
+
+      render(<ResultSection result={resultWithEmptyQuotes} onReset={jest.fn()} />);
+
+      // KeyQuotesCard should not be rendered
+      expect(screen.queryByText('金句提炼 (Key Quotes)')).not.toBeInTheDocument();
     });
   });
 });
