@@ -94,6 +94,11 @@ class ShareURLParser:
                 
                 headers = {
                     "User-Agent": user_agents[attempt % len(user_agents)],
+                    "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8",
+                    "Accept-Language": "zh-CN,zh;q=0.8,en-US;q=0.5,en;q=0.3",
+                    "Accept-Encoding": "gzip, deflate, br",
+                    "Connection": "keep-alive",
+                    "Upgrade-Insecure-Requests": "1"
                 }
                 
                 proxies = {"all://": self.proxy_url} if self.proxy_url else None

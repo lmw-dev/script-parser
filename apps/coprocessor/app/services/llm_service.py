@@ -1,6 +1,6 @@
 """
 LLM服务适配器模式实现
-支持DeepSeek和Kimi，具备主备切换功能
+支持Kimi和DeepSeek，具备主备切换功能（默认使用Kimi作为主服务）
 """
 
 import json
@@ -100,7 +100,7 @@ class DeepSeekAdapter:
                         {"role": "user", "content": text},
                     ],
                     "temperature": 0.7,
-                    "max_tokens": 1000,
+                    "max_tokens": 4000,
                 },
                 timeout=TimeoutConfig.LLM_TIMEOUT,
             )
@@ -110,6 +110,7 @@ class DeepSeekAdapter:
 
             # 提取响应内容
             content = result["choices"][0]["message"]["content"]
+            print(f"[DEBUG] DeepSeek API response received, content length: {len(content)}")
 
             # 解析JSON响应 (支持 V2.2 格式)
             try:
@@ -124,22 +125,42 @@ class DeepSeekAdapter:
                 cleaned_content = cleaned_content.strip()
 
                 analysis_data = json.loads(cleaned_content)
+                
+                # 处理 LLM 可能返回结构化对象而非字符串的情况
+                def to_string(value):
+                    """将值转换为字符串，如果是 dict 则转为 JSON 字符串"""
+                    if isinstance(value, dict):
+                        return json.dumps(value, ensure_ascii=False)
+                    return str(value)
+                
                 return AnalysisResult(
                     raw_transcript=analysis_data["raw_transcript"],
                     cleaned_transcript=analysis_data["cleaned_transcript"],
                     analysis=AnalysisDetail(
-                        hook=analysis_data["analysis"]["hook"],
-                        core=analysis_data["analysis"]["core"],
-                        cta=analysis_data["analysis"]["cta"],
+                        hook=to_string(analysis_data["analysis"]["hook"]),
+                        core=to_string(analysis_data["analysis"]["core"]),
+                        cta=to_string(analysis_data["analysis"]["cta"]),
                     ),
                 )
             except (json.JSONDecodeError, KeyError) as e:
-                raise LLMError(f"Failed to parse DeepSeek response: {str(e)}") from e
+                # 记录原始响应以便调试
+                print(f"[DEBUG] DeepSeek raw response (first 500 chars): {content[:500]}")
+                raise LLMError(f"Failed to parse DeepSeek response: {str(e)}. Response preview: {content[:200]}") from e
 
         except Exception as e:
             if isinstance(e, LLMError):
                 raise
-            raise LLMError(f"DeepSeek API error: {str(e)}") from e
+            
+            # 提供更详细的错误信息
+            import httpx
+            if isinstance(e, (httpx.TimeoutException, httpx.ReadTimeout)):
+                raise LLMError(f"DeepSeek API timeout: Request took too long (>{TimeoutConfig.LLM_TIMEOUT}s). Try without VPN or increase timeout.") from e
+            elif isinstance(e, httpx.ConnectError):
+                raise LLMError(f"DeepSeek API connection error: Cannot reach {self.base_url}. Check VPN or network settings.") from e
+            elif isinstance(e, httpx.HTTPStatusError):
+                raise LLMError(f"DeepSeek API HTTP error: {e.response.status_code} - {e.response.text[:200]}") from e
+            else:
+                raise LLMError(f"DeepSeek API error: {type(e).__name__}: {str(e)}") from e
 
 
 class KimiAdapter:
@@ -193,7 +214,7 @@ class KimiAdapter:
                         {"role": "user", "content": text},
                     ],
                     "temperature": 0.7,
-                    "max_tokens": 1000,
+                    "max_tokens": 4000,
                 },
                 timeout=TimeoutConfig.LLM_TIMEOUT,
             )
@@ -203,6 +224,7 @@ class KimiAdapter:
 
             # 提取响应内容
             content = result["choices"][0]["message"]["content"]
+            print(f"[DEBUG] Kimi API response received, content length: {len(content)}")
 
             # 解析JSON响应 (支持 V2.2 格式)
             try:
@@ -217,22 +239,42 @@ class KimiAdapter:
                 cleaned_content = cleaned_content.strip()
 
                 analysis_data = json.loads(cleaned_content)
+                
+                # 处理 LLM 可能返回结构化对象而非字符串的情况
+                def to_string(value):
+                    """将值转换为字符串，如果是 dict 则转为 JSON 字符串"""
+                    if isinstance(value, dict):
+                        return json.dumps(value, ensure_ascii=False)
+                    return str(value)
+                
                 return AnalysisResult(
                     raw_transcript=analysis_data["raw_transcript"],
                     cleaned_transcript=analysis_data["cleaned_transcript"],
                     analysis=AnalysisDetail(
-                        hook=analysis_data["analysis"]["hook"],
-                        core=analysis_data["analysis"]["core"],
-                        cta=analysis_data["analysis"]["cta"],
+                        hook=to_string(analysis_data["analysis"]["hook"]),
+                        core=to_string(analysis_data["analysis"]["core"]),
+                        cta=to_string(analysis_data["analysis"]["cta"]),
                     ),
                 )
             except (json.JSONDecodeError, KeyError) as e:
-                raise LLMError(f"Failed to parse Kimi response: {str(e)}") from e
+                # 记录原始响应以便调试
+                print(f"[DEBUG] Kimi raw response (first 500 chars): {content[:500]}")
+                raise LLMError(f"Failed to parse Kimi response: {str(e)}. Response preview: {content[:200]}") from e
 
         except Exception as e:
             if isinstance(e, LLMError):
                 raise
-            raise LLMError(f"Kimi API error: {str(e)}") from e
+            
+            # 提供更详细的错误信息
+            import httpx
+            if isinstance(e, httpx.TimeoutException):
+                raise LLMError(f"Kimi API timeout: Request took too long (>{TimeoutConfig.LLM_TIMEOUT}s)") from e
+            elif isinstance(e, httpx.ConnectError):
+                raise LLMError(f"Kimi API connection error: Cannot reach {self.base_url}. Check VPN or network settings.") from e
+            elif isinstance(e, httpx.HTTPStatusError):
+                raise LLMError(f"Kimi API HTTP error: {e.response.status_code} - {e.response.text[:200]}") from e
+            else:
+                raise LLMError(f"Kimi API error: {type(e).__name__}: {str(e)}") from e
 
 
 class LLMRouter:
@@ -262,18 +304,25 @@ class LLMRouter:
         Raises:
             LLMError: 当所有服务都失败时
         """
-        # 尝试主服务
+        primary_error = None
+        fallback_error = None
+        
+        # 尝试主服务 (Kimi)
         try:
             return await self.primary.analyze(text)
-        except LLMError:
-            # 主服务失败，尝试备用服务
+        except LLMError as e:
+            primary_error = str(e)
+            # 主服务失败，尝试备用服务 (DeepSeek)
             try:
                 return await self.fallback.analyze(text)
-            except LLMError:
+            except LLMError as e:
+                fallback_error = str(e)
                 # 所有服务都失败
                 raise LLMError(
-                    "All LLM services failed. Both primary and fallback services are unavailable."
-                ) from None
+                    f"All LLM services failed.\n"
+                    f"Primary (Kimi) error: {primary_error}\n"
+                    f"Fallback (DeepSeek) error: {fallback_error}"
+                ) from e
 
 
 def create_llm_router_from_env() -> LLMRouter:
@@ -286,10 +335,10 @@ def create_llm_router_from_env() -> LLMRouter:
     Raises:
         ValueError: 当必需的环境变量未设置时
     """
-    # 创建DeepSeek适配器作为主服务
-    primary = DeepSeekAdapter()
+    # 创建Kimi适配器作为主服务
+    primary = KimiAdapter()
 
-    # 创建Kimi适配器作为备用服务
-    fallback = KimiAdapter()
+    # 创建DeepSeek适配器作为备用服务
+    fallback = DeepSeekAdapter()
 
     return LLMRouter(primary=primary, fallback=fallback)

@@ -7,7 +7,7 @@
 ScriptParser 是一个基于 AI 的智能脚本解析工具，采用"**Web应用 + AI协处理器**"分离式架构模型：
 - **Web应用**：基于 Next.js 14 的全栈 Web 应用，负责用户界面和业务逻辑
 - **AI协处理器**：基于 FastAPI 的专用 AI 服务，专门处理音频转文本和智能解析
-- **AI 能力**：集成阿里云 ASR 和 DeepSeek/Kimi LLM
+- **AI 能力**：集成阿里云 ASR 和 Kimi/DeepSeek LLM（默认使用 Kimi）
 
 ## 技术栈
 
@@ -191,7 +191,7 @@ Content-Type: application/json
 
 ### AI协处理器开发
 - **FastAPI** 构建高性能异步 API
-- 集成 **阿里云 ASR** 和 **DeepSeek/Kimi LLM**
+- 集成 **阿里云 ASR** 和 **Kimi/DeepSeek LLM**（默认使用 Kimi）
 - 专注于音频转文本和智能解析功能
 - 支持多种分析类型：摘要、关键词、情感分析等
 
@@ -249,7 +249,7 @@ graph TD
     B -->|"/"| C[Web应用: Next.js:3000]
     B -->|"/api/*"| D[AI协处理器: FastAPI:8000]
     D -->|调用| E[阿里云 ASR API]
-    D -->|调用| F[DeepSeek/Kimi LLM]
+    D -->|调用| F[Kimi/DeepSeek LLM]
     
     subgraph "Docker 容器"
         B
@@ -316,7 +316,10 @@ REGISTRY=your-registry.com TAG=v1.0.0 ./scripts/build-push.sh
 ALIYUN_ASR_API_KEY=your_api_key
 ALIYUN_ASR_API_SECRET=your_api_secret
 
-# DeepSeek LLM配置
+# Kimi LLM配置 (主要)
+KIMI_API_KEY=your_kimi_key
+
+# DeepSeek LLM配置 (备选)
 DEEPSEEK_API_KEY=your_deepseek_key
 
 # 服务配置
@@ -379,7 +382,7 @@ docker-compose restart coprocessor
 ## 路线图
 
 - [ ] 集成真实的阿里云 ASR API
-- [ ] 集成 DeepSeek/Kimi LLM API
+- [ ] 集成 Kimi/DeepSeek LLM API
 - [ ] 添加用户认证系统
 - [ ] 支持批量音频处理
 - [ ] 添加处理进度跟踪

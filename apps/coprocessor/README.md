@@ -320,11 +320,11 @@ class NewService:
 ALIYUN_ASR_API_KEY=your_aliyun_asr_api_key
 ALIYUN_ASR_API_SECRET=your_aliyun_asr_api_secret
 
-# DeepSeek LLM配置
-DEEPSEEK_API_KEY=your_deepseek_api_key
-
-# Kimi LLM配置 (备选)
+# Kimi LLM配置 (主要)
 KIMI_API_KEY=your_kimi_api_key
+
+# DeepSeek LLM配置 (备选)
+DEEPSEEK_API_KEY=your_deepseek_api_key
 
 # 服务配置
 HOST=0.0.0.0
