@@ -22,13 +22,13 @@ export type ResultSectionProps = {
 function KeyQuotesCard({ quotes, onCopy }: { quotes: readonly string[]; onCopy: (text: string, type: string) => void }) {
   return (
     <Card className="bg-card/80 backdrop-blur-sm border border-border shadow-lg">
-      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 pt-3 px-4">
         <CardTitle className="flex items-center text-xs md:text-sm font-semibold">
           <Quote className="h-4 w-4 mr-2 text-purple-500" />
           金句
         </CardTitle>
       </CardHeader>
-      <CardContent className="space-y-2">
+      <CardContent className="px-4 pb-3 space-y-2">
         {quotes.map((quote, index) => (
           <div key={index} className="flex items-start justify-between gap-2 p-2 rounded-lg bg-muted/50 border border-border/50">
             <blockquote className="flex-1 text-xs leading-relaxed text-foreground/90 italic line-clamp-2">
@@ -90,9 +90,9 @@ export function ResultSection({ result, onReset }: ResultSectionProps) {
   }
 
   return (
-    <div className="w-full mx-auto space-y-4 md:space-y-6">
+    <div className="w-full mx-auto space-y-3 md:space-y-4">
       {/* Header - Compact */}
-      <div className="text-center space-y-2">
+      <div className="text-center space-y-1">
         <div className="inline-flex items-center justify-center w-12 h-12 md:w-14 md:h-14 rounded-full bg-green-500/10 border-2 border-green-500/20">
           <CheckCircle className="h-6 w-6 md:h-7 md:w-7 text-green-500" />
         </div>
@@ -103,7 +103,7 @@ export function ResultSection({ result, onReset }: ResultSectionProps) {
       </div>
 
       {/* Main Content Grid - Web-Optimized */}
-      <div className="grid grid-cols-1 lg:grid-cols-4 gap-4 md:gap-5">
+      <div className="grid grid-cols-1 lg:grid-cols-4 gap-4 md:gap-5 lg:gap-6">
         
         {/* Left Column: Transcript */}
         <div className="lg:col-span-2">
@@ -133,13 +133,13 @@ export function ResultSection({ result, onReset }: ResultSectionProps) {
         </div>
 
         {/* Right Column: Actions and Analysis */}
-        <div className="space-y-3 md:space-y-4">
+        <div className="space-y-2 md:space-y-3">
           {/* Action Panel */}
           <Card className="bg-card/80 backdrop-blur-sm border border-border shadow-lg">
-            <CardHeader className="pb-2">
+            <CardHeader className="pb-2 pt-3 px-4">
               <CardTitle className="text-sm md:text-base font-semibold">操作</CardTitle>
             </CardHeader>
-            <CardContent className="flex flex-col space-y-2">
+            <CardContent className="px-4 pb-3 flex flex-col space-y-2">
               <Button onClick={onReset} size="sm" className="w-full h-9 text-xs md:text-sm">
                 <RefreshCw className="h-4 w-4 mr-2" />
                 再分析一个
@@ -156,48 +156,48 @@ export function ResultSection({ result, onReset }: ResultSectionProps) {
             </CardContent>
           </Card>
 
-          {/* Analysis Cards - Compact */}
+          {/* Analysis Cards - Compact with minimal padding */}
           <Card className="bg-card/80 backdrop-blur-sm border border-border shadow-lg">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 pt-3 px-4">
               <CardTitle className="flex items-center text-xs md:text-sm font-semibold">
                 <Lightbulb className="h-4 w-4 mr-2 text-yellow-500" />
                 钩子
               </CardTitle>
-              <Button variant="ghost" size="icon" onClick={() => handleCopy(result.analysis.hook, "钩子")} className="h-6 w-6">
+              <Button variant="ghost" size="icon" onClick={() => handleCopy(result.analysis.hook, "钩子")} className="h-6 w-6 -mr-1">
                 <Copy className="h-3 w-3" />
               </Button>
             </CardHeader>
-            <CardContent>
+            <CardContent className="px-4 pb-3">
               <p className="text-xs leading-relaxed text-muted-foreground line-clamp-3">{result.analysis.hook}</p>
             </CardContent>
           </Card>
 
           <Card className="bg-card/80 backdrop-blur-sm border border-border shadow-lg">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 pt-3 px-4">
               <CardTitle className="flex items-center text-xs md:text-sm font-semibold">
                 <Diamond className="h-4 w-4 mr-2 text-cyan-500" />
                 核心
               </CardTitle>
-              <Button variant="ghost" size="icon" onClick={() => handleCopy(result.analysis.core, "核心")} className="h-6 w-6">
+              <Button variant="ghost" size="icon" onClick={() => handleCopy(result.analysis.core, "核心")} className="h-6 w-6 -mr-1">
                 <Copy className="h-3 w-3" />
               </Button>
             </CardHeader>
-            <CardContent>
+            <CardContent className="px-4 pb-3">
               <p className="text-xs leading-relaxed text-muted-foreground line-clamp-3">{result.analysis.core}</p>
             </CardContent>
           </Card>
 
           <Card className="bg-card/80 backdrop-blur-sm border border-border shadow-lg">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 pt-3 px-4">
               <CardTitle className="flex items-center text-xs md:text-sm font-semibold">
                 <Goal className="h-4 w-4 mr-2 text-green-500" />
                 行动号召
               </CardTitle>
-              <Button variant="ghost" size="icon" onClick={() => handleCopy(result.analysis.cta, "行动号召")} className="h-6 w-6">
+              <Button variant="ghost" size="icon" onClick={() => handleCopy(result.analysis.cta, "行动号召")} className="h-6 w-6 -mr-1">
                 <Copy className="h-3 w-3" />
               </Button>
             </CardHeader>
-            <CardContent>
+            <CardContent className="px-4 pb-3">
               <p className="text-xs leading-relaxed text-muted-foreground line-clamp-3">{result.analysis.cta}</p>
             </CardContent>
           </Card>
