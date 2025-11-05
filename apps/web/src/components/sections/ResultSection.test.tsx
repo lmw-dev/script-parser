@@ -77,7 +77,8 @@ describe('ResultSection Component', () => {
   
       render(<ResultSection {...defaultProps} />);
   
-      const hookCard = screen.getByText('钩子 (Hook)').closest('[data-slot="card"]');
+      // Find the card containing the hook (now just shows "钩子")
+      const hookCard = screen.getAllByText(/钩子/)[0].closest('[data-slot="card"]');
       const copyButton = hookCard!.querySelector('button');
   
       await user.click(copyButton!);
@@ -130,8 +131,8 @@ describe('ResultSection Component', () => {
     it('should render KeyQuotesCard when key_quotes exist', () => {
       render(<ResultSection {...defaultProps} />);
 
-      // Verify KeyQuotesCard title is rendered
-      expect(screen.getByText('金句提炼 (Key Quotes)')).toBeInTheDocument();
+      // Verify KeyQuotesCard title is rendered (now "金句" instead of full text)
+      expect(screen.getByText('金句')).toBeInTheDocument();
 
       // Verify key quotes are rendered
       expect(screen.getByText(/Key Quote 1/)).toBeInTheDocument();
@@ -144,9 +145,11 @@ describe('ResultSection Component', () => {
 
       render(<ResultSection {...defaultProps} />);
 
-      // Find KeyQuotesCard and locate copy buttons within it
-      const keyQuotesCard = screen.getByText('金句提炼 (Key Quotes)').closest('[data-slot="card"]');
-      const copyButtons = keyQuotesCard!.querySelectorAll('button');
+      // Find all elements containing quote text
+      const quotes = screen.getAllByText(/Key Quote/);
+      // Find the parent cards and their buttons
+      const firstQuoteCard = quotes[0].closest('[data-slot="card"]') || quotes[0].closest('.rounded-lg');
+      const copyButtons = firstQuoteCard?.querySelectorAll('button') || [];
 
       // Should have at least one copy button (one per quote)
       expect(copyButtons.length).toBeGreaterThan(0);
