@@ -90,20 +90,20 @@ export function ResultSection({ result, onReset }: ResultSectionProps) {
   }
 
   return (
-    <div className="w-full mx-auto space-y-3 md:space-y-4">
+    <div className="w-full mx-auto space-y-4">
       {/* Header - Compact */}
-      <div className="text-center space-y-1">
-        <div className="inline-flex items-center justify-center w-12 h-12 md:w-14 md:h-14 rounded-full bg-green-500/10 border-2 border-green-500/20">
-          <CheckCircle className="h-6 w-6 md:h-7 md:w-7 text-green-500" />
+      <div className="text-center space-y-2">
+        <div className="inline-flex items-center justify-center w-10 h-10 md:w-12 md:h-12 rounded-full bg-green-500/10 border-2 border-green-500/20">
+          <CheckCircle className="h-5 w-5 md:h-6 md:w-6 text-green-500" />
         </div>
         <div>
-          <h2 className="text-xl md:text-2xl font-bold text-foreground">分析完成</h2>
-          <p className="text-xs md:text-sm text-muted-foreground">AI已为您完成脚本结构化分析，结果如下。</p>
+          <h2 className="text-lg md:text-xl font-bold text-foreground">分析完成</h2>
+          <p className="text-xs text-muted-foreground">AI已为您完成脚本结构化分析，结果如下。</p>
         </div>
       </div>
 
       {/* Main Content Grid - Web-Optimized */}
-      <div className="grid grid-cols-1 lg:grid-cols-4 gap-4 md:gap-5 lg:gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-4 gap-4">
         
         {/* Left Column: Transcript */}
         <div className="lg:col-span-2">
@@ -133,7 +133,7 @@ export function ResultSection({ result, onReset }: ResultSectionProps) {
         </div>
 
         {/* Right Column: Actions and Analysis */}
-        <div className="space-y-2 md:space-y-3">
+        <div className="space-y-2">
           {/* Action Panel */}
           <Card className="bg-card/80 backdrop-blur-sm border border-border shadow-lg">
             <CardHeader className="pb-2 pt-3 px-4">
