@@ -215,7 +215,7 @@ class WorkflowOrchestrator:
                         "cta": analysis_result.analysis.cta,
                     }
                     # V3.0: 如果存在 key_quotes，则添加到响应中
-                    if analysis_result.analysis.key_quotes is not None:
+                    if hasattr(analysis_result.analysis, 'key_quotes') and analysis_result.analysis.key_quotes is not None:
                         llm_analysis["key_quotes"] = analysis_result.analysis.key_quotes
             except LLMError as llm_error:
                 self.perf_logger.log_error(
@@ -330,7 +330,7 @@ class WorkflowOrchestrator:
                         "cta": analysis_result.analysis.cta,
                     }
                     # V3.0: 如果存在 key_quotes，则添加到响应中
-                    if analysis_result.analysis.key_quotes is not None:
+                    if hasattr(analysis_result.analysis, 'key_quotes') and analysis_result.analysis.key_quotes is not None:
                         llm_analysis["key_quotes"] = analysis_result.analysis.key_quotes
             except LLMError as llm_error:
                 self.perf_logger.log_error(
