@@ -424,6 +424,55 @@ docker-compose restart coprocessor
 - 本地代码通过 volumes 挂载到容器
 - **优势**：`git pull` 后只需重启服务即可生效，无需重新构建镜像
 
+### 🍎 Mac mini 快速部署（推荐）
+
+**适用场景**：日常开发迭代、后端代码更新
+
+#### 一键快速部署
+
+Mac mini 上提供了专门的快速部署脚本：
+
+```bash
+cd /Volumes/ExternalLiumw/lavori/01_code/15-liumw/03-script-parse
+./deploy-macmini-quick.sh
+```
+
+脚本会自动完成：
+1. ✅ 检测并拉取最新代码
+2. ✅ 自动处理本地修改冲突
+3. ✅ 重启后端服务（使用挂载的代码）
+4. ✅ 健康检查和服务状态验证
+
+#### 手动快速部署
+
+如果需要手动操作：
+
+```bash
+# 1. 拉取最新代码
+cd /Volumes/ExternalLiumw/lavori/01_code/15-liumw/03-script-parse
+git pull origin main
+
+# 2. 重启后端服务（代码通过 volumes 挂载，无需重新构建）
+/usr/local/bin/docker-compose -f docker-compose.macmini.yml restart coprocessor
+
+# 3. 验证服务
+curl http://localhost:8081/api/health
+```
+
+**重要提示**：
+- ✅ **后端代码更新**：只需重启服务（30秒内完成）
+- ⚠️ **前端代码更新**：需要重新构建镜像（约10-15分钟）
+- 📦 **环境变量更新**：修改 `.env` 文件后重启服务
+
+#### 前端代码更新（需要重新构建）
+
+如果前端有改动，需要完整部署：
+
+```bash
+cd /Volumes/ExternalLiumw/lavori/01_code/15-liumw/03-script-parse
+./deploy-macmini.sh
+```
+
 ### 快速更新部署
 
 在腾讯云VPS上更新代码的流程：
