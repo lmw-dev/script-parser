@@ -40,22 +40,40 @@ export default function ResultPage() {
 
   if (appState === "SUCCESS" && resultData) {
     return (
-      <main className="flex-grow flex flex-col items-center justify-center p-6">
-        <div className="w-full max-w-4xl space-y-8">
+      <main className="flex-grow flex flex-col items-center w-full bg-gradient-to-b from-background to-muted/5">
+        {/* Results Content */}
+        <div className="w-full max-w-4xl px-4 sm:px-6 lg:px-8 py-8 sm:py-12">
           <ResultSection
             result={resultData}
             onReset={handleReset}
           />
-          {enableDonation && (
-            <div className="mt-12">
-              <DonationSection
-                wechatQrPath="/wechat_donate_qr.png"
-                alipayQrPath="/alipay_donate_qr.png"
-              />
+        </div>
+
+        {/* Divider Section */}
+        <div className="w-full border-t border-border/30 bg-muted/10">
+          <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12 sm:py-16 space-y-12">
+            {/* Donation Section */}
+            {enableDonation && (
+              <div className="space-y-4">
+                <div className="text-center mb-8">
+                  <h2 className="text-2xl font-bold text-foreground mb-2">觉得有帮助？</h2>
+                  <p className="text-sm text-muted-foreground">支持我们继续打造更好的工具</p>
+                </div>
+                <DonationSection
+                  wechatQrPath="/wechat_donate_qr.png"
+                  alipayQrPath="/alipay_donate_qr.png"
+                />
+              </div>
+            )}
+
+            {/* Email Subscription Section */}
+            <div className="space-y-4">
+              <div className="text-center mb-8">
+                <h2 className="text-2xl font-bold text-foreground mb-2">保持关注</h2>
+                <p className="text-sm text-muted-foreground">获取最新功能和更新通知</p>
+              </div>
+              <EmailSubscriptionForm />
             </div>
-          )}
-          <div className="mt-12">
-            <EmailSubscriptionForm />
           </div>
         </div>
       </main>

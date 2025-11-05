@@ -32,9 +32,9 @@ describe('DonationSection', () => {
       />
     )
 
-    expect(screen.getByText(/觉得有帮助/i)).toBeInTheDocument()
+    expect(screen.getByText(/支持开发者/i)).toBeInTheDocument()
     expect(
-      screen.getByText(/自愿支持.*不会解锁额外功能/i)
+      screen.getByText(/完全自愿.*无任何强制/i)
     ).toBeInTheDocument()
   })
 

@@ -18,15 +18,15 @@ export function EmailSubscriptionForm({
 }: EmailSubscriptionFormProps) {
   return (
     <Card 
-      className="w-full max-w-2xl mx-auto"
+      className="w-full max-w-2xl mx-auto border-none shadow-sm bg-card/50 backdrop-blur-sm"
       data-testid="email-subscription-form"
     >
-      <CardHeader className="text-center space-y-2">
+      <CardHeader className="text-center space-y-2 pb-4">
         <div className="flex items-center justify-center gap-2">
-          <Mail className="w-5 h-5 text-muted-foreground" />
-          <CardTitle className="text-xl font-semibold">{title}</CardTitle>
+          <Mail className="w-5 h-5 text-blue-500" />
+          <CardTitle className="text-lg font-semibold">{title}</CardTitle>
         </div>
-        <CardDescription className="text-sm text-muted-foreground">
+        <CardDescription className="text-xs text-muted-foreground">
           {description}
         </CardDescription>
       </CardHeader>

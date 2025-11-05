@@ -1,11 +1,8 @@
 import Link from 'next/link'
 import { Github, Twitter, BookOpen, Instagram } from 'lucide-react'
-import { DonationSection } from '@/components/feature/DonationSection'
-import { EmailSubscriptionForm } from '@/components/feature/EmailSubscriptionForm'
 
 export function Footer() {
   const currentYear = new Date().getFullYear()
-  const enableDonation = process.env.NEXT_PUBLIC_ENABLE_DONATION === 'true'
   
   const socialLinks = [
     { name: 'GitHub', icon: Github, href: 'https://github.com/lmw-dev' },
@@ -15,8 +12,8 @@ export function Footer() {
   ]
 
   return (
-    <footer className="w-full bg-muted/20 border-t border-border">
-      <div className="container mx-auto py-12 px-6 lg:px-12">
+    <footer className="w-full bg-muted/20 border-t border-border mt-12">
+      <div className="container mx-auto py-8 px-6 lg:px-12">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8 lg:gap-12">
           
           {/* Column 1: Brand */}
@@ -82,24 +79,9 @@ export function Footer() {
 
         </div>
 
-        {/* Email Subscription Section */}
-        <div className="mt-12 border-t border-border pt-12">
-          <EmailSubscriptionForm />
-        </div>
-
-        {/* Donation Section */}
-        {enableDonation && (
-          <div className="mt-12 border-t border-border pt-12">
-            <DonationSection
-              wechatQrPath="/wechat_donate_qr.png"
-              alipayQrPath="/alipay_donate_qr.png"
-            />
-          </div>
-        )}
-
         {/* Copyright */}
-        <div className="mt-12 border-t border-border pt-8 text-center">
-          <p className="text-sm text-muted-foreground">
+        <div className="mt-8 border-t border-border pt-6 text-center">
+          <p className="text-xs text-muted-foreground">
             &copy; {currentYear} AI 脚本快拆. All rights reserved.
           </p>
         </div>

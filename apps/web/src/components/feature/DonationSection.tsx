@@ -33,16 +33,16 @@ export function DonationSection({
 
   return (
     <Card 
-      className="w-full max-w-2xl mx-auto" 
+      className="w-full max-w-2xl mx-auto border-none shadow-sm bg-card/50 backdrop-blur-sm" 
       data-testid="donation-section"
     >
-      <CardHeader className="text-center space-y-2">
+      <CardHeader className="text-center space-y-2 pb-4">
         <div className="flex items-center justify-center gap-2">
-          <Coffee className="w-5 h-5 text-muted-foreground" />
-          <CardTitle className="text-xl font-semibold">觉得有帮助？</CardTitle>
+          <Coffee className="w-5 h-5 text-amber-500" />
+          <CardTitle className="text-lg font-semibold">支持开发者</CardTitle>
         </div>
-        <CardDescription className="text-sm text-muted-foreground">
-          可以请我喝杯咖啡鼓励一下！(自愿支持，不会解锁额外功能)
+        <CardDescription className="text-xs text-muted-foreground">
+          如果这个工具对你有帮助，可以请我喝杯咖啡～（完全自愿，无任何强制）
         </CardDescription>
       </CardHeader>
       
