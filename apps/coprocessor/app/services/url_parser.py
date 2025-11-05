@@ -124,13 +124,24 @@ class ShareURLParser:
                     if not video_id:
                         raise URLParserError("无法从 URL 中提取视频 ID")
 
-                    # 第二步：构建干净的 URL 并获取页面内容
+                    # 关键修复：使用新客户端请求 clean URL，避免会话状态干扰
+                    # 重要：headers必须简化，只使用 User-Agent，否则服务器返回简化版页面
                     clean_url = f'https://www.iesdouyin.com/share/video/{video_id}'
-                    page_response = await client.get(clean_url)
-                    page_response.raise_for_status() # 确保请求成功
-
-                    # 尝试解析页面内容
-                    html_content = page_response.text
+                    simple_headers = {"User-Agent": user_agents[attempt % len(user_agents)]}
+                    clean_client = httpx.AsyncClient(
+                        headers=simple_headers,  # 使用简化headers
+                        proxies=proxies,
+                        timeout=httpx.Timeout(20.0, connect=10.0),
+                        follow_redirects=True,  # 必须允许重定向
+                        verify=False
+                    )
+                    
+                    try:
+                        page_response = await clean_client.get(clean_url)
+                        page_response.raise_for_status()
+                        html_content = page_response.text
+                    finally:
+                        await clean_client.aclose()
                     
                     # 尝试从页面内容中提取路由器数据
                     router_data = self._extract_router_data_optimized(html_content)
