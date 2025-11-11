@@ -56,27 +56,47 @@ class ASRService:
         dashscope.api_key = self.api_key
         self.model = model
 
-    async def transcribe_from_url(self, video_url: str) -> str:
+    async def transcribe_from_url(
+        self, video_url: str, analysis_mode: str = "general"
+    ) -> str:
         """
         从视频URL转录文本
 
         Args:
             video_url: 视频文件URL
+            analysis_mode: 分析模式 ("general" 或 "tech")，默认为 "general"
+                          - "general": 通用叙事分析，不使用热词
+                          - "tech": 科技产品评测，注入科技热词表提升准确率
 
         Returns:
             转录的文本内容
 
         Raises:
             ASRError: 当转录失败时
+            ValueError: 当 analysis_mode="tech" 但 ALIYUN_TECH_HOTWORD_ID 未配置时
         """
+        # V3.0 - TOM-490: 构建API调用参数
+        api_params = {
+            "model": self.model,
+            "file_urls": [video_url],
+            "language_hints": ["zh", "en"],
+        }
+
+        # V3.0 - TOM-490: 科技模式热词注入（在 try 块外检查配置）
+        if analysis_mode == "tech":
+            hotword_id = os.getenv("ALIYUN_TECH_HOTWORD_ID", "").strip()
+            if not hotword_id:
+                raise ValueError(
+                    "ALIYUN_TECH_HOTWORD_ID environment variable is required when analysis_mode='tech'"
+                )
+            api_params["vocabulary_id"] = hotword_id
+
         try:
             # 使用asyncio.wait_for添加超时控制
             task_response = await asyncio.wait_for(
                 asyncio.to_thread(
                     dashscope.audio.asr.Transcription.async_call,
-                    model=self.model,
-                    file_urls=[video_url],
-                    language_hints=["zh", "en"],
+                    **api_params,  # 使用参数解包
                 ),
                 timeout=TimeoutConfig.ASR_TIMEOUT,
             )
@@ -119,7 +139,9 @@ class ASRService:
                 raise
             raise ASRError(f"ASR service error: {str(e)}") from e
 
-    async def transcribe_from_file(self, file_path: Path) -> str:
+    async def transcribe_from_file(
+        self, file_path: Path, analysis_mode: str = "general"
+    ) -> str:
         """
         从本地文件转录文本
 
@@ -128,19 +150,26 @@ class ASRService:
 
         Args:
             file_path: 本地文件路径
+            analysis_mode: 分析模式 ("general" 或 "tech")，默认为 "general"
+                          - "general": 通用叙事分析，不使用热词
+                          - "tech": 科技产品评测，注入科技热词表提升准确率
 
         Returns:
             转录的文本内容
 
         Raises:
             ASRError: 当转录失败时
+            ValueError: 当 analysis_mode="tech" 但 ALIYUN_TECH_HOTWORD_ID 未配置时
         """
         try:
             # 如果配置了OSS上传器，使用OSS模式
             if self.oss_uploader:
                 try:
                     upload_result = self.oss_uploader.upload_file(file_path)
-                    return await self.transcribe_from_url(upload_result.file_url)
+                    # V3.0 - TOM-490: 传递 analysis_mode 参数
+                    return await self.transcribe_from_url(
+                        upload_result.file_url, analysis_mode=analysis_mode
+                    )
                 except OSSUploaderError as e:
                     raise ASRError(
                         f"Failed to upload file to OSS before transcription: {e}"
@@ -153,13 +182,27 @@ class ASRService:
             # 传统模式：使用绝对路径尝试转录
             abs_path = str(file_path.resolve())
 
+            # V3.0 - TOM-490: 构建API调用参数（在 try 块外）
+            api_params = {
+                "model": self.model,
+                "file_urls": [abs_path],
+                "language_hints": ["zh", "en"],
+            }
+
+            # V3.0 - TOM-490: 科技模式热词注入（在 try 块外检查配置）
+            if analysis_mode == "tech":
+                hotword_id = os.getenv("ALIYUN_TECH_HOTWORD_ID", "").strip()
+                if not hotword_id:
+                    raise ValueError(
+                        "ALIYUN_TECH_HOTWORD_ID environment variable is required when analysis_mode='tech'"
+                    )
+                api_params["vocabulary_id"] = hotword_id
+
             # 发起异步转录任务，添加超时控制
             task_response = await asyncio.wait_for(
                 asyncio.to_thread(
                     dashscope.audio.asr.Transcription.async_call,
-                    model=self.model,
-                    file_urls=[abs_path],
-                    language_hints=["zh", "en"],
+                    **api_params,  # 使用参数解包
                 ),
                 timeout=TimeoutConfig.ASR_TIMEOUT,
             )

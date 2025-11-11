@@ -184,8 +184,11 @@ class WorkflowOrchestrator:
                 async with create_service_tracker(
                     "ASRService", "transcribe_from_url", self.perf_logger
                 ):
+                    # V3.0 - TOM-490: 预留 analysis_mode 接口
+                    # 当前阶段使用硬编码 "general" 模式，保持现有行为
+                    # TODO TOM-492: 从路由器获取实际的 analysis_mode
                     transcript_text = await asr_service.transcribe_from_url(
-                        video_info.download_url
+                        video_info.download_url, analysis_mode="general"
                     )
                 # Record ASR completion checkpoint
                 self.time_monitor.checkpoint("asr_complete")
@@ -289,8 +292,11 @@ class WorkflowOrchestrator:
                 async with create_service_tracker(
                     "ASRService", "transcribe_from_file", self.perf_logger
                 ):
+                    # V3.0 - TOM-490: 预留 analysis_mode 接口
+                    # 当前阶段使用硬编码 "general" 模式，保持现有行为
+                    # TODO TOM-492: 从路由器获取实际的 analysis_mode
                     transcript_text = await asr_service.transcribe_from_file(
-                        file_info.file_path
+                        file_info.file_path, analysis_mode="general"
                     )
                 # Record ASR completion checkpoint only on success
                 self.time_monitor.checkpoint("asr_complete")
