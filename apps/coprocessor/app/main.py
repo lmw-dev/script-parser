@@ -67,6 +67,7 @@ class TextAnalysisRequest(BaseModel):
 
 class VideoParseURLRequest(BaseModel):
     url: str
+    analysis_mode: str = "general"  # V3.0: 分析模式选择（"general" 或 "tech"）
 
 
 # 响应模型
@@ -104,7 +105,9 @@ class WorkflowOrchestrator:
         self._url_parser = None
         self._file_handler = None
         self._oss_uploader = None
-        self._llm_router = None
+        self._llm_router = None  # V1.0 旧路由器（保留用于向后兼容）
+        self._llm_track_router = None  # V3.0 新赛道路由器
+        self._llm_execution_service = None  # V3.0 执行服务
         self.perf_logger = perf_logger
         self.time_monitor = ProcessingTimeMonitor(perf_logger)
 
@@ -148,7 +151,7 @@ class WorkflowOrchestrator:
         return self._oss_uploader
 
     def _get_llm_router(self):
-        """获取LLM路由器实例，延迟初始化"""
+        """获取LLM路由器实例，延迟初始化（V1.0 旧版本，保留用于向后兼容）"""
         if self._llm_router is None:
             try:
                 with self.perf_logger.log_step("llm_router_init"):
@@ -160,7 +163,47 @@ class WorkflowOrchestrator:
                 ) from e
         return self._llm_router
 
-    async def process_url_workflow(self, url: str) -> AnalysisData:
+    def _get_llm_track_router(self):
+        """获取 V3.0 LLM 赛道路由器实例，延迟初始化"""
+        if self._llm_track_router is None:
+            try:
+                from pathlib import Path
+
+                from .services.llm_track_router import LLMTrackRouter
+
+                with self.perf_logger.log_step("llm_track_router_init"):
+                    # prompts_dir 为 app/prompts 目录
+                    prompts_dir = Path(__file__).parent / "prompts"
+                    self._llm_track_router = LLMTrackRouter(prompts_dir=prompts_dir)
+            except Exception as e:
+                self.perf_logger.log_error("Failed to initialize LLMTrackRouter", e)
+                raise ServiceInitializationError(
+                    f"Failed to initialize LLMTrackRouter: {str(e)}"
+                ) from e
+        return self._llm_track_router
+
+    def _get_llm_execution_service(self):
+        """获取 V3.0 LLM 执行服务实例，延迟初始化"""
+        if self._llm_execution_service is None:
+            try:
+                from .services.llm_execution_service import LLMExecutionService
+                from .services.llm_service import DeepSeekAdapter, KimiAdapter
+
+                with self.perf_logger.log_step("llm_execution_service_init"):
+                    # 创建主备 LLM 适配器
+                    primary = DeepSeekAdapter()
+                    fallback = KimiAdapter()
+                    self._llm_execution_service = LLMExecutionService(
+                        primary=primary, fallback=fallback
+                    )
+            except Exception as e:
+                self.perf_logger.log_error("Failed to initialize LLMExecutionService", e)
+                raise ServiceInitializationError(
+                    f"Failed to initialize LLMExecutionService: {str(e)}"
+                ) from e
+        return self._llm_execution_service
+
+    async def process_url_workflow(self, url: str, analysis_mode: str = "general") -> AnalysisData:
         """处理URL工作流"""
         self.perf_logger.log_step_start(
             "url_workflow", url=url[:100] if len(url) > 100 else url
@@ -184,11 +227,9 @@ class WorkflowOrchestrator:
                 async with create_service_tracker(
                     "ASRService", "transcribe_from_url", self.perf_logger
                 ):
-                    # V3.0 - TOM-490: 预留 analysis_mode 接口
-                    # 当前阶段使用硬编码 "general" 模式，保持现有行为
-                    # TODO TOM-492: 从路由器获取实际的 analysis_mode
+                    # V3.0 - TOM-492: 使用动态传入的 analysis_mode
                     transcript_text = await asr_service.transcribe_from_url(
-                        video_info.download_url, analysis_mode="general"
+                        video_info.download_url, analysis_mode=analysis_mode
                     )
                 # Record ASR completion checkpoint
                 self.time_monitor.checkpoint("asr_complete")
@@ -204,33 +245,59 @@ class WorkflowOrchestrator:
         analysis_result = None  # V2.2: 保存完整的分析结果以便后续使用
         with self.perf_logger.log_step("llm_analysis"):
             try:
-                # 确保LLMRouter正确实现主备切换机制
-                llm_router = self._get_llm_router()
+                # V3.0 - TOM-492: 使用新的赛道路由器架构
+                llm_track_router = self._get_llm_track_router()
+                llm_execution_service = self._get_llm_execution_service()
+
                 async with create_service_tracker(
-                    "LLMRouter", "analyze", self.perf_logger
+                    "LLMTrackRouter", "get_analysis", self.perf_logger
                 ):
-                    analysis_result = await llm_router.analyze(transcript_text)
-                    # V2.2: analysis_result 现在包含 raw_transcript, cleaned_transcript, analysis
-                    # V3.0: 支持 key_quotes 字段
-                    llm_analysis = {
-                        "hook": analysis_result.analysis.hook,
-                        "core": analysis_result.analysis.core,
-                        "cta": analysis_result.analysis.cta,
-                    }
-                    # V3.0: 如果存在 key_quotes，则添加到响应中
-                    if hasattr(analysis_result.analysis, 'key_quotes') and analysis_result.analysis.key_quotes is not None:
-                        llm_analysis["key_quotes"] = analysis_result.analysis.key_quotes
+                    router_result = await llm_track_router.get_analysis(
+                        analysis_mode=analysis_mode,
+                        transcript=transcript_text,
+                        execution_service=llm_execution_service
+                    )
+
+                    # 根据 analysis_mode 处理不同的返回结构
+                    if analysis_mode == "general":
+                        # V2.0 格式：AnalysisResult 对象
+                        analysis_result = router_result
+                        llm_analysis = {
+                            "hook": analysis_result.analysis.hook,
+                            "core": analysis_result.analysis.core,
+                            "cta": analysis_result.analysis.cta,
+                        }
+                        # V3.0: 如果存在 key_quotes，则添加到响应中
+                        if hasattr(analysis_result.analysis, 'key_quotes') and analysis_result.analysis.key_quotes is not None:
+                            llm_analysis["key_quotes"] = analysis_result.analysis.key_quotes
+                    elif analysis_mode == "tech":
+                        # V3.0 格式：Dict 对象（tech spec）
+                        llm_analysis = router_result
+                        # 对于 tech mode，我们需要从 dict 中构造一个兼容的 AnalysisData
+                        # 但暂时将 analysis_result 设置为 None，因为它的结构不同
+                        analysis_result = None
+
             except LLMError as llm_error:
                 self.perf_logger.log_error(
                     "LLM analysis failed", llm_error, video_id=video_info.video_id
                 )
                 # Provide fallback values instead of error object for consistent frontend structure
-                llm_analysis = {
-                    "hook": "⚠️ AI分析服务暂时不可用，无法生成钩子分析",
-                    "core": "⚠️ AI分析服务暂时不可用，无法生成核心内容分析",
-                    "cta": "⚠️ AI分析服务暂时不可用，无法生成行动号召分析",
-                    "_error": f"LLM analysis failed: {str(llm_error)}"
-                }
+                if analysis_mode == "general":
+                    llm_analysis = {
+                        "hook": "⚠️ AI分析服务暂时不可用，无法生成钩子分析",
+                        "core": "⚠️ AI分析服务暂时不可用，无法生成核心内容分析",
+                        "cta": "⚠️ AI分析服务暂时不可用，无法生成行动召唤分析",
+                        "_error": f"LLM analysis failed: {str(llm_error)}"
+                    }
+                elif analysis_mode == "tech":
+                    llm_analysis = {
+                        "schema_type": "v3_tech_spec",
+                        "product_parameters": [],
+                        "selling_points": [],
+                        "pricing_info": [],
+                        "subjective_evaluation": {"pros": [], "cons": []},
+                        "_error": f"LLM analysis failed: {str(llm_error)}"
+                    }
 
             # Record LLM completion checkpoint
             self.time_monitor.checkpoint("llm_complete")
@@ -273,7 +340,7 @@ class WorkflowOrchestrator:
             },
         )
 
-    async def process_file_workflow(self, file_info: TempFileInfo) -> AnalysisData:
+    async def process_file_workflow(self, file_info: TempFileInfo, analysis_mode: str = "general") -> AnalysisData:
         """处理文件工作流"""
         self.perf_logger.log_step_start(
             "file_workflow",
@@ -292,11 +359,9 @@ class WorkflowOrchestrator:
                 async with create_service_tracker(
                     "ASRService", "transcribe_from_file", self.perf_logger
                 ):
-                    # V3.0 - TOM-490: 预留 analysis_mode 接口
-                    # 当前阶段使用硬编码 "general" 模式，保持现有行为
-                    # TODO TOM-492: 从路由器获取实际的 analysis_mode
+                    # V3.0 - TOM-492: 使用动态传入的 analysis_mode
                     transcript_text = await asr_service.transcribe_from_file(
-                        file_info.file_path, analysis_mode="general"
+                        file_info.file_path, analysis_mode=analysis_mode
                     )
                 # Record ASR completion checkpoint only on success
                 self.time_monitor.checkpoint("asr_complete")
@@ -322,22 +387,35 @@ class WorkflowOrchestrator:
         analysis_result = None  # V2.2: 保存完整的分析结果以便后续使用
         with self.perf_logger.log_step("file_llm_analysis"):
             try:
-                # 确保LLMRouter正确实现主备切换机制
-                llm_router = self._get_llm_router()
+                # V3.0 - TOM-492: 使用新的赛道路由器架构
+                llm_track_router = self._get_llm_track_router()
+                llm_execution_service = self._get_llm_execution_service()
+
                 async with create_service_tracker(
-                    "LLMRouter", "analyze", self.perf_logger
+                    "LLMTrackRouter", "get_analysis", self.perf_logger
                 ):
-                    analysis_result = await llm_router.analyze(transcript_text)
-                    # V2.2: analysis_result 现在包含 raw_transcript, cleaned_transcript, analysis
-                    # V3.0: 支持 key_quotes 字段
-                    llm_analysis = {
-                        "hook": analysis_result.analysis.hook,
-                        "core": analysis_result.analysis.core,
-                        "cta": analysis_result.analysis.cta,
-                    }
-                    # V3.0: 如果存在 key_quotes，则添加到响应中
-                    if hasattr(analysis_result.analysis, 'key_quotes') and analysis_result.analysis.key_quotes is not None:
-                        llm_analysis["key_quotes"] = analysis_result.analysis.key_quotes
+                    router_result = await llm_track_router.get_analysis(
+                        analysis_mode=analysis_mode,
+                        transcript=transcript_text,
+                        execution_service=llm_execution_service
+                    )
+
+                    # 根据 analysis_mode 处理不同的返回结构
+                    if analysis_mode == "general":
+                        # V2.0 格式：AnalysisResult 对象
+                        analysis_result = router_result
+                        llm_analysis = {
+                            "hook": analysis_result.analysis.hook,
+                            "core": analysis_result.analysis.core,
+                            "cta": analysis_result.analysis.cta,
+                        }
+                        # V3.0: 如果存在 key_quotes，则添加到响应中
+                        if hasattr(analysis_result.analysis, 'key_quotes') and analysis_result.analysis.key_quotes is not None:
+                            llm_analysis["key_quotes"] = analysis_result.analysis.key_quotes
+                    elif analysis_mode == "tech":
+                        # V3.0 格式：Dict 对象（tech spec）
+                        llm_analysis = router_result
+                        analysis_result = None
             except LLMError as llm_error:
                 self.perf_logger.log_error(
                     "File LLM analysis failed",
@@ -550,6 +628,7 @@ async def parse_video(
     request: Request,
     url: str | None = Form(None),
     file: UploadFile | None = File(None),
+    analysis_mode: str = Form("general"),  # V3.0: 分析模式参数
 ):
     """视频解析接口 - 支持URL和文件上传两种模式"""
     # 实现请求ID生成用于日志跟踪
@@ -592,9 +671,12 @@ async def parse_video(
                     and data["url"] is not None
                     and str(data["url"]).strip()
                 ):
+                    # V3.0 - TOM-492: 从 JSON 请求体中提取 analysis_mode
+                    json_analysis_mode = data.get("analysis_mode", "general")
                     # 重构JSON请求处理逻辑，使用统一的工作流编排
                     result_data = await orchestrator.process_url_workflow(
-                        str(data["url"]).strip()
+                        url=str(data["url"]).strip(),
+                        analysis_mode=json_analysis_mode
                     )
                 else:
                     perf_logger.log_error(
@@ -616,9 +698,11 @@ async def parse_video(
                     ):
                         temp_file_info = await file_handler.save_upload_file(file)
 
+                    # V3.0 - TOM-492: 传递 analysis_mode 到文件工作流
                     # 重构multipart请求处理逻辑，使用统一的工作流编排
                     result_data = await orchestrator.process_file_workflow(
-                        temp_file_info
+                        file_info=temp_file_info,
+                        analysis_mode=analysis_mode
                     )
                 elif url:
                     # This handles form data with URL (should return 422 as per test)
