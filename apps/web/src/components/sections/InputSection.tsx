@@ -20,10 +20,10 @@ import { Upload, Link, Sparkles, X, Target } from "lucide-react"
 export function InputSection({ 
   currentState, 
   inputValue, 
-  selectedFile,
+  selectedFile, 
   analysisMode, // V3.0 - TOM-489
   onInputChange, 
-  onFileSelect,
+  onFileSelect, 
   onAnalysisModeChange, // V3.0 - TOM-489
   onSubmit, 
   error 
