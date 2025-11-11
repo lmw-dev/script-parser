@@ -9,6 +9,9 @@ export type AppState = "IDLE" | "INPUT_VALID" | "PROCESSING" | "SUCCESS" | "ERRO
 // Input types for flexible video input
 export type InputType = "url" | "file"
 
+// Analysis mode types (V3.0 - TOM-489)
+export type AnalysisMode = "general" | "tech" | ""
+
 // This is the final, clean data structure used by the frontend components (V3.0).
 export type AnalysisResult = {
   readonly raw_transcript: string
@@ -61,8 +64,10 @@ export type InputSectionProps = {
   readonly currentState: AppState
   readonly inputValue: string
   readonly selectedFile: File | null
+  readonly analysisMode: AnalysisMode // V3.0 - TOM-489
   readonly onInputChange: (value: string) => void
   readonly onFileSelect: (file: File | null) => void
+  readonly onAnalysisModeChange: (mode: AnalysisMode) => void // V3.0 - TOM-489
   readonly onSubmit: () => void
   readonly error?: string
 }

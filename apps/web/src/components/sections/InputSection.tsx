@@ -1,6 +1,7 @@
 /**
  * InputSection component - handles URL and file input
  * Based on TOM-318 and TOM-323 specifications
+ * V3.0 Enhancement (TOM-489): Added analysis mode selector
  * Refactored as a controlled component
  */
 
@@ -10,17 +11,20 @@ import type React from "react"
 import { useRef } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { useToast } from "@/hooks/use-toast"
 // File validation is now handled by the parent component
 import type { InputSectionProps } from "@/types/script-parser.types"
-import { Upload, Link, Sparkles, X } from "lucide-react"
+import { Upload, Link, Sparkles, X, Target } from "lucide-react"
 
 export function InputSection({ 
   currentState, 
   inputValue, 
-  selectedFile, 
+  selectedFile,
+  analysisMode, // V3.0 - TOM-489
   onInputChange, 
-  onFileSelect, 
+  onFileSelect,
+  onAnalysisModeChange, // V3.0 - TOM-489
   onSubmit, 
   error 
 }: InputSectionProps) {
@@ -60,7 +64,8 @@ export function InputSection({
     }
   }
 
-  const isSubmitDisabled = currentState === "IDLE" || currentState === "PROCESSING"
+  // V3.0 - TOM-489: Button is disabled if URL/file invalid OR analysisMode not selected
+  const isSubmitDisabled = currentState === "IDLE" || currentState === "PROCESSING" || analysisMode === ""
 
   return (
     <div className="w-full max-w-2xl space-y-6">
@@ -96,6 +101,38 @@ export function InputSection({
               <p className="text-sm text-destructive font-medium">{error}</p>
             </div>
           )}
+
+          {/* V3.0 - TOM-489: Analysis Mode Selector */}
+          <div className="space-y-2">
+            <label htmlFor="analysis-mode" className="text-sm font-medium text-foreground block text-center">
+              分析模式
+            </label>
+            <Select value={analysisMode} onValueChange={onAnalysisModeChange}>
+              <SelectTrigger 
+                id="analysis-mode"
+                className="w-full h-14 md:h-16 rounded-xl border-2 border-border bg-background/50 hover:bg-background/80 transition-all duration-200 focus:ring-2 focus:ring-ring focus:border-primary"
+              >
+                <div className="flex items-center gap-2">
+                  <Target className="h-5 w-5 text-primary" />
+                  <SelectValue placeholder="-- 请选择一个分析模式 --" />
+                </div>
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="general" className="h-12 cursor-pointer">
+                  <div className="flex flex-col items-start">
+                    <span className="font-medium">通用叙事分析 (V2.0)</span>
+                    <span className="text-xs text-muted-foreground">适用于故事、教学等内容</span>
+                  </div>
+                </SelectItem>
+                <SelectItem value="tech" className="h-12 cursor-pointer">
+                  <div className="flex flex-col items-start">
+                    <span className="font-medium">科技产品评测 (V3.0)</span>
+                    <span className="text-xs text-muted-foreground">99%+ 精准识别科技术语</span>
+                  </div>
+                </SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
         </div>
 
         <Button

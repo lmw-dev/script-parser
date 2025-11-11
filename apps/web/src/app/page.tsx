@@ -14,7 +14,8 @@ import { Sparkles, FileText, Zap } from "lucide-react"
 export default function HomePage() {
   const router = useRouter()
   const { toast } = useToast()
-  const { startProcessing } = useAppStore()
+  // V3.0 - TOM-489: Get analysisMode state and actions from store
+  const { startProcessing, analysisMode, setAnalysisMode } = useAppStore()
   
   // Local state for input validation only
   const [inputValue, setInputValue] = useState("")
@@ -173,8 +174,10 @@ export default function HomePage() {
             currentState={isValid ? "INPUT_VALID" : "IDLE"}
             inputValue={inputValue}
             selectedFile={selectedFile}
+            analysisMode={analysisMode} // V3.0 - TOM-489
             onInputChange={handleInputChange}
             onFileSelect={handleFileSelect}
+            onAnalysisModeChange={setAnalysisMode} // V3.0 - TOM-489
             onSubmit={handleSubmit}
             error={error}
           />

@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import type { AppState, VideoParseRequest, AnalysisResult } from '@/types/script-parser.types';
+import type { AppState, VideoParseRequest, AnalysisResult, AnalysisMode } from '@/types/script-parser.types';
 
 // Zustand Store 接口
 export interface AppStore {
@@ -8,12 +8,15 @@ export interface AppStore {
   requestData: VideoParseRequest | null;
   resultData: AnalysisResult | null;
   error: string | null;
+  analysisMode: AnalysisMode; // V3.0 - TOM-489
 
   // Actions
   startProcessing: (data: VideoParseRequest) => void;
   setSuccess: (result: AnalysisResult) => void;
   setError: (errorMsg: string) => void;
   reset: () => void;
+  setAnalysisMode: (mode: AnalysisMode) => void; // V3.0 - TOM-489
+  resetPartial: () => void; // V3.0 - TOM-489: Reset all except analysisMode
 }
 
 export const useAppStore = create<AppStore>((set) => ({
@@ -21,6 +24,7 @@ export const useAppStore = create<AppStore>((set) => ({
   requestData: null,
   resultData: null,
   error: null,
+  analysisMode: '', // V3.0 - TOM-489: Initial state is empty (user must select)
 
   startProcessing: (requestData) => set({
     requestData,
@@ -43,5 +47,21 @@ export const useAppStore = create<AppStore>((set) => ({
     requestData: null,
     resultData: null,
     error: null,
+    analysisMode: '', // V3.0 - TOM-489: Full reset includes analysisMode
   }),
+
+  // V3.0 - TOM-489: Set analysis mode
+  setAnalysisMode: (mode) => set({
+    analysisMode: mode,
+  }),
+
+  // V3.0 - TOM-489: Partial reset (preserve analysisMode for "smart reset")
+  resetPartial: () => set((state) => ({
+    appState: 'IDLE',
+    requestData: null,
+    resultData: null,
+    error: null,
+    // Preserve analysisMode from current state
+    analysisMode: state.analysisMode,
+  })),
 }));
