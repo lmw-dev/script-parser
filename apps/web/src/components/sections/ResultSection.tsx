@@ -1,6 +1,6 @@
 /**
- * ResultSection component - displays analysis results
- * Based on TOM-318, TOM-346 and TOM-347 specifications
+ * ResultSection component - displays analysis results with dynamic rendering
+ * V3.0 - TOM-494: Supports both V2.0 (narrative) and V3.0 (tech spec) layouts
  */
 
 "use client"
@@ -10,15 +10,32 @@ import { Button } from "@/components/ui/button"
 import { Copy, Download, RefreshCw, CheckCircle, FileText, Lightbulb, Diamond, Goal, Quote } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
 import { copyToClipboard, downloadAsMarkdown } from "@/lib/utils"
-import type { AnalysisResult } from "@/types/script-parser.types"
+import type { V2NarrativeOutput, V3TechSpecOutput, DynamicAnalysisResult } from "@/types/script-parser.types"
+import { ProductParametersCard } from "@/components/cards/ProductParametersCard"
+import { SellingPointsCard } from "@/components/cards/SellingPointsCard"
+import { PricingCard } from "@/components/cards/PricingCard"
+import { ProsConsCard } from "@/components/cards/ProsConsCard"
 
-// Update props to remove onCopy and onDownload as they are now handled internally
 export type ResultSectionProps = {
-  readonly result: AnalysisResult
+  readonly result: DynamicAnalysisResult
   readonly onReset: () => void
 }
 
-// KeyQuotesCard component for displaying key quotes
+/**
+ * Type guard: 检查是否为 V3.0 科技评测结果
+ */
+function isV3TechSpec(data: DynamicAnalysisResult): data is V3TechSpecOutput {
+  return 'schema_type' in data && data.schema_type === 'v3_tech_spec'
+}
+
+/**
+ * Type guard: 检查是否为 V2.0 通用叙事结果
+ */
+function isV2Narrative(data: DynamicAnalysisResult): data is V2NarrativeOutput {
+  return 'analysis' in data && 'hook' in data.analysis
+}
+
+// KeyQuotesCard component for displaying key quotes (V2.0)
 function KeyQuotesCard({ quotes, onCopy }: { quotes: readonly string[]; onCopy: (text: string, type: string) => void }) {
   return (
     <Card className="bg-card/80 backdrop-blur-sm border border-border shadow-lg">
@@ -49,48 +66,17 @@ function KeyQuotesCard({ quotes, onCopy }: { quotes: readonly string[]; onCopy: 
   )
 }
 
-export function ResultSection({ result, onReset }: ResultSectionProps) {
-  const { toast } = useToast()
-
-  const handleCopy = (textToCopy: string, type: string) => {
-    try {
-      const success = copyToClipboard(textToCopy)
-      if (success) {
-        toast({
-          title: "复制成功！",
-          description: `${type} 已复制到您的剪贴板。`,
-        })
-      } else {
-        throw new Error("copyToClipboard returned false")
-      }
-    } catch {
-      toast({
-        title: "复制失败",
-        description: "无法访问剪贴板，请检查浏览器权限。",
-        variant: "destructive",
-      })
-    }
-  }
-
-  const handleDownload = () => {
-    try {
-      downloadAsMarkdown(result)
-      toast({
-        title: "结果已开始下载",
-        description: "文件将保存为 script-analysis.md",
-        duration: 3000,
-      })
-    } catch {
-      toast({
-        title: "下载失败",
-        description: "无法生成下载文件，请稍后重试。",
-        variant: "destructive",
-      })
-    }
-  }
-
+/**
+ * V2.0 通用叙事布局
+ */
+function V2NarrativeLayout({ result, onReset, handleCopy, handleDownload }: {
+  result: V2NarrativeOutput
+  onReset: () => void
+  handleCopy: (text: string, type: string) => void
+  handleDownload: () => void
+}) {
   return (
-    <div className="w-full mx-auto space-y-4">
+    <div className="w-full mx-auto space-y-4" data-testid="v2-narrative-layout">
       {/* Header - Compact */}
       <div className="text-center space-y-2">
         <div className="inline-flex items-center justify-center w-10 h-10 md:w-12 md:h-12 rounded-full bg-green-500/10 border-2 border-green-500/20">
@@ -208,6 +194,181 @@ export function ResultSection({ result, onReset }: ResultSectionProps) {
           )}
         </div>
       </div>
+    </div>
+  )
+}
+
+/**
+ * V3.0 科技评测布局
+ */
+function V3TechSpecLayout({ result, onReset, handleCopy }: {
+  result: V3TechSpecOutput
+  onReset: () => void
+  handleCopy: (text: string, type: string) => void
+}) {
+  const handleCopyAll = () => {
+    // 生成 Markdown 格式的全部数据
+    let markdown = "# 产品评测分析\n\n"
+    
+    // 产品参数
+    markdown += "## 产品参数\n\n"
+    result.product_parameters.forEach(param => {
+      markdown += `- **${param.parameter}**: ${param.value}\n`
+    })
+    
+    // 核心卖点
+    markdown += "\n## 核心卖点\n\n"
+    result.selling_points.forEach((point, index) => {
+      markdown += `${index + 1}. ${point.point}\n`
+      markdown += `   > ${point.context_snippet}\n\n`
+    })
+    
+    // 价格信息
+    markdown += "## 价格信息\n\n"
+    result.pricing_info.forEach(pricing => {
+      markdown += `- **${pricing.product}**: ${pricing.price}\n`
+    })
+    
+    // 评测总结
+    markdown += "\n## 评测总结\n\n"
+    markdown += "### 优点\n\n"
+    result.subjective_evaluation.pros.forEach(pro => {
+      markdown += `- ${pro}\n`
+    })
+    markdown += "\n### 缺点\n\n"
+    result.subjective_evaluation.cons.forEach(con => {
+      markdown += `- ${con}\n`
+    })
+    
+    handleCopy(markdown, "全部内容")
+  }
+
+  return (
+    <div className="w-full mx-auto space-y-4" data-testid="v3-tech-spec-layout">
+      {/* Header - Compact */}
+      <div className="text-center space-y-2">
+        <div className="inline-flex items-center justify-center w-10 h-10 md:w-12 md:h-12 rounded-full bg-green-500/10 border-2 border-green-500/20">
+          <CheckCircle className="h-5 w-5 md:h-6 md:w-6 text-green-500" />
+        </div>
+        <div>
+          <h2 className="text-lg md:text-xl font-bold text-foreground">科技评测分析完成</h2>
+          <p className="text-xs text-muted-foreground">AI已为您提取产品技术规格和评测信息。</p>
+        </div>
+      </div>
+
+      {/* Main Content Grid */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        {/* Left Column: Actions */}
+        <div className="space-y-2">
+          {/* Action Panel */}
+          <Card className="bg-card/80 backdrop-blur-sm border border-border shadow-lg">
+            <CardHeader className="pb-2 pt-3 px-4">
+              <CardTitle className="text-sm md:text-base font-semibold">操作</CardTitle>
+            </CardHeader>
+            <CardContent className="px-4 pb-3 flex flex-col space-y-2">
+              <Button onClick={onReset} size="sm" className="w-full h-9 text-xs md:text-sm">
+                <RefreshCw className="h-4 w-4 mr-2" />
+                再分析一个
+              </Button>
+              <Button
+                onClick={handleCopyAll}
+                variant="secondary"
+                size="sm"
+                className="w-full h-9 text-xs md:text-sm"
+              >
+                <Copy className="h-4 w-4 mr-2" />
+                全部复制
+              </Button>
+            </CardContent>
+          </Card>
+
+          {/* Pricing Card (Quick Preview) */}
+          <PricingCard pricingInfo={result.pricing_info} onCopy={handleCopy} />
+        </div>
+
+        {/* Right Column: Detailed Cards */}
+        <div className="space-y-2">
+          <ProductParametersCard parameters={result.product_parameters} onCopy={handleCopy} />
+          <SellingPointsCard sellingPoints={result.selling_points} onCopy={handleCopy} />
+          <ProsConsCard evaluation={result.subjective_evaluation} onCopy={handleCopy} />
+        </div>
+      </div>
+    </div>
+  )
+}
+
+/**
+ * 主组件：动态路由到 V2.0 或 V3.0 布局
+ */
+export function ResultSection({ result, onReset }: ResultSectionProps) {
+  const { toast } = useToast()
+
+  const handleCopy = (textToCopy: string, type: string) => {
+    try {
+      const success = copyToClipboard(textToCopy)
+      if (success) {
+        toast({
+          title: "复制成功！",
+          description: `${type} 已复制到您的剪贴板。`,
+        })
+      } else {
+        throw new Error("copyToClipboard returned false")
+      }
+    } catch {
+      toast({
+        title: "复制失败",
+        description: "无法访问剪贴板，请检查浏览器权限。",
+        variant: "destructive",
+      })
+    }
+  }
+
+  const handleDownload = () => {
+    try {
+      // V2.0 才有 download 功能
+      if (isV2Narrative(result)) {
+        downloadAsMarkdown(result)
+        toast({
+          title: "结果已开始下载",
+          description: "文件将保存为 script-analysis.md",
+          duration: 3000,
+        })
+      }
+    } catch {
+      toast({
+        title: "下载失败",
+        description: "无法生成下载文件，请稍后重试。",
+        variant: "destructive",
+      })
+    }
+  }
+
+  // 动态渲染逻辑
+  if (isV3TechSpec(result)) {
+    return <V3TechSpecLayout result={result} onReset={onReset} handleCopy={handleCopy} />
+  }
+
+  if (isV2Narrative(result)) {
+    return <V2NarrativeLayout result={result} onReset={onReset} handleCopy={handleCopy} handleDownload={handleDownload} />
+  }
+
+  // 错误状态：未知的结果类型
+  return (
+    <div className="w-full mx-auto space-y-4">
+      <Card className="bg-destructive/10 border-destructive">
+        <CardHeader>
+          <CardTitle className="text-destructive">未知的分析结果格式</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <p className="text-sm text-muted-foreground">
+            无法识别分析结果的类型。请刷新页面或重新提交。
+          </p>
+          <Button onClick={onReset} variant="outline" className="mt-4">
+            <RefreshCw className="h-4 w-4 mr-2" />
+            返回首页
+          </Button>
+        </CardContent>
+      </Card>
     </div>
   )
 }

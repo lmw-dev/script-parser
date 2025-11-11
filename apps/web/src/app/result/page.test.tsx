@@ -1,7 +1,7 @@
 
 import { render, screen } from '@testing-library/react';
 import ResultPage from './page';
-import { AnalysisResult } from '@/types';
+import type { AnalysisResult } from '@/types/script-parser.types';
 
 // Mock the app store
 const mockResultData: AnalysisResult = {
@@ -14,7 +14,7 @@ const mockResultData: AnalysisResult = {
 };
 
 jest.mock('@/stores/app-store', () => ({
-  useAppStore: (selector: Function) => {
+  useAppStore: <T,>(selector: (store: unknown) => T): T => {
     const store = {
       resultData: mockResultData,
       error: null,

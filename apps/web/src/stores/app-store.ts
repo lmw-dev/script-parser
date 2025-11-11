@@ -1,18 +1,18 @@
 import { create } from 'zustand';
-import type { AppState, VideoParseRequest, AnalysisResult, AnalysisMode } from '@/types/script-parser.types';
+import type { AppState, VideoParseRequest, AnalysisMode, DynamicAnalysisResult } from '@/types/script-parser.types';
 
 // Zustand Store 接口
 export interface AppStore {
   // State
   appState: AppState;
   requestData: VideoParseRequest | null;
-  resultData: AnalysisResult | null;
+  resultData: DynamicAnalysisResult | null; // V3.0 - TOM-494: 支持动态结构（V2 或 V3）
   error: string | null;
   analysisMode: AnalysisMode; // V3.0 - TOM-489
 
   // Actions
   startProcessing: (data: VideoParseRequest) => void;
-  setSuccess: (result: AnalysisResult) => void;
+  setSuccess: (result: DynamicAnalysisResult) => void; // V3.0 - TOM-494: 接受动态结果
   setError: (errorMsg: string) => void;
   reset: () => void;
   setAnalysisMode: (mode: AnalysisMode) => void; // V3.0 - TOM-489
