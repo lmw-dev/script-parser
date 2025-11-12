@@ -4,13 +4,13 @@
  * Implementation for TOM-325 requirements
  */
 
-import type { VideoParseRequest, AnalysisResult, VideoParseResponse } from "@/types/script-parser.types"
+import type { VideoParseRequest, AnalysisResult, VideoParseResponse, DynamicAnalysisResult } from "@/types/script-parser.types"
 
 /**
  * Submits video for parsing via URL or file upload
- * Returns the analysis result directly
+ * Returns the analysis result directly (V2.0 or V3.0)
  */
-export const parseVideo = async (request: VideoParseRequest): Promise<AnalysisResult> => {
+export const parseVideo = async (request: VideoParseRequest): Promise<DynamicAnalysisResult> => {
   const apiUrl = `${process.env.NEXT_PUBLIC_API_URL}/api/parse`;
 
   // Input validation
@@ -41,21 +41,23 @@ export const parseVideo = async (request: VideoParseRequest): Promise<AnalysisRe
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          url: request.url
+          url: request.url,
+          analysis_mode: request.analysis_mode // V3.0 - TOM-489
         }),
-        // Extended timeout for video processing (2 minutes)
-        signal: AbortSignal.timeout(120000),
+        // Extended timeout for video processing (5 minutes)
+        signal: AbortSignal.timeout(300000),
       })
     } else {
       // File mode - send as multipart/form-data
       const formData = new FormData()
       formData.append("file", request.file!)
+      formData.append("analysis_mode", request.analysis_mode) // V3.0 - TOM-489
 
       response = await fetch(apiUrl, {
         method: "POST",
         body: formData,
-        // Extended timeout for video processing (2 minutes)
-        signal: AbortSignal.timeout(120000),
+        // Extended timeout for video processing (5 minutes)
+        signal: AbortSignal.timeout(300000),
       })
     }
 
@@ -93,8 +95,17 @@ export const parseVideo = async (request: VideoParseRequest): Promise<AnalysisRe
         throw new Error('LLM analysis data is missing in the API response.');
     }
 
-    // V3.0: Map BackendData to AnalysisResult (frontend structure)
-    // Note: llmAnalysis is ApiAnalysisResult which includes key_quotes
+    // V3.0: 检查是否为科技评测响应 (schema_type === "v3_tech_spec")
+    if ('schema_type' in llmAnalysis && llmAnalysis.schema_type === 'v3_tech_spec') {
+        // V3.0 科技评测：返回带有逐字稿的完整结构
+        return {
+            ...llmAnalysis,
+            raw_transcript: responseData.data.raw_transcript,
+            cleaned_transcript: responseData.data.cleaned_transcript,
+        } as any; // 类型断言为 DynamicAnalysisResult
+    }
+
+    // V2.0 通用叙事：返回 AnalysisResult 结构
     const frontendResult: AnalysisResult = {
         raw_transcript: responseData.data.raw_transcript,
         cleaned_transcript: responseData.data.cleaned_transcript,

@@ -257,8 +257,35 @@ function V3TechSpecLayout({ result, onReset, handleCopy }: {
       </div>
 
       {/* Main Content Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-        {/* Left Column: Actions */}
+      <div className="grid grid-cols-1 lg:grid-cols-4 gap-4">
+        {/* Left Column: Transcript */}
+        <div className="lg:col-span-2">
+          <Card className="h-full bg-card/80 backdrop-blur-sm border border-border shadow-lg transition-all duration-300">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3">
+              <CardTitle className="flex items-center text-base md:text-lg font-semibold">
+                <FileText className="h-4 w-4 md:h-5 md:w-5 mr-2 text-primary" />
+                完整逐字稿
+              </CardTitle>
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => handleCopy(result.cleaned_transcript, "完整逐字稿")}
+                className="text-muted-foreground hover:bg-primary/10 hover:text-primary h-8 w-8"
+              >
+                <Copy className="h-4 w-4" />
+              </Button>
+            </CardHeader>
+            <CardContent>
+              <div className="prose prose-sm max-w-none h-[350px] lg:h-[450px] overflow-y-auto rounded-lg bg-input/50 p-3 border border-border text-sm">
+                <p className="whitespace-pre-wrap leading-relaxed text-foreground/90">
+                  {result.cleaned_transcript}
+                </p>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Right Column: Actions and Analysis Cards */}
         <div className="space-y-2">
           {/* Action Panel */}
           <Card className="bg-card/80 backdrop-blur-sm border border-border shadow-lg">
@@ -282,14 +309,10 @@ function V3TechSpecLayout({ result, onReset, handleCopy }: {
             </CardContent>
           </Card>
 
-          {/* Pricing Card (Quick Preview) */}
-          <PricingCard pricingInfo={result.pricing_info} onCopy={handleCopy} />
-        </div>
-
-        {/* Right Column: Detailed Cards */}
-        <div className="space-y-2">
+          {/* Analysis Cards */}
           <ProductParametersCard parameters={result.product_parameters} onCopy={handleCopy} />
           <SellingPointsCard sellingPoints={result.selling_points} onCopy={handleCopy} />
+          <PricingCard pricingInfo={result.pricing_info} onCopy={handleCopy} />
           <ProsConsCard evaluation={result.subjective_evaluation} onCopy={handleCopy} />
         </div>
       </div>

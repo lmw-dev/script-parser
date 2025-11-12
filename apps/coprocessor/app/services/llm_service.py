@@ -127,6 +127,22 @@ class DeepSeekAdapter:
 
                 analysis_data = json.loads(cleaned_content)
 
+                # V3.0: 检查是否为科技评测响应格式
+                if "schema_type" in analysis_data and analysis_data["schema_type"] == "v3_tech_spec":
+                    # V3.0 科技评测模式：直接返回 JSON 字符串供路由器解析
+                    # 将 JSON 对象转为字符串存储在 cleaned_transcript 中
+                    return AnalysisResult(
+                        raw_transcript="",  # 科技模式不需要 transcript
+                        cleaned_transcript=json.dumps(analysis_data, ensure_ascii=False),
+                        analysis=AnalysisDetail(
+                            hook="",  # 科技模式不使用这些字段
+                            core="",
+                            cta="",
+                            key_quotes=None,
+                        ),
+                    )
+
+                # V2.0 通用叙事模式
                 # 处理 LLM 可能返回结构化对象而非字符串的情况
                 def to_string(value):
                     """将值转换为字符串，如果是 dict 则转为 JSON 字符串"""
@@ -251,6 +267,22 @@ class KimiAdapter:
 
                 analysis_data = json.loads(cleaned_content)
 
+                # V3.0: 检查是否为科技评测响应格式
+                if "schema_type" in analysis_data and analysis_data["schema_type"] == "v3_tech_spec":
+                    # V3.0 科技评测模式：直接返回 JSON 字符串供路由器解析
+                    # 将 JSON 对象转为字符串存储在 cleaned_transcript 中
+                    return AnalysisResult(
+                        raw_transcript="",  # 科技模式不需要 transcript
+                        cleaned_transcript=json.dumps(analysis_data, ensure_ascii=False),
+                        analysis=AnalysisDetail(
+                            hook="",  # 科技模式不使用这些字段
+                            core="",
+                            cta="",
+                            key_quotes=None,
+                        ),
+                    )
+
+                # V2.0 通用叙事模式
                 # 处理 LLM 可能返回结构化对象而非字符串的情况
                 def to_string(value):
                     """将值转换为字符串，如果是 dict 则转为 JSON 字符串"""

@@ -7,6 +7,10 @@ import os
 import httpx
 from pydantic import BaseModel
 
+# 禁用环境变量中的代理设置，防止 httpx 自动检测 SOCKS 代理
+for proxy_var in ['all_proxy', 'ALL_PROXY', 'http_proxy', 'HTTP_PROXY', 'https_proxy', 'HTTPS_PROXY']:
+    os.environ.pop(proxy_var, None)
+
 
 class VideoInfo(BaseModel):
     """Video information extracted from sharing URL"""
@@ -31,8 +35,6 @@ class ShareURLParser:
         self.headers = {
             "User-Agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 17_2 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) EdgiOS/121.0.2277.107 Version/17.0 Mobile/15E148 Safari/604.1"
         }
-        # 从环境变量中读取代理配置
-        self.proxy_url = os.getenv("PROXY_URL")
 
     async def parse(self, share_text: str) -> VideoInfo:
         """
@@ -101,11 +103,8 @@ class ShareURLParser:
                     "Upgrade-Insecure-Requests": "1"
                 }
                 
-                proxies = {"all://": self.proxy_url} if self.proxy_url else None
-
                 client = httpx.AsyncClient(
                     headers=headers,
-                    proxies=proxies,  # 添加代理配置
                     timeout=httpx.Timeout(20.0, connect=10.0),
                     follow_redirects=True,
                     verify=False  # 禁用 SSL 验证以解决某些 SSL 问题
@@ -130,7 +129,6 @@ class ShareURLParser:
                     simple_headers = {"User-Agent": user_agents[attempt % len(user_agents)]}
                     clean_client = httpx.AsyncClient(
                         headers=simple_headers,  # 使用简化headers
-                        proxies=proxies,
                         timeout=httpx.Timeout(20.0, connect=10.0),
                         follow_redirects=True,  # 必须允许重定向
                         verify=False

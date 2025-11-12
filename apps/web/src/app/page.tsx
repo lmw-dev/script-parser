@@ -91,7 +91,8 @@ export default function HomePage() {
       request = { 
         type: 'file',
         url: '',
-        file: selectedFile 
+        file: selectedFile,
+        analysis_mode: analysisMode // V3.0 - TOM-489
       }
     } else if (inputValue.trim()) {
       const validationResult = extractAndValidateUrl(inputValue)
@@ -100,7 +101,8 @@ export default function HomePage() {
         request = { 
           type: 'url',
           url: validationResult.extractedUrl,
-          file: null 
+          file: null,
+          analysis_mode: analysisMode // V3.0 - TOM-489
         }
       } else {
         setError(validationResult.error || "请输入有效的视频链接")

@@ -38,6 +38,8 @@ export type V2NarrativeOutput = AnalysisResult & {
  */
 export type V3TechSpecOutput = {
   readonly schema_type: 'v3_tech_spec'
+  readonly raw_transcript: string // V3.0: 原始逐字稿
+  readonly cleaned_transcript: string // V3.0: 清洗后的逐字稿
   readonly product_parameters: ReadonlyArray<{
     readonly parameter: string
     readonly value: string
@@ -88,6 +90,7 @@ export type VideoParseRequest = {
   readonly type: 'url' | 'file'
   readonly url: string
   readonly file: File | null
+  readonly analysis_mode: AnalysisMode // V3.0 - TOM-489: 分析模式
 }
 
 // This now accurately reflects the JSON response from the Python backend.
