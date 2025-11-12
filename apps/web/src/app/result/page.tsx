@@ -13,7 +13,7 @@ export default function ResultPage() {
   const resultData = useAppStore((state) => state.resultData)
   const error = useAppStore((state) => state.error)
   const appState = useAppStore((state) => state.appState)
-  const reset = useAppStore((state) => state.reset)
+  const resetPartial = useAppStore((state) => state.resetPartial) // V3.0 - TOM-499: Use resetPartial to preserve analysisMode
   const enableDonation = process.env.NEXT_PUBLIC_ENABLE_DONATION === 'true'
 
   useEffect(() => {
@@ -24,7 +24,7 @@ export default function ResultPage() {
   }, [appState, router])
 
   const handleReset = () => {
-    reset()
+    resetPartial() // V3.0 - TOM-499: Preserve analysisMode for "smart reset" UX
     router.push("/")
   }
 
