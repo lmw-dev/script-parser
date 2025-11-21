@@ -89,12 +89,12 @@ function V2NarrativeLayout({ result, onReset, handleCopy, handleDownload }: {
       </div>
 
       {/* Main Content Grid - Web-Optimized */}
-      <div className="grid grid-cols-1 lg:grid-cols-4 gap-4">
-        
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+
         {/* Left Column: Transcript */}
         <div className="lg:col-span-2">
-          <Card className="h-full bg-card/80 backdrop-blur-sm border border-border shadow-lg transition-all duration-300">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3">
+          <Card className="h-full flex flex-col bg-card/80 backdrop-blur-sm border border-border shadow-lg transition-all duration-300">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3 flex-shrink-0">
               <CardTitle className="flex items-center text-base md:text-lg font-semibold">
                 <FileText className="h-4 w-4 md:h-5 md:w-5 mr-2 text-primary" />
                 完整逐字稿
@@ -108,8 +108,8 @@ function V2NarrativeLayout({ result, onReset, handleCopy, handleDownload }: {
                 <Copy className="h-4 w-4" />
               </Button>
             </CardHeader>
-            <CardContent>
-              <div className="prose prose-sm max-w-none h-[350px] lg:h-[450px] overflow-y-auto rounded-lg bg-input/50 p-3 border border-border text-sm">
+            <CardContent className="flex-1 min-h-0 flex flex-col">
+              <div className="prose prose-sm max-w-none flex-1 overflow-y-auto rounded-lg bg-input/50 p-3 border border-border text-sm">
                 <p className="whitespace-pre-wrap leading-relaxed text-foreground/90">
                   {result.cleaned_transcript}
                 </p>
@@ -209,26 +209,26 @@ function V3TechSpecLayout({ result, onReset, handleCopy }: {
   const handleCopyAll = () => {
     // 生成 Markdown 格式的全部数据
     let markdown = "# 产品评测分析\n\n"
-    
+
     // 产品参数
     markdown += "## 产品参数\n\n"
     result.product_parameters.forEach(param => {
       markdown += `- **${param.parameter}**: ${param.value}\n`
     })
-    
+
     // 核心卖点
     markdown += "\n## 核心卖点\n\n"
     result.selling_points.forEach((point, index) => {
       markdown += `${index + 1}. ${point.point}\n`
       markdown += `   > ${point.context_snippet}\n\n`
     })
-    
+
     // 价格信息
     markdown += "## 价格信息\n\n"
     result.pricing_info.forEach(pricing => {
       markdown += `- **${pricing.product}**: ${pricing.price}\n`
     })
-    
+
     // 评测总结
     markdown += "\n## 评测总结\n\n"
     markdown += "### 优点\n\n"
@@ -239,7 +239,7 @@ function V3TechSpecLayout({ result, onReset, handleCopy }: {
     result.subjective_evaluation.cons.forEach(con => {
       markdown += `- ${con}\n`
     })
-    
+
     handleCopy(markdown, "全部内容")
   }
 
@@ -257,11 +257,11 @@ function V3TechSpecLayout({ result, onReset, handleCopy }: {
       </div>
 
       {/* Main Content Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
         {/* Left Column: Transcript */}
         <div className="lg:col-span-2">
-          <Card className="h-full bg-card/80 backdrop-blur-sm border border-border shadow-lg transition-all duration-300">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3">
+          <Card className="h-full flex flex-col bg-card/80 backdrop-blur-sm border border-border shadow-lg transition-all duration-300">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3 flex-shrink-0">
               <CardTitle className="flex items-center text-base md:text-lg font-semibold">
                 <FileText className="h-4 w-4 md:h-5 md:w-5 mr-2 text-primary" />
                 完整逐字稿
@@ -275,8 +275,8 @@ function V3TechSpecLayout({ result, onReset, handleCopy }: {
                 <Copy className="h-4 w-4" />
               </Button>
             </CardHeader>
-            <CardContent>
-              <div className="prose prose-sm max-w-none h-[350px] lg:h-[450px] overflow-y-auto rounded-lg bg-input/50 p-3 border border-border text-sm">
+            <CardContent className="flex-1 min-h-0 flex flex-col">
+              <div className="prose prose-sm max-w-none flex-1 overflow-y-auto rounded-lg bg-input/50 p-3 border border-border text-sm">
                 <p className="whitespace-pre-wrap leading-relaxed text-foreground/90">
                   {result.cleaned_transcript}
                 </p>

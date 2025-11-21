@@ -26,7 +26,10 @@ export type ProductParametersCardProps = {
  * @param onCopy - 复制回调函数
  */
 export function ProductParametersCard({ parameters, onCopy }: ProductParametersCardProps) {
-  if (!parameters || parameters.length === 0) {
+  // Filter out "价格" (Price) parameters as they are better displayed in the PricingCard
+  const filteredParameters = parameters?.filter(p => p.parameter !== "价格") || []
+
+  if (filteredParameters.length === 0) {
     return null
   }
 
@@ -49,8 +52,8 @@ export function ProductParametersCard({ parameters, onCopy }: ProductParametersC
               </TableRow>
             </TableHeader>
             <TableBody>
-              {parameters.map((param, index) => (
-                <TableRow 
+              {filteredParameters.map((param, index) => (
+                <TableRow
                   key={index}
                   className="hover:bg-muted/50 transition-colors"
                 >

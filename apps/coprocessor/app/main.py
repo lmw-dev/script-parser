@@ -191,8 +191,8 @@ class WorkflowOrchestrator:
 
                 with self.perf_logger.log_step("llm_execution_service_init"):
                     # 创建主备 LLM 适配器
-                    primary = DeepSeekAdapter()
-                    fallback = KimiAdapter()
+                    primary = KimiAdapter()
+                    fallback = DeepSeekAdapter()
                     self._llm_execution_service = LLMExecutionService(
                         primary=primary, fallback=fallback
                     )
