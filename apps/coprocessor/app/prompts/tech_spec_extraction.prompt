@@ -12,7 +12,7 @@
     * `pricing_info`: 明确提到的产品价格或SKU信息（例如: "$3499"）。
     * `subjective_evaluation`: 评测者明确的主观意见（优点/缺点）。
 3.  **引用 (Context Snippet)**: 对于 `selling_points` 和 `pricing_info` 类别中的每一项，你必须包含一个简短的、能支撑该信息的逐字稿原文引用（`context_snippet`）。
-4.  **格式**: 你的回答**必须**是一个严格遵循 `<json_schema>` 规范的、**单一的 JSON 对象**。绝不能包含JSON之外的任何文本（例如: "这是您要的结果..."）。
+4.  **格式**: 你的回答**必须**是一个严格遵循 `<json_schema>` 规范的、**单一的 JSON 对象**。绝不能包含JSON之外的任何文本（例如: "这是您要的结果..."）。**必须包含 "schema_type": "v3_tech_spec" 字段**。
 5.  **空状态**: 如果逐字稿中找不到某一类别的信息，你仍必须保持完整的JSON结构，并将对应的数组或字段留空（`[]` 或 `""`）。
 6.  **风格**: 严格借鉴 `structured_analysis.prompt` 中成熟的XML标签和指令风格。
 

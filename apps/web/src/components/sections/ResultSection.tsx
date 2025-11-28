@@ -7,7 +7,7 @@
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { Copy, Download, RefreshCw, CheckCircle, FileText, Lightbulb, Diamond, Goal, Quote } from "lucide-react"
+import { Copy, Download, RefreshCw, CheckCircle, FileText, Lightbulb, Diamond, Goal, Quote, AlertCircle } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
 import { copyToClipboard, downloadAsMarkdown } from "@/lib/utils"
 import type { V2NarrativeOutput, V3TechSpecOutput, DynamicAnalysisResult } from "@/types/script-parser.types"
@@ -102,7 +102,7 @@ function V2NarrativeLayout({ result, onReset, handleCopy, handleDownload }: {
               <Button
                 variant="ghost"
                 size="icon"
-                onClick={() => handleCopy(result.cleaned_transcript, "完整逐字稿")}
+                onClick={() => handleCopy(result.raw_transcript, "完整逐字稿")}
                 className="text-muted-foreground hover:bg-primary/10 hover:text-primary h-8 w-8"
               >
                 <Copy className="h-4 w-4" />
@@ -111,7 +111,7 @@ function V2NarrativeLayout({ result, onReset, handleCopy, handleDownload }: {
             <CardContent className="flex-1 min-h-0 flex flex-col">
               <div className="prose prose-sm max-w-none flex-1 overflow-y-auto rounded-lg bg-input/50 p-3 border border-border text-sm">
                 <p className="whitespace-pre-wrap leading-relaxed text-foreground/90">
-                  {result.cleaned_transcript}
+                  {result.raw_transcript}
                 </p>
               </div>
             </CardContent>
@@ -199,6 +199,27 @@ function V2NarrativeLayout({ result, onReset, handleCopy, handleDownload }: {
 }
 
 /**
+ * V3.0 科技评测空状态提示组件
+ */
+function TechSpecEmptyState() {
+  return (
+    <Card className="bg-amber-500/5 border border-amber-500/20 shadow-lg">
+      <CardContent className="flex items-start gap-3 py-4 px-4">
+        <AlertCircle className="h-5 w-5 text-amber-500 flex-shrink-0 mt-0.5" />
+        <div className="space-y-1">
+          <p className="text-sm font-medium text-amber-700 dark:text-amber-400">
+            未检测到科技评测内容
+          </p>
+          <p className="text-xs text-muted-foreground">
+            此视频可能不是科技产品评测类型。建议使用「通用类型」重新分析，以获得更好的结果。
+          </p>
+        </div>
+      </CardContent>
+    </Card>
+  )
+}
+
+/**
  * V3.0 科技评测布局
  */
 function V3TechSpecLayout({ result, onReset, handleCopy }: {
@@ -206,6 +227,16 @@ function V3TechSpecLayout({ result, onReset, handleCopy }: {
   onReset: () => void
   handleCopy: (text: string, type: string) => void
 }) {
+  // 检查是否有任何结构化数据
+  const hasProductParameters = result.product_parameters && result.product_parameters.length > 0
+  const hasSellingPoints = result.selling_points && result.selling_points.length > 0
+  const hasPricingInfo = result.pricing_info && result.pricing_info.length > 0
+  const hasEvaluation = result.subjective_evaluation && (
+    (result.subjective_evaluation.pros && result.subjective_evaluation.pros.length > 0) ||
+    (result.subjective_evaluation.cons && result.subjective_evaluation.cons.length > 0)
+  )
+  const hasAnyStructuredData = hasProductParameters || hasSellingPoints || hasPricingInfo || hasEvaluation
+
   const handleCopyAll = () => {
     // 生成 Markdown 格式的全部数据
     let markdown = "# 产品评测分析\n\n"
@@ -269,7 +300,7 @@ function V3TechSpecLayout({ result, onReset, handleCopy }: {
               <Button
                 variant="ghost"
                 size="icon"
-                onClick={() => handleCopy(result.cleaned_transcript, "完整逐字稿")}
+                onClick={() => handleCopy(result.raw_transcript, "完整逐字稿")}
                 className="text-muted-foreground hover:bg-primary/10 hover:text-primary h-8 w-8"
               >
                 <Copy className="h-4 w-4" />
@@ -278,7 +309,7 @@ function V3TechSpecLayout({ result, onReset, handleCopy }: {
             <CardContent className="flex-1 min-h-0 flex flex-col">
               <div className="prose prose-sm max-w-none flex-1 overflow-y-auto rounded-lg bg-input/50 p-3 border border-border text-sm">
                 <p className="whitespace-pre-wrap leading-relaxed text-foreground/90">
-                  {result.cleaned_transcript}
+                  {result.raw_transcript}
                 </p>
               </div>
             </CardContent>
@@ -297,23 +328,31 @@ function V3TechSpecLayout({ result, onReset, handleCopy }: {
                 <RefreshCw className="h-4 w-4 mr-2" />
                 再分析一个
               </Button>
-              <Button
-                onClick={handleCopyAll}
-                variant="secondary"
-                size="sm"
-                className="w-full h-9 text-xs md:text-sm"
-              >
-                <Copy className="h-4 w-4 mr-2" />
-                全部复制
-              </Button>
+              {hasAnyStructuredData && (
+                <Button
+                  onClick={handleCopyAll}
+                  variant="secondary"
+                  size="sm"
+                  className="w-full h-9 text-xs md:text-sm"
+                >
+                  <Copy className="h-4 w-4 mr-2" />
+                  全部复制
+                </Button>
+              )}
             </CardContent>
           </Card>
 
-          {/* Analysis Cards */}
-          <ProductParametersCard parameters={result.product_parameters} onCopy={handleCopy} />
-          <SellingPointsCard sellingPoints={result.selling_points} onCopy={handleCopy} />
-          <PricingCard pricingInfo={result.pricing_info} onCopy={handleCopy} />
-          <ProsConsCard evaluation={result.subjective_evaluation} onCopy={handleCopy} />
+          {/* Empty State or Analysis Cards */}
+          {!hasAnyStructuredData ? (
+            <TechSpecEmptyState />
+          ) : (
+            <>
+              <ProductParametersCard parameters={result.product_parameters} onCopy={handleCopy} />
+              <SellingPointsCard sellingPoints={result.selling_points} onCopy={handleCopy} />
+              <PricingCard pricingInfo={result.pricing_info} onCopy={handleCopy} />
+              <ProsConsCard evaluation={result.subjective_evaluation} onCopy={handleCopy} />
+            </>
+          )}
         </div>
       </div>
     </div>

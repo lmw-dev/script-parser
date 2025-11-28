@@ -128,7 +128,16 @@ class DeepSeekAdapter:
                 analysis_data = json.loads(cleaned_content)
 
                 # V3.0: 检查是否为科技评测响应格式
+                is_v3_tech = False
                 if "schema_type" in analysis_data and analysis_data["schema_type"] == "v3_tech_spec":
+                    is_v3_tech = True
+                elif "product_parameters" in analysis_data and "selling_points" in analysis_data:
+                    # Fallback check if schema_type is missing but structure looks like tech spec
+                    is_v3_tech = True
+                    # Inject schema_type if missing so downstream can recognize it
+                    analysis_data["schema_type"] = "v3_tech_spec"
+
+                if is_v3_tech:
                     # V3.0 科技评测模式：直接返回 JSON 字符串供路由器解析
                     # 将 JSON 对象转为字符串存储在 cleaned_transcript 中
                     return AnalysisResult(
@@ -151,7 +160,11 @@ class DeepSeekAdapter:
                     return str(value)
 
                 # 提取 analysis 对象（支持 V3.0 key_quotes）
-                analysis_obj = analysis_data["analysis"]
+                analysis_obj = analysis_data.get("analysis", {})
+                if not analysis_obj and "hook" in analysis_data:
+                     # Fallback: if analysis object is missing but fields are at top level
+                     analysis_obj = analysis_data
+
                 key_quotes = None
                 if "key_quotes" in analysis_obj:
                     # V3.0: 提取 key_quotes 数组
@@ -160,12 +173,12 @@ class DeepSeekAdapter:
                         key_quotes = [str(q) for q in quotes if q]  # 确保所有元素都是字符串
 
                 return AnalysisResult(
-                    raw_transcript=analysis_data["raw_transcript"],
-                    cleaned_transcript=analysis_data["cleaned_transcript"],
+                    raw_transcript=analysis_data.get("raw_transcript", ""),
+                    cleaned_transcript=analysis_data.get("cleaned_transcript", ""),
                     analysis=AnalysisDetail(
-                        hook=to_string(analysis_obj["hook"]),
-                        core=to_string(analysis_obj["core"]),
-                        cta=to_string(analysis_obj["cta"]),
+                        hook=to_string(analysis_obj.get("hook", "")),
+                        core=to_string(analysis_obj.get("core", "")),
+                        cta=to_string(analysis_obj.get("cta", "")),
                         key_quotes=key_quotes,
                     ),
                 )
@@ -268,7 +281,16 @@ class KimiAdapter:
                 analysis_data = json.loads(cleaned_content)
 
                 # V3.0: 检查是否为科技评测响应格式
+                is_v3_tech = False
                 if "schema_type" in analysis_data and analysis_data["schema_type"] == "v3_tech_spec":
+                    is_v3_tech = True
+                elif "product_parameters" in analysis_data and "selling_points" in analysis_data:
+                    # Fallback check if schema_type is missing but structure looks like tech spec
+                    is_v3_tech = True
+                    # Inject schema_type if missing so downstream can recognize it
+                    analysis_data["schema_type"] = "v3_tech_spec"
+
+                if is_v3_tech:
                     # V3.0 科技评测模式：直接返回 JSON 字符串供路由器解析
                     # 将 JSON 对象转为字符串存储在 cleaned_transcript 中
                     return AnalysisResult(
@@ -291,7 +313,11 @@ class KimiAdapter:
                     return str(value)
 
                 # 提取 analysis 对象（支持 V3.0 key_quotes）
-                analysis_obj = analysis_data["analysis"]
+                analysis_obj = analysis_data.get("analysis", {})
+                if not analysis_obj and "hook" in analysis_data:
+                     # Fallback: if analysis object is missing but fields are at top level
+                     analysis_obj = analysis_data
+
                 key_quotes = None
                 if "key_quotes" in analysis_obj:
                     # V3.0: 提取 key_quotes 数组
@@ -300,12 +326,12 @@ class KimiAdapter:
                         key_quotes = [str(q) for q in quotes if q]  # 确保所有元素都是字符串
 
                 return AnalysisResult(
-                    raw_transcript=analysis_data["raw_transcript"],
-                    cleaned_transcript=analysis_data["cleaned_transcript"],
+                    raw_transcript=analysis_data.get("raw_transcript", ""),
+                    cleaned_transcript=analysis_data.get("cleaned_transcript", ""),
                     analysis=AnalysisDetail(
-                        hook=to_string(analysis_obj["hook"]),
-                        core=to_string(analysis_obj["core"]),
-                        cta=to_string(analysis_obj["cta"]),
+                        hook=to_string(analysis_obj.get("hook", "")),
+                        core=to_string(analysis_obj.get("core", "")),
+                        cta=to_string(analysis_obj.get("cta", "")),
                         key_quotes=key_quotes,
                     ),
                 )
