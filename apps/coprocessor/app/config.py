@@ -10,7 +10,7 @@ class TimeoutConfig:
     """Timeout configuration for various services"""
 
     # Service-specific timeouts (in seconds)
-    ASR_TIMEOUT = float(os.getenv("ASR_TIMEOUT", "120"))  # 2 minutes for ASR processing
+    ASR_TIMEOUT = float(os.getenv("ASR_TIMEOUT", "300"))  # 5 minutes for ASR processing (long videos)
     LLM_TIMEOUT = float(os.getenv("LLM_TIMEOUT", "90"))  # 90 seconds for LLM analysis (increased for long transcripts)
     OSS_UPLOAD_TIMEOUT = float(
         os.getenv("OSS_UPLOAD_TIMEOUT", "60")

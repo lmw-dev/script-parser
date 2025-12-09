@@ -5,6 +5,7 @@
 
 import asyncio
 import json
+import logging
 import os
 from http import HTTPStatus
 from pathlib import Path
@@ -14,6 +15,9 @@ import dashscope
 
 from ..config import TimeoutConfig
 from .oss_uploader import OSSUploader, OSSUploaderError
+
+# 配置日志
+logger = logging.getLogger(__name__)
 
 
 class ASRError(Exception):
@@ -82,14 +86,22 @@ class ASRService:
             "language_hints": ["zh", "en"],
         }
 
-        # V3.0 - TOM-490: 科技模式热词注入（在 try 块外检查配置）
+        # V3.0 - TOM-490: 科技模式热词注入
+        # 注意：DashScope phrase_id 与阿里云智能语音交互的热词表是不同系统
+        # 目前暂时禁用热词注入，等待集成 DashScope 短语表功能
         if analysis_mode == "tech":
             hotword_id = os.getenv("ALIYUN_TECH_HOTWORD_ID", "").strip()
-            if not hotword_id:
-                raise ValueError(
-                    "ALIYUN_TECH_HOTWORD_ID environment variable is required when analysis_mode='tech'"
-                )
-            api_params["vocabulary_id"] = hotword_id
+            if hotword_id:
+                # TODO: 需要在 DashScope 控制台创建短语表并使用对应的 phrase_id
+                # 当前智能语音交互的热词表 ID 无法在 DashScope 中使用
+                logger.warning(f"⚠️ [ASR] 热词功能暂不可用: 需要在 DashScope 控制台创建短语表")
+                logger.info(f"🔧 [ASR] 当前热词表ID (智能语音交互): {hotword_id}")
+            else:
+                logger.info(f"🔧 [ASR] 科技模式: 未配置热词表")
+        else:
+            logger.info(f"🔧 [ASR] 分析模式: {analysis_mode}，不使用热词表")
+
+        logger.info(f"🔧 [ASR] API调用参数: {api_params}")
 
         try:
             # 使用asyncio.wait_for添加超时控制
@@ -101,21 +113,27 @@ class ASRService:
                 timeout=TimeoutConfig.ASR_TIMEOUT,
             )
 
+            # 打印完整响应用于调试
+            logger.info(f"🔧 [ASR] API响应: status={getattr(task_response, 'status_code', 'N/A')}, "
+                       f"message={getattr(task_response, 'message', 'N/A')}, "
+                       f"request_id={getattr(task_response, 'request_id', 'N/A')}")
+            
             # 检查响应是否有效
-            if (
-                not task_response
-                or not hasattr(task_response, "output")
-                or not task_response.output
-            ):
+            if not task_response:
+                raise ASRError("No response from DashScope API")
+            
+            if not hasattr(task_response, "output") or not task_response.output:
+                error_msg = getattr(task_response, "message", "Unknown error")
+                status_code = getattr(task_response, "status_code", "Unknown")
                 raise ASRError(
-                    "Invalid response from DashScope API - check your API key"
+                    f"DashScope API error (status: {status_code}): {error_msg}"
                 )
 
             if not hasattr(task_response.output, "task_id"):
                 error_msg = getattr(task_response, "message", "Unknown error")
                 status_code = getattr(task_response, "status_code", "Unknown")
                 raise ASRError(
-                    f"DashScope API error (status: {status_code}): {error_msg}"
+                    f"DashScope API error - no task_id (status: {status_code}): {error_msg}"
                 )
 
             # 等待转录完成，添加超时控制
@@ -189,14 +207,18 @@ class ASRService:
                 "language_hints": ["zh", "en"],
             }
 
-            # V3.0 - TOM-490: 科技模式热词注入（在 try 块外检查配置）
+            # V3.0 - TOM-490: 科技模式热词注入
+            # 注意：DashScope phrase_id 与阿里云智能语音交互的热词表是不同系统
             if analysis_mode == "tech":
                 hotword_id = os.getenv("ALIYUN_TECH_HOTWORD_ID", "").strip()
-                if not hotword_id:
-                    raise ValueError(
-                        "ALIYUN_TECH_HOTWORD_ID environment variable is required when analysis_mode='tech'"
-                    )
-                api_params["vocabulary_id"] = hotword_id
+                if hotword_id:
+                    logger.warning(f"⚠️ [ASR-File] 热词功能暂不可用: 需要在 DashScope 控制台创建短语表")
+                else:
+                    logger.info(f"🔧 [ASR-File] 科技模式: 未配置热词表")
+            else:
+                logger.info(f"🔧 [ASR-File] 分析模式: {analysis_mode}，不使用热词表")
+
+            logger.info(f"🔧 [ASR-File] API调用参数: {api_params}")
 
             # 发起异步转录任务，添加超时控制
             task_response = await asyncio.wait_for(

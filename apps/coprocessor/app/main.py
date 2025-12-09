@@ -18,7 +18,9 @@ from .error_handling import (
 from .http_client import cleanup_http_client
 from .logging_config import PerformanceLogger, generate_request_id, set_request_context
 from .performance_monitoring import ProcessingTimeMonitor, create_service_tracker
-from .services.asr_service import ASRError, ASRService
+from .services.asr_service import ASRError
+from .services.asr_nls_service import NLSASRError
+from .services.asr_factory import create_asr_service
 from .services.file_handler import FileHandler, TempFileInfo
 from .services.llm_service import LLMError, create_llm_router_from_env
 from .services.oss_uploader import (
@@ -221,9 +223,9 @@ class WorkflowOrchestrator:
         transcript_text = f"Video: {video_info.title}"
         with self.perf_logger.log_step("asr_transcription"):
             try:
-                # 确保ASRService正确处理OSS集成模式和传统模式
+                # V3.0: 使用工厂函数创建 ASR 服务，支持 DashScope 和 NLS 双后端
                 # For URL workflow, we don't need OSS integration since we have a direct URL
-                asr_service = ASRService()
+                asr_service = create_asr_service()
                 async with create_service_tracker(
                     "ASRService", "transcribe_from_url", self.perf_logger
                 ):
@@ -233,7 +235,7 @@ class WorkflowOrchestrator:
                     )
                 # Record ASR completion checkpoint
                 self.time_monitor.checkpoint("asr_complete")
-            except (ASRError, ValueError) as asr_error:
+            except (ASRError, NLSASRError, ValueError) as asr_error:
                 self.perf_logger.log_error(
                     "ASR transcription failed", asr_error, video_id=video_info.video_id
                 )
@@ -352,10 +354,9 @@ class WorkflowOrchestrator:
         transcript_text = f"Processed file: {file_info.original_filename}"
         with self.perf_logger.log_step("file_asr_transcription"):
             try:
-                # 确保FileHandler和OSSUploader在文件处理流程中正确集成
-                # 确保ASRService正确处理OSS集成模式和传统模式
+                # V3.0: 使用工厂函数创建 ASR 服务，支持 DashScope 和 NLS 双后端
                 oss_uploader = self._get_oss_uploader()
-                asr_service = ASRService(oss_uploader=oss_uploader)
+                asr_service = create_asr_service(oss_uploader=oss_uploader)
                 async with create_service_tracker(
                     "ASRService", "transcribe_from_file", self.perf_logger
                 ):
@@ -365,7 +366,7 @@ class WorkflowOrchestrator:
                     )
                 # Record ASR completion checkpoint only on success
                 self.time_monitor.checkpoint("asr_complete")
-            except (ASRError, ValueError, OSSUploaderError) as asr_error:
+            except (ASRError, NLSASRError, ValueError, OSSUploaderError) as asr_error:
                 self.perf_logger.log_error(
                     "File ASR transcription failed",
                     asr_error,
