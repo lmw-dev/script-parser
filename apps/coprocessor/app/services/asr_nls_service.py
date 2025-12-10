@@ -186,6 +186,80 @@ class NLSASRService:
         except Exception as e:
             raise NLSASRError(f"查询任务失败: {str(e)}") from e
     
+    def _format_transcript_with_paragraphs(self, sentences: list[dict]) -> str:
+        """
+        将 NLS API 返回的句子数组格式化为带分段的文本
+        
+        分段策略：
+        1. 根据句子间的静音时长分段（>1.5秒认为是段落边界）
+        2. 每累积约200-300字自动分段（避免段落过长）
+        3. 遇到语气词结尾（？！。）也会考虑分段
+        
+        Args:
+            sentences: NLS API 返回的句子数组，每个句子包含 Text, BeginTime, EndTime 等
+            
+        Returns:
+            格式化后的带分段文本
+        """
+        if not sentences:
+            return ""
+        
+        paragraphs = []
+        current_paragraph = []
+        current_char_count = 0
+        
+        # 分段阈值
+        SILENCE_THRESHOLD_MS = 1500  # 静音超过1.5秒分段
+        CHAR_THRESHOLD = 250  # 字符数阈值
+        
+        for i, sentence in enumerate(sentences):
+            text = sentence.get("Text", "").strip()
+            if not text:
+                continue
+            
+            current_paragraph.append(text)
+            current_char_count += len(text)
+            
+            # 判断是否需要分段
+            should_break = False
+            
+            # 条件1: 检查与下一句的时间间隔
+            if i < len(sentences) - 1:
+                current_end = sentence.get("EndTime", 0)
+                next_begin = sentences[i + 1].get("BeginTime", 0)
+                silence_duration = next_begin - current_end
+                
+                if silence_duration >= SILENCE_THRESHOLD_MS:
+                    should_break = True
+                    logger.debug(f"🔧 [NLS-ASR] 静音分段: {silence_duration}ms")
+            
+            # 条件2: 字符数超过阈值，且当前句子以句号/问号/感叹号结尾
+            if current_char_count >= CHAR_THRESHOLD:
+                if text.endswith(('。', '？', '！', '?', '!', '.', '…')):
+                    should_break = True
+                    logger.debug(f"🔧 [NLS-ASR] 长度分段: {current_char_count}字符")
+            
+            # 条件3: 字符数严重超标，强制分段
+            if current_char_count >= CHAR_THRESHOLD * 1.5:
+                should_break = True
+                logger.debug(f"🔧 [NLS-ASR] 强制分段: {current_char_count}字符")
+            
+            # 执行分段
+            if should_break and current_paragraph:
+                paragraphs.append("".join(current_paragraph))
+                current_paragraph = []
+                current_char_count = 0
+        
+        # 添加最后一个段落
+        if current_paragraph:
+            paragraphs.append("".join(current_paragraph))
+        
+        # 用双换行符连接段落
+        transcript = "\n\n".join(paragraphs)
+        logger.info(f"🔧 [NLS-ASR] 分段完成: {len(paragraphs)} 段，共 {len(transcript)} 字符")
+        
+        return transcript
+    
     async def _wait_for_result(self, task_id: str, timeout: float) -> str:
         """
         等待任务完成并获取结果
@@ -220,8 +294,8 @@ class NLSASRService:
                 if not sentences:
                     return ""
                 
-                # 合并所有句子的文本
-                transcript = "".join(s.get("Text", "") for s in sentences)
+                # 智能分段处理
+                transcript = self._format_transcript_with_paragraphs(sentences)
                 logger.info(f"🔧 [NLS-ASR] 转录完成: {len(transcript)} 字符")
                 return transcript
             
