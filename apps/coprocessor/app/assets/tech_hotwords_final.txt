@@ -1,0 +1,408 @@
+Apple Intelligence
+Qualcomm
+Azure
+Amazon WebServices
+Amazon CodeWhisperer
+SWE bench
+DevOps
+Cryptocurrency
+Latency
+User Experience
+Superintelligence
+松下
+Panasonic
+AZ100
+AZ80
+森海塞尔
+Sennheiser
+Momentum
+小馒头
+MTW4
+索尼
+Sony
+WF 1000XM5
+WF 1000XM4
+WF 1000XM3
+LinkBuds
+苹果
+AirPods
+AirPods Pro
+AirPods Pro 2
+AirPods Pro 3
+AirPods Max
+OPPO
+Enco
+Enco X
+Enco X2
+Enco X3
+Enco Free
+Enco Free 2
+Enco Free 3
+Enco Free 4
+Enco Air
+Enco Air 4 Pro
+声阔
+Soundcore
+Space A40
+Liberty 4
+Liberty 4 NC
+985
+华为
+Huawei
+FreeBuds
+FreeBuds Pro
+FreeBuds Pro 2
+FreeBuds Pro 3
+FreeBuds 5i
+FreeBuds 6i
+FreeBuds 7i
+真我
+Realme
+Buds Air
+Buds Air 5 Pro
+Buds Air 6 Pro
+Buds Air 7 Pro
+红米
+Redmi
+Redmi Buds
+Buds 5 Pro
+Buds 6 Pro
+漫步者
+Edifier
+Lolli
+Lolli Pro
+Lolli Pro 5
+NeoBuds
+NeoBuds Pro
+倍思
+Baseus
+M2s
+M2s Ultra
+Bowie
+水月雨
+Moondrop
+琉璃
+MIAD01
+Chu
+Space Travel
+QCY
+T8
+T8 Pro
+T13
+HT05
+绿联
+UGREEN
+HiTune
+T6
+T6 Magic
+万魔
+1MORE
+EVO
+Aero
+ComfoBuds
+Vivo
+TWS
+TWS 3
+TWS 4
+小米
+Xiaomi
+Buds 4
+Buds 4 Pro
+Buds 5
+FIIL
+T1
+T1 Pro
+CC Pro
+JBL
+Tour Pro
+Tour Pro 2
+Live Pro 2
+Bose
+QuietComfort
+QuietComfort Ultra
+QC Earbuds
+韶音
+Shokz
+OpenRun
+OpenRun Pro
+OpenFit
+Bang Olufsen
+Beoplay
+铁三角
+Audio Technica
+ATH
+拜雅
+Beyerdynamic
+final
+山灵
+Shanling
+飞傲
+FiiO
+AAC
+SBC
+LDAC
+aptX
+aptX HD
+aptX Adaptive
+aptX Lossless
+LHDC
+LHDC 5 0
+LC3
+LC3plus
+骁龙畅听
+Snapdragon Sound
+高通
+主动降噪
+ANC
+被动降噪
+PNC
+通透模式
+透传模式
+环境音
+降噪深度
+分贝
+dB
+赫兹
+Hz
+频宽
+降噪频宽
+耳压
+耳压感
+动圈
+动铁
+圈铁
+平板
+单元
+发声单元
+振膜
+磁流体
+DAC
+双DAC
+蓝牙芯片
+高通芯片
+QCC3091
+QCC5181
+QCC5171
+BES2700
+恒玄
+洛达
+AB1585
+续航
+充电仓
+快充
+无线充电
+入耳式
+半入耳式
+头戴式
+开放式
+骨传导
+通话降噪
+ENC
+麦克风
+双麦
+三麦
+六麦
+IP防水
+IPX4
+IPX5
+IPX7
+佩戴检测
+触控
+多点连接
+无缝切换
+低延迟
+游戏模式
+空间音频
+Hi Res
+无损
+高保真
+HiFi
+煲机
+调音
+EQ
+均衡器
+三频
+低频
+中频
+高频
+解析力
+声场
+定位
+结像
+人声
+乐器
+XM5
+XM4
+XM3
+降噪豆
+MTW3
+Space Q45
+Space One
+Q45
+Liberty 3 Pro
+Liberty Pro
+Find X8
+Find X7
+Find X6
+萝莉炮
+萝莉炮2
+萝莉炮5
+TWS耳机
+莱特尔
+兴戈
+锦瑟香也
+TFZ
+达音科
+DUNU
+凯声
+Kbear
+天使吉米
+Tanchjim
+Tangzu
+唐竹
+七赫兹
+7Hz
+Truthear
+EST112
+EQ调音
+预设EQ
+自定义EQ
+殿堂感
+厅堂感
+空气感
+氛围感
+女毒
+男毒
+ACG
+蓝牙5 3
+蓝牙5 4
+双设备连接
+多设备切换
+快速配对
+小米妙享
+华为超级终端
+OPPO互联
+灵动蓝牙
+AI通话降噪
+风噪抑制
+骨声纹
+骨传导麦克风
+波束成形
+DNN降噪
+小米生态
+华为生态
+苹果生态
+OPPO生态
+Vivo生态
+充电舱
+电池舱
+续航时间
+总续航
+单次续航
+单耳续航
+磁吸充电
+佩戴舒适度
+耳塞
+耳套
+硅胶耳塞
+海绵耳塞
+记忆海绵
+耳翼
+耳挂
+鲨鱼鳍
+耳甲腔
+耳道
+品控
+做工
+用料
+塑料感
+金属感
+质感
+手感
+打油
+刮花
+掉漆
+性价比
+越级
+守门员
+卷王
+万金油
+全能
+旗舰
+次旗舰
+入门
+中端
+高端
+o1
+o3
+o4 mini
+Google I O
+WWDC
+Apple
+Full Self Driving
+Minimum Viable Product
+Automatic Speech Recognition
+Text to Speech
+Natural Language Processing
+Neural Processing Unit
+Virtual Reality
+Augmented Reality
+Mixed Reality
+Internet of Things
+Electric Vehicle
+User Interface
+Human Computer Interaction
+Internationalization
+Localization
+Customer Relationship Management
+Disinformation
+竹
+B O
+头部追踪
+Q30
+i5
+豆式耳机
+斗式耳机
+半入耳
+全入耳
+Letshuoer
+S12
+S15
+EJ07
+徕声
+Letshuo
+See Audio
+SIMGOT
+Salnotes
+KATO
+Blessing
+FD5
+FD7
+FA9
+JadeAudio
+EA500
+EA1000
+Simphonio
+竹林鸟
+密度
+厚度
+通透
+清亮
+暖声
+冷声
+杂食
+流行
+古典
+摇滚
+电子
+爵士
+民谣
+三设备连接
+同时连接
+深度神经网络
+安卓生态
+iOS生态
+无线充
+有线充
+充电盒
+佩戴稳固

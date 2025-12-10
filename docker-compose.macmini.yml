@@ -33,13 +33,13 @@ services:
       dockerfile: ./apps/web/Dockerfile
       args:
         # Mac mini 局域网访问 - 使用 Mac mini 的实际 IP
-        NEXT_PUBLIC_API_URL: http://192.168.31.100:8081/api
+        NEXT_PUBLIC_API_URL: http://100.123.255.27:8081
     image: scriptparser-web:macmini
     container_name: sp_macmini_web
     restart: unless-stopped
     environment:
       - NODE_ENV=production
-      - NEXT_PUBLIC_API_URL=http://192.168.31.100:8081/api
+      - NEXT_PUBLIC_API_URL=http://100.123.255.27:8081
     expose:
       - "3000"
     networks:

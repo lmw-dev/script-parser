@@ -1,0 +1,203 @@
+iPad Pro
+Qualcomm
+Azure
+Amazon WebServices
+Amazon CodeWhisperer
+JavaScript
+TypeScript
+Customer Relationship Management
+松下
+Panasonic
+AZ100
+AZ80
+森海塞尔
+Sennheiser
+索尼
+Sony
+WF-1000XM5
+WF-1000XM4
+WF-1000XM3
+苹果
+AirPods
+AirPods Pro
+AirPods Pro 2
+AirPods Pro 3
+AirPods Pro3
+AirPods Max
+OPPO
+Enco
+Enco X
+Enco X2
+Enco X3
+Enco Free
+Enco Free 2
+Enco Free 3
+Enco Free 4
+Enco Air
+Enco Air 4 Pro
+声阔
+Soundcore
+华为
+FreeBuds
+FreeBuds Pro
+FreeBuds Pro 2
+FreeBuds Pro 3
+FreeBuds 5i
+FreeBuds 6i
+FreeBuds 7i
+真我
+Realme
+红米
+Redmi
+Redmi Buds
+Redmi Buds 6 Pro
+漫步者
+Edifier
+Lolli
+Lolli Pro
+Lolli Pro 5
+倍思
+Baseus
+水月雨
+Moondrop
+弱水时砂
+弱水之沙
+琉璃
+琉璃MK2
+QCY
+QCY Buds
+QCY Buds Pro
+QCY全能仓
+全能仓
+绿联
+UGREEN
+绿联T6
+Vivo
+Vivo TWS
+Vivo TWS4
+TWS
+TWS 3
+TWS 4
+小米
+Xiaomi
+FIIL
+JBL
+Bose
+B&O
+铁三角
+拜雅
+final
+AAC
+SBC
+LDAC
+aptX
+aptX HD
+aptX Adaptive
+aptX Lossless
+aptX Loss
+LHDC
+LHDC 5.0
+LHDC5.0
+LC3
+LC3plus
+高通
+主动降噪
+ANC
+被动降噪
+降噪深度
+分贝
+dB
+赫兹
+Hz
+降噪频宽
+动圈
+动铁
+单元
+发声单元
+DAC
+双DAC
+蓝牙芯片
+高通芯片
+QCC3091
+QCC5181
+QCC5171
+恒玄
+恒玄2710
+洛达
+续航
+充电仓
+无线充电
+入耳式
+半入耳式
+头戴式
+骨传导
+通话降噪
+麦克风
+IP防水
+IPX4
+IPX5
+IPX7
+佩戴检测
+触控
+低延迟
+空间音频
+Hi-Res
+HiFi
+EQ
+低频
+中频
+高频
+声场
+XM5
+XM4
+XM3
+降噪豆
+TWS耳机
+半入耳
+全入耳
+莱特尔
+Tanchjim
+七赫兹
+7Hz
+EQ调音
+预设EQ
+自定义EQ
+小米妙享
+华为超级终端
+OPPO互联
+AI通话降噪
+骨传导麦克风
+DNN降噪
+小米生态
+华为生态
+苹果生态
+OPPO生态
+Vivo生态
+充电舱
+续航时间
+总续航
+单次续航
+单耳续航
+充电盒
+磁吸充电
+佩戴舒适度
+佩戴稳固
+品控
+做工
+性价比
+守门员
+万金油
+旗舰
+次旗舰
+OTA升级
+OTA
+漫步者绿耳
+HiFi大厂
+双麦克风
+三麦克风
+六麦克风
+麦克风方案
+漫步者Lolli
+漫步者Lolli Pro
+同声传译
+心率检测

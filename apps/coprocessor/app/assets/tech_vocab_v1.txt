@@ -1,0 +1,690 @@
+AI
+AGI
+LLM
+Large Language Model
+RAG
+Retrieval-Augmented Generation
+Fine-tuning
+Prompt Engineering
+GPT-4
+GPT-4o
+GPT-5
+GPT-5.1
+o1
+o3
+o4-mini
+Claude 3
+Claude 3.5 Sonnet
+Claude 4
+Claude Opus 4.5
+Opus 4.5
+Sonnet 4
+Opus
+Haiku
+Llama 3
+Llama 4
+Meta AI
+Gemini 1.5 Pro
+Gemini 2
+Gemini 2.5
+Gemini 3
+Gemini 3 Pro
+Google I/O
+WWDC
+Apple Intelligence
+OpenAI
+Anthropic
+DeepMind
+Perplexity AI
+Midjourney
+DALL-E 3
+Sora
+Stable Diffusion
+NVIDIA
+CUDA
+TensorFlow
+PyTorch
+GPU
+TPU
+GeForce RTX
+RTX 4090
+RTX 5090
+Blackwell
+Hopper
+AMD
+Ryzen
+Radeon
+Intel
+Core Ultra
+Lunar Lake
+Arrow Lake
+Apple
+M3 Max
+M4
+M4 Pro
+M4 Max
+M4 Ultra
+MacBook Pro
+iPad Pro
+Vision Pro
+Qualcomm
+Snapdragon
+Snapdragon X Elite
+ARM
+RISC-V
+Samsung
+Galaxy S24 Ultra
+Tesla
+Full Self-Driving
+FSD
+Autopilot
+Cybertruck
+Microsoft
+Windows 11
+Copilot
+Copilot+
+Azure
+AWS
+Amazon WebServices
+GCP
+Google Cloud Platform
+Hugging Face
+GitHub
+VS Code
+Visual Studio Code
+Cursor
+Cursor IDE
+Windsurf
+Windsurf IDE
+Bolt
+bolt.new
+v0
+v0.dev
+Replit
+Replit Agent
+Codeium
+Tabnine
+Amazon CodeWhisperer
+CodeGeeX
+Devin
+SWE-bench
+HumanEval
+code-davinci
+codex
+Agentic
+Agent
+Linear
+Linear App
+Obsidian
+Obsidian.md
+Notion
+Figma
+Arc Browser
+Arc
+JavaScript
+TypeScript
+Python
+React
+Next.js
+Vercel
+Node.js
+FastAPI
+Docker
+Kubernetes
+API
+SaaS
+Software as a Service
+PaaS
+IaaS
+FinTech
+MarTech
+DevOps
+CI/CD
+Agile
+Scrum
+Kanban
+PMF
+Product-Market Fit
+MVP
+Minimum Viable Product
+OKR
+KPI
+ARPU
+LTV
+CAC
+MRR
+ARR
+B2B
+B2C
+SOP
+Standard Operating Procedure
+ASR
+Automatic Speech Recognition
+TTS
+Text-to-Speech
+NLP
+Natural Language Processing
+NPU
+Neural Processing Unit
+VR
+Virtual Reality
+AR
+Augmented Reality
+MR
+Mixed Reality
+Blockchain
+Cryptocurrency
+Bitcoin
+Ethereum
+NFT
+Web3
+DeFi
+Quantum Computing
+IoT
+Internet of Things
+5G
+6G
+Wi-Fi 6E
+Wi-Fi 7
+Bluetooth 5.4
+USB-C
+Thunderbolt 5
+OLED
+mini-LED
+micro-LED
+Quantum Dot
+LiDAR
+Solid-State Battery
+EV
+Electric Vehicle
+Generative AI
+GenAI
+Transformer
+Diffusion Model
+Vector Database
+Vector Store
+Embedding
+Token
+Tokenization
+Hallucination
+Latency
+Throughput
+Scalability
+Open Source
+Proprietary
+API Key
+SDK
+Monorepo
+Microservices
+Serverless
+Edge Computing
+Digital Twin
+Cybersecurity
+Zero-Day Exploit
+Phishing
+Ransomware
+VPN
+Zero Trust
+UI
+UX
+User Interface
+User Experience
+HCI
+Human-Computer Interaction
+Accessibility
+a11y
+Internationalization
+i18n
+Localization
+l10n
+SEO
+Search Engine Optimization
+SEM
+Search Engine Marketing
+CRM
+Customer Relationship Management
+ERP
+Enterprise Resource Planning
+Deepfake
+Misinformation
+Disinformation
+Ethical AI
+AI Alignment
+Superintelligence
+Singularity
+松下
+Panasonic
+AZ100
+AZ80
+森海塞尔
+Sennheiser
+Momentum
+小馒头
+MTW4
+索尼
+Sony
+WF-1000XM5
+WF-1000XM4
+WF-1000XM3
+LinkBuds
+苹果
+AirPods
+AirPods Pro
+AirPods Pro 2
+AirPods Pro 3
+AirPods Pro3
+AirPods Max
+OPPO
+Enco
+Enco X
+Enco X2
+Enco X3
+Enco Free
+Enco Free 2
+Enco Free 3
+Enco Free 4
+Enco Air
+Enco Air 4 Pro
+声阔
+Soundcore
+Space A40
+Liberty 4
+Liberty 4 NC
+985
+华为
+Huawei
+FreeBuds
+FreeBuds Pro
+FreeBuds Pro 2
+FreeBuds Pro 3
+FreeBuds 5i
+FreeBuds 6i
+FreeBuds 7i
+真我
+Realme
+Buds Air
+Buds Air 5 Pro
+Buds Air 6 Pro
+Buds Air 7 Pro
+Air 7 Pro
+红米
+Redmi
+Redmi Buds
+Redmi Buds 6 Pro
+Buds 5 Pro
+Buds 6 Pro
+漫步者
+Edifier
+Lolli
+Lolli Pro
+Lolli Pro 5
+NeoBuds
+NeoBuds Pro
+倍思
+Baseus
+M2s
+M2s Ultra
+M2S
+M2S Ultra
+Bowie
+水月雨
+Moondrop
+弱水时砂
+弱水之沙
+AirFi
+AirFi O
+AirFi i5
+琉璃
+琉璃MK2
+MIAD01
+竹
+Chu
+Space Travel
+QCY
+QCY Buds
+QCY Buds Pro
+QCY全能仓
+全能仓
+T8
+T8 Pro
+T13
+HT05
+绿联
+UGREEN
+HiTune
+T6
+T6 Magic
+T6magic
+绿联T6
+万魔
+1MORE
+EVO
+Aero
+ComfoBuds
+Vivo
+Vivo TWS
+Vivo TWS4
+TWS
+TWS 3
+TWS 4
+小米
+Xiaomi
+Buds 4
+Buds 4 Pro
+Buds 5
+FIIL
+T1
+T1 Pro
+CC Pro
+JBL
+Tour Pro
+Tour Pro 2
+Live Pro 2
+Bose
+QuietComfort
+QuietComfort Ultra
+QC Earbuds
+韶音
+Shokz
+OpenRun
+OpenRun Pro
+OpenFit
+B&O
+Bang & Olufsen
+Beoplay
+铁三角
+Audio-Technica
+ATH
+拜雅
+Beyerdynamic
+final
+山灵
+Shanling
+飞傲
+FiiO
+AAC
+SBC
+LDAC
+aptX
+aptX HD
+aptX Adaptive
+aptX Lossless
+aptX Loss
+LHDC
+LHDC 5.0
+LHDC5.0
+LC3
+LC3plus
+骁龙畅听
+Snapdragon Sound
+高通
+主动降噪
+ANC
+被动降噪
+PNC
+通透模式
+透传模式
+环境音
+降噪深度
+分贝
+dB
+赫兹
+Hz
+频宽
+降噪频宽
+耳压
+耳压感
+动圈
+动铁
+圈铁
+平板
+单元
+发声单元
+振膜
+磁流体
+DAC
+双DAC
+蓝牙芯片
+高通芯片
+QCC3091
+QCC5181
+QCC5171
+BES2700
+恒玄
+恒玄2710
+BES2710
+洛达
+AB1585
+续航
+充电仓
+快充
+无线充电
+入耳式
+半入耳式
+头戴式
+开放式
+骨传导
+通话降噪
+ENC
+麦克风
+双麦
+三麦
+六麦
+IP防水
+IPX4
+IPX5
+IPX7
+佩戴检测
+触控
+多点连接
+无缝切换
+低延迟
+游戏模式
+空间音频
+头部追踪
+Hi-Res
+无损
+高保真
+HiFi
+煲机
+调音
+EQ
+均衡器
+三频
+低频
+中频
+高频
+解析力
+声场
+定位
+结像
+人声
+乐器
+XM5
+XM4
+XM3
+降噪豆
+MTW3
+Space Q45
+Space One
+Q45
+Q30
+Liberty 3 Pro
+Liberty Pro
+Find X8
+Find X7
+Find X6
+i5
+萝莉炮
+萝莉炮2
+萝莉炮5
+TWS耳机
+豆式耳机
+斗式耳机
+半入耳
+全入耳
+莱特尔
+Letshuoer
+LC环
+LC环Ultra
+S12
+S15
+EJ07
+徕声
+Letshuo
+兴戈
+See Audio
+SIMGOT
+锦瑟香也
+TFZ
+The Fragrant Zither
+达音科
+DUNU
+凯声
+Kbear
+天使吉米
+Tanchjim
+Tangzu
+唐竹
+七赫兹
+7Hz
+Salnotes
+Truthear
+KATO
+Aria
+Starfield
+Blessing
+Variations
+FD5
+FD7
+FA9
+EST112
+JadeAudio
+EA500
+EA1000
+Simphonio
+竹林鸟
+EQ调音
+预设EQ
+自定义EQ
+殿堂感
+厅堂感
+空气感
+氛围感
+密度
+厚度
+通透
+清亮
+暖声
+冷声
+杂食
+女毒
+男毒
+ACG
+流行
+古典
+摇滚
+电子
+爵士
+民谣
+蓝牙5.3
+蓝牙5.4
+双设备连接
+三设备连接
+多设备切换
+同时连接
+快速配对
+Google Fast Pair
+Swift Pair
+小米妙享
+华为超级终端
+OPPO互联
+灵动蓝牙
+AI通话降噪
+风噪抑制
+骨声纹
+骨传导麦克风
+波束成形
+DNN降噪
+深度神经网络
+小米生态
+华为生态
+苹果生态
+OPPO生态
+Vivo生态
+安卓生态
+iOS生态
+充电舱
+电池舱
+续航时间
+总续航
+单次续航
+单耳续航
+无线充
+有线充
+充电盒
+磁吸充电
+佩戴舒适度
+佩戴稳固
+耳塞
+耳套
+硅胶耳塞
+海绵耳塞
+记忆海绵
+耳翼
+耳挂
+鲨鱼鳍
+耳甲腔
+耳道
+品控
+做工
+用料
+塑料感
+金属感
+质感
+手感
+打油
+刮花
+掉漆
+性价比
+越级
+守门员
+卷王
+万金油
+全能
+旗舰
+次旗舰
+入门
+中端
+高端
+OTA升级
+OTA
+固件升级
+固件更新
+新固件
+绿耳
+漫步者绿耳
+Air Buds
+Air Buds Air Pro 4
+米系生态
+米西生态
+HiFi大厂
+hi fi大厂
+双麦克风
+三麦克风
+六麦克风
+麦克风方案
+SoC
+蓝牙SoC
+音频SoC
+ED SoC
+双核处理器
+双核
+LE Audio
+蓝牙LE
+FE4
+Free 4
+漫步者Lolli
+漫步者Lolli Pro
+同声传译
+心率检测
