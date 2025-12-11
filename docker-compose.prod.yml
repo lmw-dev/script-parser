@@ -37,6 +37,8 @@ services:
     environment:
       - NODE_ENV=${NODE_ENV}
       - NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL}
+      # 修复 Next.js 15 在 Docker 中的 IPv6 redirect 问题
+      - HOSTNAME=0.0.0.0
     expose:
       - "3000"
     networks:
@@ -75,6 +77,12 @@ services:
       - MAX_TOKENS=${MAX_TOKENS}
       - TEMPERATURE=${TEMPERATURE}
       - TIMEOUT=${TIMEOUT}
+      # V3.0 - TOM-537: NLS ASR 后端配置
+      - ASR_BACKEND=${ASR_BACKEND:-dashscope}
+      - ALIYUN_ACCESS_KEY_ID=${ALIYUN_ACCESS_KEY_ID}
+      - ALIYUN_ACCESS_KEY_SECRET=${ALIYUN_ACCESS_KEY_SECRET}
+      - ALIYUN_NLS_APPKEY=${ALIYUN_NLS_APPKEY}
+      - ALIYUN_TECH_HOTWORD_ID=${ALIYUN_TECH_HOTWORD_ID}
     expose:
       - "8000"
     networks:

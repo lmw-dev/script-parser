@@ -4,9 +4,14 @@ const nextConfig: NextConfig = {
   // 启用 standalone 输出模式，用于 Docker 部署
   output: 'standalone',
 
-  // 配置图片域名
+  // 配置图片域名（使用 remotePatterns 替代已废弃的 domains）
   images: {
-    domains: ['localhost'],
+    remotePatterns: [
+      {
+        protocol: 'http',
+        hostname: 'localhost',
+      },
+    ],
   },
 
   // 环境变量配置
@@ -29,7 +34,21 @@ const nextConfig: NextConfig = {
     },
   },
 
-  // 注意：Next.js 15的API Routes配置已移至route.ts文件中处理
+  // 禁用默认静态页面缓存头
+  headers: async () => {
+    return [
+      {
+        // 对所有 HTML 页面禁用缓存
+        source: '/:path*',
+        headers: [
+          {
+            key: 'Cache-Control',
+            value: 'no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0',
+          },
+        ],
+      },
+    ];
+  },
 };
 
 export default nextConfig;

@@ -1,5 +1,8 @@
 "use client"
 
+// 强制动态渲染，禁用 Next.js 默认的静态页面缓存
+export const dynamic = 'force-dynamic'
+
 import { useState } from "react"
 import { useRouter } from "next/navigation"
 import { useToast } from "@/hooks/use-toast"

@@ -329,15 +329,15 @@ function V3TechSpecLayout({ result, onReset, handleCopy }: {
                 再分析一个
               </Button>
               {hasAnyStructuredData && (
-                <Button
-                  onClick={handleCopyAll}
-                  variant="secondary"
-                  size="sm"
-                  className="w-full h-9 text-xs md:text-sm"
-                >
-                  <Copy className="h-4 w-4 mr-2" />
-                  全部复制
-                </Button>
+              <Button
+                onClick={handleCopyAll}
+                variant="secondary"
+                size="sm"
+                className="w-full h-9 text-xs md:text-sm"
+              >
+                <Copy className="h-4 w-4 mr-2" />
+                全部复制
+              </Button>
               )}
             </CardContent>
           </Card>
@@ -347,10 +347,10 @@ function V3TechSpecLayout({ result, onReset, handleCopy }: {
             <TechSpecEmptyState />
           ) : (
             <>
-              <ProductParametersCard parameters={result.product_parameters} onCopy={handleCopy} />
-              <SellingPointsCard sellingPoints={result.selling_points} onCopy={handleCopy} />
-              <PricingCard pricingInfo={result.pricing_info} onCopy={handleCopy} />
-              <ProsConsCard evaluation={result.subjective_evaluation} onCopy={handleCopy} />
+          <ProductParametersCard parameters={result.product_parameters} onCopy={handleCopy} />
+          <SellingPointsCard sellingPoints={result.selling_points} onCopy={handleCopy} />
+          <PricingCard pricingInfo={result.pricing_info} onCopy={handleCopy} />
+          <ProsConsCard evaluation={result.subjective_evaluation} onCopy={handleCopy} />
             </>
           )}
         </div>

@@ -117,7 +117,7 @@ class ASRService:
             logger.info(f"🔧 [ASR] API响应: status={getattr(task_response, 'status_code', 'N/A')}, "
                        f"message={getattr(task_response, 'message', 'N/A')}, "
                        f"request_id={getattr(task_response, 'request_id', 'N/A')}")
-            
+
             # 检查响应是否有效
             if not task_response:
                 raise ASRError("No response from DashScope API")
