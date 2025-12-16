@@ -1,4 +1,5 @@
 # 使用简化的单阶段构建
+# ✅ 第一处修改：构建环境用 Node 20
 FROM node:20-alpine AS builder
 
 RUN apk add --no-cache libc6-compat
@@ -23,7 +24,8 @@ RUN pnpm install --frozen-lockfile
 RUN pnpm --filter web build
 
 # 运行阶段
-FROM node:18-alpine AS runner
+# ✅✅✅ 关键修改：运行环境必须也是 Node 20！！！
+FROM node:20-alpine AS runner
 WORKDIR /app
 
 ENV NODE_ENV production
